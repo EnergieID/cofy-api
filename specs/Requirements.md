@@ -1,0 +1,6 @@
+- Can run anywhere (eg: self-hosted on end user servers)
+- Supports multiple database/storage options
+- Easily configurable for different setups
+- Standardized interface/API
+- Easily usable by EnergyID
+- Directly acesible for power user, eg through powerBI or script

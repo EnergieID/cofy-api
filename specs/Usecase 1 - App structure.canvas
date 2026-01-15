@@ -1,0 +1,311 @@
+{
+  "nodes": [
+    {
+      "type": "group",
+      "id": "803e64d09bad3560",
+      "x": 1100,
+      "y": -440,
+      "width": 720,
+      "height": 1400,
+      "label": "Signal"
+    },
+    {
+      "type": "group",
+      "id": "ff1d10c747fa4481",
+      "x": -980,
+      "y": -440,
+      "width": 520,
+      "height": 1660,
+      "label": "General Module"
+    },
+    {
+      "type": "group",
+      "id": "f013b34b411a1721",
+      "x": -420,
+      "y": -440,
+      "width": 720,
+      "height": 1140,
+      "label": "Tariff"
+    },
+    {
+      "type": "group",
+      "id": "ed1fcecda0ba256f",
+      "x": 340,
+      "y": -440,
+      "width": 720,
+      "height": 1140,
+      "label": "Balance"
+    },
+    {
+      "type": "group",
+      "id": "167158bfe1dc12c0",
+      "x": -390,
+      "y": -1240,
+      "width": 660,
+      "height": 420,
+      "label": "API"
+    },
+    {
+      "type": "text",
+      "id": "d0e24127015fe750",
+      "x": -940,
+      "y": -420,
+      "width": 460,
+      "height": 180,
+      "text": "## App layer\nimportable python library\nExposes fastAPI\nExposes data source directly\nHighly injectable using settings"
+    },
+    {
+      "type": "text",
+      "id": "83870b0ca9e868aa",
+      "x": -940,
+      "y": -220,
+      "width": 460,
+      "height": 180,
+      "text": "## API Layer\nreturns fast API that uses data source\nShould do almost nothing and be highly abstractable for the pure data fetch cases\ncan be more involved for compute function"
+    },
+    {
+      "type": "text",
+      "id": "9fb74ad2cd8066cd",
+      "x": -940,
+      "y": 100,
+      "width": 460,
+      "height": 120,
+      "text": "## Model\nDefinition of the model that will be returned by API"
+    },
+    {
+      "type": "text",
+      "id": "793d6f63e07342c2",
+      "x": -400,
+      "y": -220,
+      "width": 680,
+      "height": 300,
+      "text": "## API\n```python\ndef getFastApi() -> FastAPI:\n    app = FastAPI()\n    \n    @app.get(\"/\")\n    def index(params) -> Tarrif[]:\n\t    return datasoure.list(params)\n    \n\treturn app\n```"
+    },
+    {
+      "type": "text",
+      "id": "1e79d6acaa786c84",
+      "x": -943.2594011191463,
+      "y": -1649.6624883914903,
+      "width": 520,
+      "height": 220,
+      "text": "## Unresolved usecases by current design\n- MQTT \n- Datalake/database directly accessible for power users (eg powerBI or scripts)\n- Specific API implementations for devices\n- Admin interface"
+    },
+    {
+      "type": "text",
+      "id": "010410e16c10a37a",
+      "x": -400,
+      "y": -420,
+      "width": 680,
+      "height": 180,
+      "text": "## App\n```python\ndef __init__(setting):\n    datasource = settings.datasource || new Fetcher(settings)\n\tfastApi = new API(datasource, settings)\n```"
+    },
+    {
+      "type": "text",
+      "id": "44047d00625924df",
+      "x": -940,
+      "y": -1231.9868697311556,
+      "width": 460,
+      "height": 200,
+      "text": "## Cofy\nSetup general API\nHandles registration of modules\nHandles security and management of access tokens\nShould be able to restrict Modules and module implementations based on Token"
+    },
+    {
+      "type": "text",
+      "id": "ad64ce417438cd59",
+      "x": -940,
+      "y": -795,
+      "width": 460,
+      "height": 155,
+      "text": "## Main\nLaunch script that registers modules with correct settings\nActs as admin interface\n**Will be custom in every install**"
+    },
+    {
+      "type": "text",
+      "id": "5cf365c7f188596b",
+      "x": -400,
+      "y": 100,
+      "width": 680,
+      "height": 180,
+      "text": "## Model\n```python\nclass Tarrif(BaseModel):\n   time: timestamp\n   value: double \n```"
+    },
+    {
+      "type": "text",
+      "id": "53fc5c6a4054719c",
+      "x": -400,
+      "y": 300,
+      "width": 680,
+      "height": 180,
+      "text": "## Fetcher\n```python\ndef list(params):\n    data = fetch(self.settings.url, params)\n    return self.tarrifsParser.parse(data)\n```"
+    },
+    {
+      "type": "text",
+      "id": "0abda8f89e425e4d",
+      "x": -400,
+      "y": 500,
+      "width": 680,
+      "height": 180,
+      "text": "## Parser\n```python\ndef parse(data):\n    return new Tarrif(time: data.UTCDateTime, value: data.value/100)\n```"
+    },
+    {
+      "type": "text",
+      "id": "a86b83f40fd98bd7",
+      "x": 360,
+      "y": -420,
+      "width": 680,
+      "height": 180,
+      "text": "## App\n```python\ndef __init__(setting):\n    datasource = settings.datasource || new Fetcher(settings)\n\tfastApi = new API(datasource, settings)\n```"
+    },
+    {
+      "type": "text",
+      "id": "bb61bab266d585d9",
+      "x": 360,
+      "y": -220,
+      "width": 680,
+      "height": 300,
+      "text": "## API\n```python\ndef getFastApi() -> FastAPI:\n    app = FastAPI()\n    \n    @app.get(\"/\")\n    def index(params) -> Balance[]:\n\t    return datasoure.list(params)\n    \n\treturn app\n```"
+    },
+    {
+      "type": "text",
+      "id": "9bee93821098e05b",
+      "x": -370,
+      "y": -1220,
+      "width": 620,
+      "height": 100,
+      "text": "## GET `/`\nCofy cloud discovery, Lists all installed modules\n"
+    },
+    {
+      "type": "text",
+      "id": "6f3ef29a89d167fd",
+      "x": -370,
+      "y": -1080,
+      "width": 620,
+      "height": 100,
+      "text": "## GET `/{ModuleType}`\nLists all installed modules of the given type\n"
+    },
+    {
+      "type": "text",
+      "id": "f4cc785ed572f5d4",
+      "x": -370,
+      "y": -940,
+      "width": 620,
+      "height": 100,
+      "text": "## GET `/{ModuleType}/{ImplementationKey}`\nModule specific api\n"
+    },
+    {
+      "type": "text",
+      "id": "65b7a7db6b9b1e79",
+      "x": 360,
+      "y": 300,
+      "width": 680,
+      "height": 180,
+      "text": "## Fetcher\n```python\ndef list(params):\n    data = fetch(self.settings.url, params)\n    return self.Parser.parse(data)\n```"
+    },
+    {
+      "type": "text",
+      "id": "8fe82089486d689f",
+      "x": 360,
+      "y": 500,
+      "width": 680,
+      "height": 180,
+      "text": "## Parser\n```python\ndef parse(data):\n    return new Balance(time: data.UTCDateTime, value: data.value/100)\n```"
+    },
+    {
+      "type": "text",
+      "id": "02ded345afb2494c",
+      "x": 360,
+      "y": 100,
+      "width": 680,
+      "height": 180,
+      "text": "## Model\n```python\nclass Balance(BaseModel):\n   time: timestamp\n   value: double \n```"
+    },
+    {
+      "type": "text",
+      "id": "5053251a0cf07228",
+      "x": 1120,
+      "y": -420,
+      "width": 680,
+      "height": 180,
+      "text": "## App\n```python\ndef __init__(setting):\n    datasource = settings.datasource || new Fetcher(settings)\n\tfastApi = new API(datasource, settings)\n```"
+    },
+    {
+      "type": "text",
+      "id": "f57d6d30414aedb7",
+      "x": 1120,
+      "y": -220,
+      "width": 680,
+      "height": 300,
+      "text": "## API\n```python\ndef getFastApi() -> FastAPI:\n    app = FastAPI()\n    \n    @app.get(\"/\")\n    def index(params) -> Balance[]:\n\t    return datasoure.list(params)\n    \n\treturn app\n```"
+    },
+    {
+      "type": "text",
+      "id": "d4865abc7f15eb72",
+      "x": 1120,
+      "y": 100,
+      "width": 680,
+      "height": 180,
+      "text": "## Model\n```python\nclass Signal(BaseModel):\n   time: timestamp\n   value: double \n   signal: int\n```"
+    },
+    {
+      "type": "text",
+      "id": "14b8de6873de3d1b",
+      "x": 1120,
+      "y": 300,
+      "width": 680,
+      "height": 180,
+      "text": "## Fetcher\n```python\ndef list(params):\n    tarrifs = cofy.getModule(\"tarifs\").datasource.list(params)\n    balance = cofy.getModule(\"balance\").datasource.list(params)\n    return self.Computer.calc(tarrifs, balance)\n```"
+    },
+    {
+      "type": "text",
+      "id": "1ceca0bf13e4807b",
+      "x": 1120,
+      "y": 700,
+      "width": 680,
+      "height": 240,
+      "text": "## Computer\n```python\ndef calc(tarrifs, balance):\n    return new Signal(\n\t    timestamp: balance.timestamp,\n\t    value: balance.value * tarrifs.value,\n\t    signal: value > 0 ? -1, 1\n    )\n```"
+    },
+    {
+      "type": "text",
+      "id": "298a917846268780",
+      "x": -400,
+      "y": -795,
+      "width": 680,
+      "height": 255,
+      "text": "## Main\n```python\ncofy = new Cofy(settings)\n\ntarrifs = new TarrifsApp(settings)\ncofy.register(\"tarrifs\", tarrifs)\n...\n\ncofy.start()\n```"
+    },
+    {
+      "type": "text",
+      "id": "e24cacfe5d429b4f",
+      "x": -940,
+      "y": 300,
+      "width": 460,
+      "height": 180,
+      "text": "## Source layer\nCan be a database request, or a direct proxy\nInterface should be similar to fast API\nSimple cases should also be rather generalisable\n**Might need custom implementation per community**"
+    },
+    {
+      "type": "text",
+      "id": "70edd586222236d2",
+      "x": -940,
+      "y": 500,
+      "width": 460,
+      "height": 140,
+      "text": "## Parsing layer\nConverts external data format to internal model\n**Will need custom implementation per community**"
+    },
+    {
+      "type": "text",
+      "id": "4dffa7cb74712f57",
+      "x": -940,
+      "y": 700,
+      "width": 460,
+      "height": 100,
+      "text": "## Compute layer\nPure functions, no side effects"
+    },
+    {
+      "type": "text",
+      "id": "450c074b39337aa1",
+      "x": -940,
+      "y": 1000,
+      "width": 460,
+      "height": 180,
+      "text": "## Scheduled jobs\n2 main types: \n- fetch external -> parse -> store internal\n- fetch (any) -> reformat -> post external"
+    }
+  ],
+  "edges": []
+}
