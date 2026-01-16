@@ -273,8 +273,8 @@
     {
       "type": "text",
       "id": "e24cacfe5d429b4f",
-      "x": -940,
-      "y": 300,
+      "x": -936.0462261094145,
+      "y": 301.76507762972557,
       "width": 460,
       "height": 180,
       "text": "## Source layer\nCan be a database request, or a direct proxy\nInterface should be similar to fast API\nSimple cases should also be rather generalisable\n**Might need custom implementation per community**"
