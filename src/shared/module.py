@@ -1,5 +1,5 @@
 from src.cofy.app import Cofy
-from fastapi import FastAPI
+from fastapi import APIRouter
 from abc import ABC, abstractmethod
 
 class Module(ABC):
@@ -13,5 +13,5 @@ class Module(ABC):
         self.settings.update(new_settings)
     
     @abstractmethod
-    def get_fastapi(self) -> FastAPI:
+    def get_router(self) -> APIRouter():
         pass
