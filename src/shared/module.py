@@ -13,5 +13,5 @@ class Module(ABC):
         self.settings.update(new_settings)
     
     @abstractmethod
-    def get_router(self) -> APIRouter():
+    def get_router(self) -> APIRouter:
         pass
