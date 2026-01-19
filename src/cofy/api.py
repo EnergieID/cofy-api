@@ -1,11 +1,15 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from src.cofy.app import Cofy
+
 from fastapi import APIRouter
 
 class CofyApi:
-    cofy: src.cofy.app.Cofy
+    cofy: Cofy
     router: APIRouter
 
-    def __init__(self, cofy: src.cofy.app.Cofy):
+    def __init__(self, cofy: Cofy):
         self.cofy = cofy
         self.router = APIRouter()
         self.router.add_api_route("/", self.get_modules, methods=["GET"])
