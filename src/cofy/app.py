@@ -37,11 +37,3 @@ class Cofy:
     
     def get_modules_by_type(self, module_type: str) -> dict[str, Module]:
         return self.modules.get(module_type, {})
-    
-    def run(self):
-
-        for module_type in self.modules:
-            for module_name in self.modules[module_type]:
-                module = self.modules[module_type][module_name]
-                m
-        return api
