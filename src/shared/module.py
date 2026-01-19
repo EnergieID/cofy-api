@@ -1,9 +1,9 @@
-from src.cofy.app import Cofy
-from fastapi import APIRouter
+from __future__ import annotations
 from abc import ABC, abstractmethod
+from fastapi import APIRouter
 
 class Module(ABC):
-    cofy: Cofy
+    cofy: src.cofy.app.Cofy
     settings: dict
 
     def __init__(self, settings: dict):

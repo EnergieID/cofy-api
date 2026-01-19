@@ -16,8 +16,5 @@ uv sync
 ```
 Run development demo application:
 ```sh
-uv run
-# or
-source .venv/bin/activate
-python src/demo/main.py
+poe demo
 ```

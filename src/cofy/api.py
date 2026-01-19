@@ -1,13 +1,11 @@
-
+from __future__ import annotations
 from fastapi import APIRouter
-from cofy.app import Cofy
-
 
 class CofyApi:
-    cofy: Cofy
+    cofy: src.cofy.app.Cofy
     router: APIRouter
 
-    def __init__(self, cofy: Cofy):
+    def __init__(self, cofy: src.cofy.app.Cofy):
         self.cofy = cofy
         self.router = APIRouter()
         self.router.add_api_route("/", self.get_modules, methods=["GET"])

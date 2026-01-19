@@ -11,8 +11,8 @@ class Cofy:
 
     def __init__(self, settings: dict):
         self.settings = settings
-        api = FastAPI()
-        api.include_router(CofyApi(self).router)
+        self.api = FastAPI()
+        self.api.include_router(CofyApi(self).router)
 
     def register_module(self, module_type: str, module_name: str, module: Module):
         if module_type not in self.modules:
