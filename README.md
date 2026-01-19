@@ -18,3 +18,9 @@ Run development demo application:
 ```sh
 poe demo
 ```
+Code style checks:
+```sh
+poe lint    # Check code style
+poe format  # Format code
+poe check   # Run type checks
+```
