@@ -15,9 +15,6 @@ class Module(ABC):
     def __init__(self, settings: dict):
         self.settings = settings
 
-    def update_settings(self, new_settings: dict):
-        self.settings.update(new_settings)
-
     @abstractmethod
     def get_router(self) -> APIRouter:
         pass

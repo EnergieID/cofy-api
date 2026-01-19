@@ -3,11 +3,11 @@
 /src
     modules/
         <module_name>/
-            app/            # Optional: if app.py becomes to complex
-            api/            # Optional: if multiple implementations of api, or API becomes complex
-            model/          # Optional: if module specifies multiple models
-            source/         # Data source layer: DB clients, proxies, interfaces
-            parsing/        # Parsing layer: adapters, converters, custom logic
+            apps/            # Optional: if app.py becomes to complex
+            apis/            # Optional: if multiple implementations of api, or API becomes complex
+            models/          # Optional: if module specifies multiple models
+            sources/         # Data source layer: DB clients, proxies, interfaces
+            parsers/          # Parse layer: adapters, converters, custom logic
             compute/        # Compute layer: pure functions, stateless logic
             jobs/           # Scheduled jobs: fetch, parse, store, reformat, post
             __init__.py     # Makes the module importable
