@@ -2,8 +2,6 @@ from fastapi import FastAPI
 from src.shared.module import Module
 from src.cofy.api import CofyApi
 
-CONF_MODULE_SETTINGS_KEY = "modules"
-
 
 class Cofy:
     modules: dict[str, dict[str, Module]] = {}
