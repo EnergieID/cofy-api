@@ -1,6 +1,7 @@
 **Cofy Cloud** is an open-source modular framework for ingesting, standardising, storing, and computing energy-related data, designed to run anywhere from local deployments to cloud environments.
 
-Right now this is very much a work in progress, with the specifications still being defined and reworked in `specs/`.
+Right now this is very much a work in progress.
+With the development of a firts proof of concept. This it not ready for production use and the api is likely to change significantly in the near future.
 
 ## Setup
 ### Install
