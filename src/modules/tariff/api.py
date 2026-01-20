@@ -14,10 +14,9 @@ class TariffAPI:
         self.router = APIRouter(prefix="/v1")
         self.router.add_api_route("/", self.get_tariffs, methods=["GET"])
 
-    def get_tariffs(self,
+    async def get_tariffs(self,
             start: dt.datetime,
             end: dt.datetime
         ) -> list[TariffEntry]:
-        frame = self.source.fetch_tariffs(start, end)
-
-        return frame.entries.to_dicts()
+        frame = await self.source.fetch_tariffs(start, end)
+        return [TariffEntry(**row) for row in frame.entries.iter_rows(named=True)]

@@ -208,3 +208,5 @@ __marimo__/
 
 # Obsidian
 **/*.obsidian/
+
+local.settings.json

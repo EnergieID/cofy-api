@@ -10,7 +10,10 @@ class TariffApp(Module):
 
     def __init__(self, settings: dict):
         super().__init__(settings)
-        self.source = settings.get("source", EntsoeDayAheadTariffSource(settings.get("country_code", "DE"), settings.get("api_key", "")))
+        if "source" in settings:
+            self.source = settings["source"]
+        else:
+            self.source = EntsoeDayAheadTariffSource(settings.get("country_code", "BE"), settings.get("api_key", ""))
         self.api = TariffAPI(self.source)
 
     @property

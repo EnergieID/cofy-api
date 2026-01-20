@@ -1,8 +1,9 @@
 import narwhals as nw
+import datetime as dt
 from pydantic import BaseModel
 
 class TariffEntry(BaseModel):
-    timestamp: str
+    timestamp: dt.datetime
     value: float
 
 class TariffFrame:
