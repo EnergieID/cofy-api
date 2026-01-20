@@ -14,7 +14,9 @@ class Cofy:
         self.fastApi = FastAPI(
             title=settings.get("title", "Cofy cloud API"),
             version=settings.get("version", "0.1.0"),
-            description=settings.get("description", "Modular cloud API for energy data"),
+            description=settings.get(
+                "description", "Modular cloud API for energy data"
+            ),
         )
         self.cofyApi = CofyApi(self)
         self.fastApi.include_router(self.cofyApi.router)

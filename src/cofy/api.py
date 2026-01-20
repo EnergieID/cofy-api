@@ -7,7 +7,8 @@ if TYPE_CHECKING:
     from src.cofy.app import Cofy
     from src.shared.module import Module
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+
 
 class ModuleResponse(BaseModel):
     module_type: str
@@ -23,9 +24,11 @@ class ModuleResponse(BaseModel):
             metadata=module.metadata,
         )
 
+
 class ModuleTypeResponse(BaseModel):
     module_type: str
     modules: list[ModuleResponse]
+
 
 class CofyApi:
     cofy: Cofy
@@ -59,13 +62,17 @@ class CofyApi:
     def get_modules_by_type(self, module_type: str) -> list[ModuleResponse]:
         """returns a list of all registered modules of the given type."""
         return [
-                    self.get_module(module_type, module_name)
-                    for module_name in self.cofy.get_modules_by_type(module_type).keys()
-                ]
+            self.get_module(module_type, module_name)
+            for module_name in self.cofy.get_modules_by_type(module_type).keys()
+        ]
 
     def get_module(self, module_type: str, module_name: str) -> ModuleResponse:
         """Returns the module with the given type and name."""
         module = self.cofy.get_module(module_type, module_name)
+
+        if not module:
+            raise HTTPException(
+                status_code=404, detail=f"Module {module_type}/{module_name} not found"
+            )
+
         return ModuleResponse(module=module, endpoint=self.module_endpoint(module))
-    
-    

@@ -40,7 +40,7 @@ class Module(ABC):
         """
         The name of the module instance, e.g. "entsoe_tariff", "openweather", etc.
         Use it to differentiate between multiple instances/implementations of the same module type.
-        
+
         :rtype: str
         """
         return self.settings.get("name", "default")
@@ -50,7 +50,7 @@ class Module(ABC):
         """
         Metadata about the module instance.
         E.g. the unit of measurement, the data source, the update frequency, etc.
-        
+
         :rtype: dict
         """
         return {}
