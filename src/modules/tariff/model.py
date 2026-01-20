@@ -1,4 +1,4 @@
-import narwhals
+import narwhals as nw
 from pydantic import BaseModel
 
 class TariffEntry(BaseModel):
@@ -7,8 +7,9 @@ class TariffEntry(BaseModel):
 
 class TariffFrame:
     unit: str
-    entries: narwhals.DataFrame[TariffEntry]
+    entries: nw.DataFrame[TariffEntry]
 
-    def __init__(self, unit: str, entries: narwhals.DataFrame[TariffEntry]):
+    @nw.narwhalify
+    def __init__(self, unit: str, entries: nw.DataFrame[TariffEntry]):
         self.unit = unit
         self.entries = entries

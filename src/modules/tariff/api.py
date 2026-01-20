@@ -11,8 +11,8 @@ class TariffAPI:
 
     def __init__(self, source: TariffSource):
         self.source = source
-        self.router = APIRouter()
-        self.router.add_api_route("/v1", self.get_tariffs, methods=["GET"])
+        self.router = APIRouter(prefix="/v1")
+        self.router.add_api_route("/", self.get_tariffs, methods=["GET"])
 
     def get_tariffs(self,
             start: dt.datetime,

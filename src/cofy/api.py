@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from src.cofy.app import Cofy
+    from src.shared.module import Module
 
 from fastapi import APIRouter
 
@@ -13,6 +14,14 @@ class ModuleResponse(BaseModel):
     module_name: str
     endpoint: str
     metadata: dict
+
+    def __init__(self, module: Module, endpoint: str):
+        super().__init__(
+            module_type=module.module_type,
+            module_name=module.module_name,
+            endpoint=endpoint,
+            metadata=module.metadata,
+        )
 
 class ModuleTypeResponse(BaseModel):
     module_type: str
@@ -24,7 +33,7 @@ class CofyApi:
 
     def __init__(self, cofy: Cofy):
         self.cofy = cofy
-        self.router = APIRouter()
+        self.router = APIRouter(prefix="/v1")
         self.router.add_api_route("/", self.get_modules, methods=["GET"])
         self.router.add_api_route(
             "/{module_type}", self.get_modules_by_type, methods=["GET"]
@@ -32,6 +41,9 @@ class CofyApi:
         self.router.add_api_route(
             "/{module_type}/{module_name}", self.get_module, methods=["GET"]
         )
+
+    def module_endpoint(self, module: Module) -> str:
+        return f"/v1/{module.module_type}/{module.module_name}"
 
     def get_modules(self) -> list[ModuleTypeResponse]:
         return [
@@ -49,11 +61,7 @@ class CofyApi:
                 ]
 
     def get_module(self, module_type: str, module_name: str) -> ModuleResponse:
-        return ModuleResponse(
-                        module_type=module_type,
-                        module_name=module_name,
-                        endpoint=f"/{module_type}/{module_name}",
-                        metadata=self.cofy.get_module(module_type, module_name).settings,
-                    )
+        module = self.cofy.get_module(module_type, module_name)
+        return ModuleResponse(module=module, endpoint=self.module_endpoint(module))
     
     

@@ -19,5 +19,5 @@ class EntsoeDayAheadTariffSource(TariffSource):
         )
         return TariffFrame(
             unit="EUR/MWh",
-            entries=narwhals.from_native(pandas_frame.reset_index().rename(columns={"index": "timestamp"}))
+            entries=pandas_frame.reset_index().rename(columns={"index": "timestamp"})
         )

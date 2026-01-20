@@ -15,11 +15,16 @@ class Cofy:
         self.api = FastAPI()
         self.api.include_router(CofyApi(self).router)
 
-    def register_module(self, module_type: str, module_name: str, module: Module):
-        if module_type not in self.modules:
-            self.modules[module_type] = {}
-        self.modules[module_type][module_name] = module
+    def register_module(self, module: Module):
+        if module.type not in self.modules:
+            self.modules[module.type] = {}
+        self.modules[module.type][module.name] = module
         module.cofy = self
+
+        if module.router:
+            self.api.include_router(
+                module.router, prefix=f"/{module.type}/{module.name}"
+            )
 
     def get_module(self, module_type: str, module_name: str) -> Module | None:
         return self.modules.get(module_type, {}).get(module_name)
