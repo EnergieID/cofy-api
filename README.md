@@ -9,18 +9,30 @@ Right now this is very much a work in progress, with the specifications still be
 *TODO*
 ### Development
 We use [astral](https://docs.astral.sh/) python tooling for our development environment.
+We use [poethepoet](https://poethepoet.natn.io) to define some essential tasks.
+The demo run task is also available as vscode execution task, making it easy to run and debug the demo application from within vscode.
 
-Install/update dependencies:
+#### Install/update dependencies:
 ```sh
 uv sync
 ```
-Run development demo application:
+
+#### Run development demo application:
+Our demo application uses some API keys for external services. You can provide these `local.settings.json` file in the root of the repository, following the structure of `local.settings.example.json`.
+
 ```sh
 poe demo
 ```
-Code style checks:
+
+#### Code style checks:
 ```sh
 poe lint    # Check code style
 poe format  # Format code
 poe check   # Run type checks
 ```
+
+#### Run tests:
+TODO
+
+#### Build & publish
+TODO
