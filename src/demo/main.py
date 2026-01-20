@@ -7,4 +7,4 @@ cofy = Cofy(settings={})
 tariffs = TariffApp(settings={})
 cofy.register_module(tariffs)
 
-app = cofy.api
+app = cofy.fastApi

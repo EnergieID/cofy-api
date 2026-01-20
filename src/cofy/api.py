@@ -17,8 +17,8 @@ class ModuleResponse(BaseModel):
 
     def __init__(self, module: Module, endpoint: str):
         super().__init__(
-            module_type=module.module_type,
-            module_name=module.module_name,
+            module_type=module.type,
+            module_name=module.name,
             endpoint=endpoint,
             metadata=module.metadata,
         )
@@ -43,9 +43,11 @@ class CofyApi:
         )
 
     def module_endpoint(self, module: Module) -> str:
-        return f"/v1/{module.module_type}/{module.module_name}"
+        """Returns the API endpoint for the given module."""
+        return f"/v1/{module.type}/{module.name}"
 
     def get_modules(self) -> list[ModuleTypeResponse]:
+        """Returns a list of all registered modules grouped by their type."""
         return [
             ModuleTypeResponse(
                 module_type=module_type,
@@ -55,12 +57,14 @@ class CofyApi:
         ]
 
     def get_modules_by_type(self, module_type: str) -> list[ModuleResponse]:
+        """returns a list of all registered modules of the given type."""
         return [
                     self.get_module(module_type, module_name)
                     for module_name in self.cofy.get_modules_by_type(module_type).keys()
                 ]
 
     def get_module(self, module_type: str, module_name: str) -> ModuleResponse:
+        """Returns the module with the given type and name."""
         module = self.cofy.get_module(module_type, module_name)
         return ModuleResponse(module=module, endpoint=self.module_endpoint(module))
     

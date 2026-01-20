@@ -8,12 +8,14 @@ CONF_MODULE_SETTINGS_KEY = "modules"
 class Cofy:
     modules: dict[str, dict[str, Module]] = {}
     settings: dict = {}
-    api: FastAPI
+    fastApi: FastAPI
+    cofyApi: CofyApi
 
     def __init__(self, settings: dict):
         self.settings = settings
-        self.api = FastAPI()
-        self.api.include_router(CofyApi(self).router)
+        self.fastApi = FastAPI()
+        self.cofyApi = CofyApi(self)
+        self.fastApi.include_router(self.cofyApi.router)
 
     def register_module(self, module: Module):
         if module.type not in self.modules:
@@ -22,8 +24,8 @@ class Cofy:
         module.cofy = self
 
         if module.router:
-            self.api.include_router(
-                module.router, prefix=f"/{module.type}/{module.name}"
+            self.fastApi.include_router(
+                module.router, prefix=self.cofyApi.module_endpoint(module)
             )
 
     def get_module(self, module_type: str, module_name: str) -> Module | None:
