@@ -7,7 +7,7 @@ repos:
     - id: ruff-check
       args: [ --fix ]
     # Run the formatter.
-    - id: ruff-formatter
+    - id: ruff-format
 
 - repo: https://github.com/allganize/ty-pre-commit
   # Ty version.
@@ -17,7 +17,7 @@ repos:
     - id: ty-check
 
 - repo: https://github.com/pycqa/isort
-  rev: 5.11.2
+  rev: 7.0.0
   hooks:
     - id: isort
       name: isort (python)
