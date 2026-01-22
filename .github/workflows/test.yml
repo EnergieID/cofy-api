@@ -24,9 +24,20 @@ jobs:
       - name: Install poethepoet
         run: uv tool install poethepoet
       - name: Run tests
-        run: poe test --cov-report=lcov:cov.info
+        run: poe test --cov-report=lcov:cov.info --cov-report=xml:cov.xml
       - name: Code Coverage Annotation
         uses: ggilder/codecoverage@v1
         with:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           COVERAGE_FILE_PATH: "cov.info"
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: cov.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          thresholds: '90 95'
