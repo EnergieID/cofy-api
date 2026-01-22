@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -25,6 +24,20 @@ jobs:
         run: uv tool install poethepoet
       - name: Run tests
         run: poe test --cov-report=lcov:cov.info --cov-report=xml:cov.xml
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data
+          path: cov.info, cov.xml
+
+  coverage:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Download coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data
       - name: Code Coverage Annotation
         uses: ggilder/codecoverage@v1
         with:
