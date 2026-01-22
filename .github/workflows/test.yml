@@ -49,6 +49,11 @@ jobs:
           filename: cov.xml
           badge: true
           fail_below_min: true
+          hide_complexity: true
+          hide_branch_rate: true
           format: markdown
           indicators: true
           thresholds: '90 95'
+          output: both
+      - name: Write to Job Summary
+        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
