@@ -38,6 +38,3 @@ class Cofy:
 
     def get_modules_by_type(self, module_type: str) -> dict[str, Module]:
         return self.modules.get(module_type, {})
-
-    def uncovered_method(self):
-        return "This method is not covered by tests"
