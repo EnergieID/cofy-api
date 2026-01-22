@@ -48,3 +48,24 @@ class TestApi:
         assert response.status_code == 404
         data = response.json()
         assert "not found" in data["detail"].lower()
+
+    def test_module_router_included_on_endpoint(self):
+        # Create a module with a router
+        from fastapi import APIRouter
+
+        router = APIRouter()
+
+        @router.get("/hello")
+        def hello():
+            return {"message": "Hello from module"}
+
+        module_with_router = DummyModule(
+            name="modwithrouter", type_="testtype", router=router
+        )
+        self.cofy.register_module(module_with_router)
+
+        # Test that the module's router is accessible at the correct endpoint
+        response = self.client.get("/v1/testtype/modwithrouter/hello")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["message"] == "Hello from module"
