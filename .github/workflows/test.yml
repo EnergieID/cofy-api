@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: uv sync
       - name: Run tests
-        run: uv tool run pytest --tests=tests --cov=src --cov-report=lcov:cov.info
+        run: uv tool run pytest --cov=src --cov-report=lcov:cov.info
       - name: Code Coverage Annotation
         uses: ggilder/codecoverage@v1
         with:
