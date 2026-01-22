@@ -32,3 +32,5 @@ env = { PYTHONPATH = "." }
 [tool.poe.tasks.test]
 cmd = "pytest --cov=src"
 env = { PYTHONPATH = "." }
+[tool.coverage.report]
+skip_covered = true
