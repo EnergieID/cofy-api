@@ -31,13 +31,17 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           COVERAGE_FILE_PATH: "cov.info"
       - name: Code Coverage Report
-        uses: irongut/CodeCoverageSummary@v1.3.0
+        uses: VeryGoodOpenSource/very_good_coverage@v3
         with:
-          filename: cov.xml
-          badge: true
-          fail_below_min: true
-          format: markdown
-          hide_branch_rate: false
-          hide_complexity: true
-          indicators: true
-          thresholds: '90 95'
+          path: cov.info
+          min_coverage: 95
+        # uses: irongut/CodeCoverageSummary@v1.3.0
+        # with:
+        #   filename: cov.xml
+        #   badge: true
+        #   fail_below_min: true
+        #   format: markdown
+        #   hide_branch_rate: false
+        #   hide_complexity: true
+        #   indicators: true
+        #   thresholds: '90 95'
