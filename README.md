@@ -47,7 +47,8 @@ poe check   # Run type checks
 ```
 
 #### Run tests:
-TODO
-
+```sh
+poe test
+```
 #### Build & publish
 TODO
