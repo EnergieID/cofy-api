@@ -21,7 +21,9 @@ jobs:
           version: '0.9.21'
       - name: Install dependencies
         run: uv sync
-      - name: "Install pre-commit"
+      - name: Install pre-commit
         run: uv tool install pre-commit
-      - name: "Run pre-commit hooks"
+      - name: Install poethepoet
+        run: uv tool install poethepoet
+      - name: Run pre-commit hooks
         run: pre-commit run --all-files

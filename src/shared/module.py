@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.cofy.app import Cofy
     from fastapi import APIRouter
+
+    from src.cofy.app import Cofy
 
 from abc import ABC, abstractmethod
 

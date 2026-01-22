@@ -1,10 +1,18 @@
 repos:
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  # Ruff version.
-  rev: v0.14.13
+- repo: local
   hooks:
-    # Run the linter.
-    - id: ruff-check
-      args: [ --fix ]
-    # Run the formatter.
-    - id: ruff-format
+    - id: lint
+      name: poe lint
+      entry: poe lint
+      language: system
+      types: [python]
+    - id: type-check
+      name: poe type-check
+      entry: poe check
+      language: system
+      types: [python]
+    - id: format
+      name: poe format
+      entry: poe format
+      language: system
+      types: [python]

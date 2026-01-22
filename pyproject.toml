@@ -21,6 +21,6 @@ dependencies = [
 cmd = "fastapi dev src/demo/main.py"
 env = { PYTHONPATH = "." }
 [tool.poe.tasks]
-lint = "ruff check"
+lint = "ruff check --select I --fix"
 format = "ruff format"
 check = "ty check"
