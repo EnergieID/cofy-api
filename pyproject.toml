@@ -30,7 +30,7 @@ check = "ty check"
 cmd = "fastapi dev src/demo/main.py"
 env = { PYTHONPATH = "." }
 [tool.poe.tasks.test]
-cmd = "pytest --cov=src"
+cmd = "pytest --cov=src --cov-report=term-missing"
 env = { PYTHONPATH = "." }
 [tool.coverage.report]
 skip_covered = true
