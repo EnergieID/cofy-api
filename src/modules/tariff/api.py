@@ -1,5 +1,6 @@
-from fastapi import APIRouter
 import datetime as dt
+
+from fastapi import APIRouter
 
 from src.modules.tariff.model import TariffEntry
 from src.modules.tariff.source import TariffSource

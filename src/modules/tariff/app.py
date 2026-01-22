@@ -1,8 +1,9 @@
 from fastapi import APIRouter
-from src.shared.module import Module
-from src.modules.tariff.source import TariffSource
+
 from src.modules.tariff.api import TariffAPI
+from src.modules.tariff.source import TariffSource
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
+from src.shared.module import Module
 
 
 class TariffApp(Module):

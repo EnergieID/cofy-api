@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 import datetime as dt
+from abc import ABC, abstractmethod
 
 from src.modules.tariff.model import TariffFrame
 

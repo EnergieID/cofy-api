@@ -1,7 +1,8 @@
 import json
-from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
-from src.modules.tariff.app import TariffApp
+
 from src.cofy.app import Cofy
+from src.modules.tariff.app import TariffApp
+from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
 environment = json.load(open("local.settings.json"))
 
