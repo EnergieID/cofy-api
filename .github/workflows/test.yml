@@ -21,8 +21,10 @@ jobs:
           version: '0.9.21'
       - name: Install dependencies
         run: uv sync
+      - name: Install poethepoet
+        run: uv tool install poethepoet
       - name: Run tests
-        run: uv tool run pytest --cov=src --cov-report=lcov:cov.info
+        run: poe test --cov-report=lcov:cov.info
       - name: Code Coverage Annotation
         uses: ggilder/codecoverage@v1
         with:
