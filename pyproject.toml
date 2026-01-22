@@ -14,17 +14,21 @@ dependencies = [
     "narwhals>=2.15.0",
     "pandas>=2.3.3",
     "polars>=1.37.1",
+]
+[dependency-groups]
+dev = [
+    "pytest-cov>=7.0.0",
     "pytest>=9.0.2",
     "ruff>=0.14.13",
     "ty>=0.0.12",
 ]
-[tool.poe.tasks.demo]
-cmd = "fastapi dev src/demo/main.py"
-env = { PYTHONPATH = "." }
-[tool.poe.tasks.test]
-cmd = "pytest"
-env = { PYTHONPATH = "." }
 [tool.poe.tasks]
 lint = "ruff check --select I --fix"
 format = "ruff format"
 check = "ty check"
+[tool.poe.tasks.demo]
+cmd = "fastapi dev src/demo/main.py"
+env = { PYTHONPATH = "." }
+[tool.poe.tasks.test]
+cmd = "pytest --cov=src"
+env = { PYTHONPATH = "." }
