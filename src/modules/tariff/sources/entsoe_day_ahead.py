@@ -24,10 +24,11 @@ class EntsoeDayAheadTariffSource(TariffSource):
             start=pd.Timestamp(start),
             end=pd.Timestamp(end),
         )
+        series.to_csv("debug_entsoe.csv")  # Debug line to trace data
         df = (
             series.to_frame()
             .reset_index()
-            .rename(columns={"index": "timestamp", 0: "value"})
+            .rename(columns={"index": "timestamp", "0": "value"})
         )
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         return TariffFrame(unit="EUR/MWh", entries=df)
