@@ -24,7 +24,6 @@ class Module(ABC):
         :return: A fastAPI router, that exposes the module's API endpoints.
         :rtype: APIRouter
         """
-        pass
 
     @property
     @abstractmethod
@@ -35,7 +34,6 @@ class Module(ABC):
 
         :rtype: str
         """
-        pass
 
     @property
     def name(self) -> str:
