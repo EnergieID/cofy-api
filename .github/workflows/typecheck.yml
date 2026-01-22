@@ -20,7 +20,7 @@ jobs:
           version: '0.9.21'
       - name: Install dependencies
         run: uv sync
-      - name: "Install poethepoet
+      - name: Install poethepoet
         run: uv tool install poethepoet
-      - name: "Run type checks"
+      - name: Run type checks
         run: poe check
