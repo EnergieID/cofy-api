@@ -36,7 +36,7 @@ class CofyApi:
 
     def __init__(self, cofy: Cofy):
         self.cofy = cofy
-        self.router = APIRouter(prefix="/v1")
+        self.router = APIRouter(prefix="/v0")
         self.router.add_api_route("/", self.get_modules, methods=["GET"])
         self.router.add_api_route(
             "/{module_type}", self.get_modules_by_type, methods=["GET"]
@@ -47,7 +47,7 @@ class CofyApi:
 
     def module_endpoint(self, module: Module) -> str:
         """Returns the API endpoint for the given module."""
-        return f"/v1/{module.type}/{module.name}"
+        return f"/v0/{module.type}/{module.name}"
 
     def get_modules(self) -> list[ModuleTypeResponse]:
         """Returns a list of all registered modules grouped by their type."""
