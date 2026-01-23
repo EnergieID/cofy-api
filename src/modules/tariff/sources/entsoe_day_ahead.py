@@ -24,7 +24,6 @@ class EntsoeDayAheadTariffSource(TariffSource):
             start=pd.Timestamp(start),
             end=pd.Timestamp(end),
         )
-        series.to_csv("debug_entsoe.csv")  # Debug line to trace data
         df = (
             series.to_frame()
             .reset_index()
