@@ -6,7 +6,7 @@ import narwhals as nw
 import pandas as pd
 import pytest
 
-from src.modules.tariff.model import TariffEntry, TariffFrame
+from src.modules.tariff.model import TariffFrame
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
 EXAMPLE_CSV_NAME = "entsoe_day_ahead_example.csv"
