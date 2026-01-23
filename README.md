@@ -1,6 +1,7 @@
 **Cofy Cloud** is an open-source modular framework for ingesting, standardising, storing, and computing energy-related data, designed to run anywhere from local deployments to cloud environments.
 
-Right now this is very much a work in progress, with the specifications still being defined and reworked in `specs/`.
+Right now this is very much a work in progress.
+With the development of a first proof of concept. This is not ready for production use and the api is likely to change significantly in the near future.
 
 ## Setup
 ### Install
@@ -8,4 +9,31 @@ Right now this is very much a work in progress, with the specifications still be
 ### Configure
 *TODO*
 ### Development
-*TODO*
+We use [astral](https://docs.astral.sh/) python tooling for our development environment.
+We use [poethepoet](https://poethepoet.natn.io) to define some essential tasks.
+The demo run task is also available as vscode execution task, making it easy to run and debug the demo application from within vscode.
+
+#### Install/update dependencies:
+```sh
+uv sync
+```
+
+#### Run development demo application:
+Our demo application uses some API keys for external services. You can provide these `local.settings.json` file in the root of the repository, following the structure of `local.settings.example.json`.
+
+```sh
+poe demo
+```
+
+#### Code style checks:
+```sh
+poe lint    # Check code style
+poe format  # Format code
+poe check   # Run type checks
+```
+
+#### Run tests:
+TODO
+
+#### Build & publish
+TODO
