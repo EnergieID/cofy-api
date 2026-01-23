@@ -3,10 +3,7 @@ from fastapi import APIRouter
 
 from src.modules.tariff.app import TariffApp
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
-
-
-class DummySource:
-    pass
+from tests.modules.tariff.dummy_source import DummySource
 
 
 class DummyAPI:
