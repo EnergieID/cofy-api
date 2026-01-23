@@ -39,11 +39,15 @@ def test_init_invalid(country_code, api_key, error_msg):
 async def test_fetch_tariffs():
     src = EntsoeDayAheadTariffSource("BE", "key")
     src.client = MagicMock()
-    src.client.query_day_ahead_prices.return_value = pd.read_csv(
-        str(EXAMPLE_CSV_PATH),
-        index_col=0,
-        parse_dates=True,
-    ).squeeze()
+    src.client.query_day_ahead_prices.return_value = (
+        pd.read_csv(
+            str(EXAMPLE_CSV_PATH),
+            index_col=0,
+            parse_dates=True,
+        )
+        .squeeze()
+        .rename(0)
+    )
 
     start = dt.datetime(2026, 1, 21)
     end = dt.datetime(2026, 1, 22)
