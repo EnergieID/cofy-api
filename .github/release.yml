@@ -4,13 +4,13 @@ changelog:
       - dependencies
       - no-release-notes
   categories:
-    - title: "🚀 New Features"
+    - title: "⚡ New Features"
       labels:
         - feature
-    - title: "🐛 Bug Fixes"
+    - title: "🐞 Bug Fixes"
       labels:
         - bug
-    - title: "🧰 Maintenance"
+    - title: "🔧 Maintenance"
       labels:
         - chore
     - title: "✨ Changes"
