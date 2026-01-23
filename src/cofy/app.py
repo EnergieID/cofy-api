@@ -4,12 +4,12 @@ from src.cofy.api import CofyApi
 
 
 class Cofy:
-    modules: dict[str, dict[str, Module]] = {}
-    settings: dict = {}
+    settings: dict
     fastApi: FastAPI
     cofyApi: CofyApi
 
     def __init__(self, settings: dict):
+        self.modules: dict[str, dict[str, Module]] = {}
         self.settings = settings
         self.fastApi = FastAPI(
             title=settings.get("title", "Cofy cloud API"),

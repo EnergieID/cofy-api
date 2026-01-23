@@ -3,7 +3,8 @@ from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSour
 from src.modules.tariff.app import TariffApp
 from src.cofy.app import Cofy
 
-environment = json.load(open("local.settings.json"))
+with open("local.settings.json") as f:
+    environment = json.load(f)
 
 cofy = Cofy(settings={})
 

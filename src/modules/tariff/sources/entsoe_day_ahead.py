@@ -1,8 +1,11 @@
-from src.modules.tariff.source import TariffSource
-from src.modules.tariff.model import TariffFrame
-from entsoe import EntsoePandasClient
-import pandas as pd
+import asyncio
 import datetime as dt
+
+import pandas as pd
+from entsoe import EntsoePandasClient
+
+from src.modules.tariff.model import TariffFrame
+from src.modules.tariff.source import TariffSource
 
 
 class EntsoeDayAheadTariffSource(TariffSource):
@@ -17,7 +20,8 @@ class EntsoeDayAheadTariffSource(TariffSource):
         self.client = EntsoePandasClient(api_key=api_key)
 
     async def fetch_tariffs(self, start: dt.datetime, end: dt.datetime) -> TariffFrame:
-        series = self.client.query_day_ahead_prices(
+        series = await asyncio.to_thread(
+            self.client.query_day_ahead_prices,
             country_code=self.country_code,
             start=pd.Timestamp(start),
             end=pd.Timestamp(end),
