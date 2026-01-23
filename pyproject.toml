@@ -21,6 +21,18 @@ dependencies = [
 cmd = "fastapi dev src/demo/main.py"
 env = { PYTHONPATH = "." }
 [tool.poe.tasks]
-lint = "ruff check --select I --fix"
+lint = "ruff check --fix"
 format = "ruff format"
 check = "ty check"
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "UP", # pyupgrade
+    "B", # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I", # isort
+]
+ignore = [
+    "E501", #Line too long
+]

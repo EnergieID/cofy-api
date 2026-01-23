@@ -14,7 +14,8 @@ cofy.register_module(tariffs)
 
 ## Tariff app with custom source
 source = EntsoeDayAheadTariffSource(
-    country_code="NL", api_key=environment.get("ENTSOE_API_KEY", "")
+    country_code="NL",
+    api_key=environment.get("ENTSOE_API_KEY", ""),
 )
 nl_tariffs = TariffApp(settings={"source": source, "name": "nl_tariffs"})
 cofy.register_module(nl_tariffs)
@@ -25,7 +26,7 @@ fr_tariffs = TariffApp(
         "country_code": "FR",
         "api_key": environment.get("ENTSOE_API_KEY", ""),
         "name": "fr_tariffs",
-    }
+    },
 )
 cofy.register_module(fr_tariffs)
 

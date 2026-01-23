@@ -16,7 +16,8 @@ class TariffApp(Module):
             self.source = settings["source"]
         else:
             self.source = EntsoeDayAheadTariffSource(
-                settings.get("country_code", "BE"), settings.get("api_key", "")
+                settings.get("country_code", "BE"),
+                settings.get("api_key", ""),
             )
         self.api = TariffAPI(self.source)
 
