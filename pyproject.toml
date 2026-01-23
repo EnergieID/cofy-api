@@ -14,10 +14,10 @@ dependencies = [
     "narwhals>=2.15.0",
     "pandas>=2.3.3",
     "polars>=1.37.1",
-    "pytest-asyncio>=1.3.0",
 ]
 [dependency-groups]
 dev = [
+    "pytest-asyncio>=1.3.0",
     "pytest-cov>=7.0.0",
     "pytest>=9.0.2",
     "ruff>=0.14.13",
