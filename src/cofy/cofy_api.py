@@ -38,12 +38,11 @@ class CofyApi(FastAPI):
         self._modules[module.type][module.name] = module
         module.cofy = self
 
-        if module.router:
-            self.include_router(
-                module.router,
-                prefix=self._modulesRouter.module_endpoint(module),
-                tags=[module.type],
-            )
+        self.include_router(
+            module,
+            prefix=self._modulesRouter.module_endpoint(module),
+            tags=[module.type],
+        )
 
     def get_modules(self) -> dict[str, dict[str, Module]]:
         return self._modules
