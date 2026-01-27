@@ -31,20 +31,19 @@ class ModuleTypeResponse(BaseModel):
     modules: list[ModuleResponse]
 
 
-class CofyApi:
+class ModulesRouter(APIRouter):
     cofy: Cofy
-    router: APIRouter
 
     def __init__(self, cofy: Cofy):
+        super().__init__(prefix="/v0")
         self.cofy = cofy
-        self.router = APIRouter(prefix="/v0")
-        self.router.add_api_route("/", self.get_modules, methods=["GET"])
-        self.router.add_api_route(
+        self.add_api_route("/", self.get_modules, methods=["GET"])
+        self.add_api_route(
             "/{module_type}",
             self.get_modules_by_type,
             methods=["GET"],
         )
-        self.router.add_api_route(
+        self.add_api_route(
             "/{module_type}/{module_name}",
             self.get_module,
             methods=["GET"],

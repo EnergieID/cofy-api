@@ -11,7 +11,7 @@ def test_cofy_initialization():
     assert cofy.fastApi.title == "Test API"
     assert cofy.fastApi.version == "1.2.3"
     assert cofy.fastApi.description == "Test desc"
-    assert isinstance(cofy.cofyApi, object)
+    assert isinstance(cofy.modulesRouter, object)
     assert cofy.settings == settings
 
 

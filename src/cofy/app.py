@@ -1,13 +1,14 @@
 from fastapi import FastAPI
 
-from src.cofy.api import CofyApi
+from src.cofy.docs_router import DocsRouter
+from src.cofy.modules_router import ModulesRouter
 from src.shared.module import Module
 
 
 class Cofy:
     settings: dict
     fastApi: FastAPI
-    cofyApi: CofyApi
+    modulesRouter: ModulesRouter
 
     def __init__(self, settings: dict):
         self.modules: dict[str, dict[str, Module]] = {}
@@ -20,9 +21,19 @@ class Cofy:
                 "Modular cloud API for energy data",
             ),
             dependencies=settings.get("dependencies", []),
+            docs_url=None,
+            redoc_url=None,
+            openapi_url=None,
         )
-        self.cofyApi = CofyApi(self)
-        self.fastApi.include_router(self.cofyApi.router)
+        self.modulesRouter = ModulesRouter(self)
+        self.fastApi.include_router(self.modulesRouter)
+        self.fastApi.include_router(
+            DocsRouter(
+                title=self.fastApi.title,
+                version=self.fastApi.version,
+                routes=self.fastApi.routes,
+            )
+        )
 
     def register_module(self, module: Module):
         if module.type not in self.modules:
@@ -33,7 +44,7 @@ class Cofy:
         if module.router:
             self.fastApi.include_router(
                 module.router,
-                prefix=self.cofyApi.module_endpoint(module),
+                prefix=self.modulesRouter.module_endpoint(module),
             )
 
     def get_module(self, module_type: str, module_name: str) -> Module | None:

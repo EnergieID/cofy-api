@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import APIKeyHeader, APIKeyQuery
 from pydantic import BaseModel
 from starlette.status import HTTP_401_UNAUTHORIZED
@@ -31,16 +31,22 @@ def token_verifier(tokens: dict):
     tokens = {token: TokenInfo(info) for token, info in tokens.items()}
 
     def verify(
+        request: Request,
         header_token: str = Depends(
-            APIKeyHeader(name="Authorization", auto_error=False)
+            APIKeyHeader(name="Authorization", auto_error=False, scheme_name="header")
         ),
-        query_token: str = Depends(APIKeyQuery(name="token", auto_error=False)),
+        query_token: str = Depends(
+            APIKeyQuery(name="token", auto_error=False, scheme_name="query")
+        ),
     ):
         token = None
+        auth_scheme_used = None
         if header_token and header_token.lower().startswith("bearer "):
             token = header_token[7:]
+            auth_scheme_used = "header"
         elif query_token:
             token = query_token
+            auth_scheme_used = "query"
         if not token:
             if header_token:
                 raise HTTPException(
@@ -61,5 +67,7 @@ def token_verifier(tokens: dict):
             raise HTTPException(
                 status_code=HTTP_401_UNAUTHORIZED, detail="Token expired"
             )
+        request.state.token = token
+        request.state.auth_scheme_used = auth_scheme_used
 
     return verify
