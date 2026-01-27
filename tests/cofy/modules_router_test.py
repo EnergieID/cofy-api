@@ -4,7 +4,7 @@ from src.cofy.app import Cofy
 from tests.cofy.dummy_module import DummyModule
 
 
-class TestApi:
+class TestModulesRouter:
     def setup_method(self):
         self.cofy = Cofy(settings={})
         self.module = DummyModule(
