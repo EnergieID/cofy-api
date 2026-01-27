@@ -30,7 +30,7 @@ class TestTariffAPI:
         client = TestClient(app)
 
         response = client.get(
-            "/v1/",
+            "/v0/",
             params={"start": self.start.isoformat(), "end": self.end.isoformat()},
         )
         assert response.status_code == 200

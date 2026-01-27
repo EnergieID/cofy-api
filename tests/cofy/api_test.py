@@ -14,7 +14,8 @@ class TestApi:
         self.client = TestClient(self.cofy.fastApi)
 
     def test_get_modules(self):
-        response = self.client.get("/v1/")
+        response = self.client.get("/v0"
+        "/")
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
@@ -29,14 +30,14 @@ class TestApi:
         assert found
 
     def test_get_modules_by_type(self):
-        response = self.client.get("/v1/testtype")
+        response = self.client.get("/v0/testtype")
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
         assert any(mod["module_name"] == "testmodule" for mod in data)
 
     def test_get_module(self):
-        response = self.client.get("/v1/testtype/testmodule")
+        response = self.client.get("/v0/testtype/testmodule")
         assert response.status_code == 200
         data = response.json()
         assert data["module_type"] == "testtype"
@@ -44,7 +45,7 @@ class TestApi:
         assert data["metadata"] == {"info": "test"}
 
     def test_get_module_not_found(self):
-        response = self.client.get("/v1/testtype/doesnotexist")
+        response = self.client.get("/v0/testtype/doesnotexist")
         assert response.status_code == 404
         data = response.json()
         assert "not found" in data["detail"].lower()
@@ -65,7 +66,7 @@ class TestApi:
         self.cofy.register_module(module_with_router)
 
         # Test that the module's router is accessible at the correct endpoint
-        response = self.client.get("/v1/testtype/modwithrouter/hello")
+        response = self.client.get("/v0/testtype/modwithrouter/hello")
         assert response.status_code == 200
         data = response.json()
         assert data["message"] == "Hello from module"
