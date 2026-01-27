@@ -14,8 +14,17 @@ We use [poethepoet](https://poethepoet.natn.io) to define some essential tasks.
 The demo run task is also available as vscode execution task, making it easy to run and debug the demo application from within vscode.
 
 #### Install/update dependencies:
+First install [uv](https://docs.astral.sh/uv/) if you don't have it yet.
+
+Then install/update dependencies:
 ```sh
 uv sync
+```
+
+Install [poethepoet](https://poethepoet.natn.io) and [pre-commit](https://pre-commit.com/)
+```sh
+uv tool install poethepoet
+uv tool install pre-commit
 ```
 
 Activate [pre-commit](https://pre-commit.com/) hooks that enforce code style on every commit:
@@ -38,7 +47,8 @@ poe check   # Run type checks
 ```
 
 #### Run tests:
-TODO
-
+```sh
+poe test
+```
 #### Build & publish
 TODO

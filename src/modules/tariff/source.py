@@ -7,4 +7,4 @@ from src.modules.tariff.model import TariffFrame
 class TariffSource(ABC):
     @abstractmethod
     async def fetch_tariffs(self, start: dt.datetime, end: dt.datetime) -> TariffFrame:
-        pass
+        """Fetch tariff data between start and end datetimes."""

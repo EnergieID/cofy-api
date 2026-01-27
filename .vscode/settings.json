@@ -3,5 +3,9 @@
         "[*Dark*]": {
             "titleBar.activeBackground": "#304401"
         }
-    }
+    },
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "tests", "--import-mode=importlib"
+    ]
 }
