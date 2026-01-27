@@ -17,6 +17,7 @@ class Cofy:
             description=settings.get(
                 "description", "Modular cloud API for energy data"
             ),
+            dependencies=settings.get("dependencies", []),
         )
         self.cofyApi = CofyApi(self)
         self.fastApi.include_router(self.cofyApi.router)
