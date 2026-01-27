@@ -2,7 +2,7 @@ import json
 
 from fastapi import Depends
 
-from src.cofy.app import Cofy
+from src.cofy.cofy_api import CofyApi
 from src.cofy.token_auth import token_verifier
 from src.modules.tariff.app import TariffApp
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
@@ -10,27 +10,25 @@ from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSour
 with open("local.settings.json") as f:
     environment = json.load(f)
 
-cofy = Cofy(
-    settings={
-        "dependencies": [
-            Depends(
-                token_verifier(
-                    {
-                        "foo": {"name": "Demo Token", "expires": "2030-12-31T23:59:59"},
-                        "bar": {
-                            "name": "Expired Token",
-                            "expires": "2020-01-01T00:00:00",
-                        },
-                        "bas": {"name": "Infinity Token"},
-                    }
-                )
+app = CofyApi(
+    dependencies=[
+        Depends(
+            token_verifier(
+                {
+                    "foo": {"name": "Demo Token", "expires": "2030-12-31T23:59:59"},
+                    "bar": {
+                        "name": "Expired Token",
+                        "expires": "2020-01-01T00:00:00",
+                    },
+                    "bas": {"name": "Infinity Token"},
+                }
             )
-        ]
-    }
+        )
+    ]
 )
 
 tariffs = TariffApp(settings={"api_key": environment.get("ENTSOE_API_KEY", "")})
-cofy.register_module(tariffs)
+app.register_module(tariffs)
 
 ## Tariff app with custom source
 source = EntsoeDayAheadTariffSource(
@@ -38,7 +36,7 @@ source = EntsoeDayAheadTariffSource(
     api_key=environment.get("ENTSOE_API_KEY", ""),
 )
 nl_tariffs = TariffApp(settings={"source": source, "name": "nl_tariffs"})
-cofy.register_module(nl_tariffs)
+app.register_module(nl_tariffs)
 
 ## Tariff app with default source and custom settings
 fr_tariffs = TariffApp(
@@ -48,6 +46,4 @@ fr_tariffs = TariffApp(
         "name": "fr_tariffs",
     },
 )
-cofy.register_module(fr_tariffs)
-
-app = cofy.fastApi
+app.register_module(fr_tariffs)

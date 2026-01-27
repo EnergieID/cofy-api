@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
-    from src.cofy.app import Cofy
+    from src.cofy.cofy_api import CofyApi
     from src.shared.module import Module
 
 from fastapi import APIRouter, HTTPException
@@ -32,9 +32,9 @@ class ModuleTypeResponse(BaseModel):
 
 
 class ModulesRouter(APIRouter):
-    cofy: Cofy
+    cofy: CofyApi
 
-    def __init__(self, cofy: Cofy):
+    def __init__(self, cofy: CofyApi):
         super().__init__(prefix="/v0")
         self.cofy = cofy
         self.add_api_route("/", self.get_modules, methods=["GET"])
@@ -60,7 +60,7 @@ class ModulesRouter(APIRouter):
                 module_type=module_type,
                 modules=self.get_modules_by_type(module_type),
             )
-            for module_type in self.cofy.modules
+            for module_type in self.cofy.get_modules()
         ]
 
     def get_modules_by_type(self, module_type: str) -> list[ModuleResponse]:

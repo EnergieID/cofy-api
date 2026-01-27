@@ -1,17 +1,17 @@
 from fastapi.testclient import TestClient
 
-from src.cofy.app import Cofy
+from src.cofy.cofy_api import CofyApi
 from tests.cofy.dummy_module import DummyModule
 
 
 class TestModulesRouter:
     def setup_method(self):
-        self.cofy = Cofy(settings={})
+        self.cofy = CofyApi(settings={})
         self.module = DummyModule(
             name="testmodule", type_="testtype", router=None, metadata={"info": "test"}
         )
         self.cofy.register_module(self.module)
-        self.client = TestClient(self.cofy.fastApi)
+        self.client = TestClient(self.cofy)
 
     def test_get_modules(self):
         response = self.client.get("/v0/")
