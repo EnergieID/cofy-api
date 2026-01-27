@@ -1,22 +1,21 @@
 from fastapi import FastAPI
 
-from src.cofy.app import Cofy
+from src.cofy.cofy_api import CofyApi
 from tests.cofy.dummy_module import DummyModule
 
 
 def test_cofy_initialization():
     settings = {"title": "Test API", "version": "1.2.3", "description": "Test desc"}
-    cofy = Cofy(settings)
-    assert isinstance(cofy.fastApi, FastAPI)
-    assert cofy.fastApi.title == "Test API"
-    assert cofy.fastApi.version == "1.2.3"
-    assert cofy.fastApi.description == "Test desc"
-    assert isinstance(cofy.cofyApi, object)
-    assert cofy.settings == settings
+    cofy = CofyApi(**settings)
+    assert isinstance(cofy, FastAPI)
+    assert cofy.title == "Test API"
+    assert cofy.version == "1.2.3"
+    assert cofy.description == "Test desc"
+    assert isinstance(cofy._modulesRouter, object)
 
 
 def test_register_and_get_module():
-    cofy = Cofy({})
+    cofy = CofyApi()
     module = DummyModule(name="mod1", type_="typeA")
     cofy.register_module(module)
     assert module.cofy is cofy
@@ -37,13 +36,13 @@ def test_register_and_get_module():
 
 
 def test_get_module_returns_none_for_missing():
-    cofy = Cofy({})
+    cofy = CofyApi()
     assert cofy.get_module("missing", "none") is None
     assert cofy.get_modules_by_type("missing") == {}
 
 
 def test_modules_with_same_name_overwrite():
-    cofy = Cofy({})
+    cofy = CofyApi()
     module1 = DummyModule(name="sameName", type_="typeX")
     cofy.register_module(module1)
     assert cofy.get_module("typeX", "sameName") is module1
