@@ -4,13 +4,13 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.modules.tariff.api import TariffAPI
+from src.modules.tariff.router import TariffRouter
 from tests.modules.tariff.dummy_source import DummySource
 
 
-class TestTariffAPI:
+class TestTariffRouter:
     def setup_method(self):
-        self.api = TariffAPI(DummySource())
+        self.api = TariffRouter(DummySource())
         self.start = dt.datetime(2026, 1, 1, 0, 0)
         self.end = dt.datetime(2026, 1, 1, 3, 0)
 
