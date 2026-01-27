@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.cofy.app import Cofy
     from fastapi import APIRouter
+
+    from src.cofy.app import Cofy
 
 from abc import ABC, abstractmethod
 
@@ -18,27 +20,22 @@ class Module(ABC):
     @property
     @abstractmethod
     def router(self) -> APIRouter:
-        """
-        :return: A fastAPI router, that exposes the module's API endpoints.
+        """:return: A fastAPI router, that exposes the module's API endpoints.
         :rtype: APIRouter
         """
-        pass
 
     @property
     @abstractmethod
     def type(self) -> str:
-        """
-        Describes the type of the module, e.g. "tariff", "weather", "storage", etc.
+        """Describes the type of the module, e.g. "tariff", "weather", "storage", etc.
         Should be unique across all module types and defines the API and data model of the module.
 
         :rtype: str
         """
-        pass
 
     @property
     def name(self) -> str:
-        """
-        The name of the module instance, e.g. "entsoe_tariff", "openweather", etc.
+        """The name of the module instance, e.g. "entsoe_tariff", "openweather", etc.
         Use it to differentiate between multiple instances/implementations of the same module type.
 
         :rtype: str
@@ -47,8 +44,7 @@ class Module(ABC):
 
     @property
     def metadata(self) -> dict:
-        """
-        Metadata about the module instance.
+        """Metadata about the module instance.
         E.g. the unit of measurement, the data source, the update frequency, etc.
 
         :rtype: dict

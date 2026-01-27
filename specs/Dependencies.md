@@ -3,6 +3,8 @@
  - **uv**: Dependency management and virtual environments
  - **ty**: Type checking
  - **poethepoet**: Task runner for development tasks
+ - **pre-commit**: Git hooks for code quality enforcement
+ - **pytest**: Testing framework
  
 ## Core dependencies
 ### [Narwhals](https://github.com/narwhals-dev/narwhals)
