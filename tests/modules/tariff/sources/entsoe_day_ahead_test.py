@@ -56,7 +56,7 @@ async def test_fetch_tariffs():
     assert result.unit == "EUR/MWh"
     assert result.entries.schema == {
         "value": nw.Float64,
-        "timestamp": nw.Datetime(time_unit="ns", time_zone="UTC+01:00"),
+        "timestamp": nw.Datetime,
     }
 
     # Check specific tariff value
