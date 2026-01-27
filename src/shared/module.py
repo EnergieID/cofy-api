@@ -20,16 +20,14 @@ class Module(ABC):
     @property
     @abstractmethod
     def router(self) -> APIRouter:
-        """
-        :return: A fastAPI router, that exposes the module's API endpoints.
+        """:return: A fastAPI router, that exposes the module's API endpoints.
         :rtype: APIRouter
         """
 
     @property
     @abstractmethod
     def type(self) -> str:
-        """
-        Describes the type of the module, e.g. "tariff", "weather", "storage", etc.
+        """Describes the type of the module, e.g. "tariff", "weather", "storage", etc.
         Should be unique across all module types and defines the API and data model of the module.
 
         :rtype: str
@@ -37,8 +35,7 @@ class Module(ABC):
 
     @property
     def name(self) -> str:
-        """
-        The name of the module instance, e.g. "entsoe_tariff", "openweather", etc.
+        """The name of the module instance, e.g. "entsoe_tariff", "openweather", etc.
         Use it to differentiate between multiple instances/implementations of the same module type.
 
         :rtype: str
@@ -47,8 +44,7 @@ class Module(ABC):
 
     @property
     def metadata(self) -> dict:
-        """
-        Metadata about the module instance.
+        """Metadata about the module instance.
         E.g. the unit of measurement, the data source, the update frequency, etc.
 
         :rtype: dict
