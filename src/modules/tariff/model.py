@@ -1,5 +1,6 @@
-import narwhals as nw
 import datetime as dt
+
+import narwhals as nw
 from pydantic import BaseModel
 
 

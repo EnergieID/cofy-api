@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -39,10 +40,14 @@ class CofyApi:
         self.router = APIRouter(prefix="/v0")
         self.router.add_api_route("/", self.get_modules, methods=["GET"])
         self.router.add_api_route(
-            "/{module_type}", self.get_modules_by_type, methods=["GET"]
+            "/{module_type}",
+            self.get_modules_by_type,
+            methods=["GET"],
         )
         self.router.add_api_route(
-            "/{module_type}/{module_name}", self.get_module, methods=["GET"]
+            "/{module_type}/{module_name}",
+            self.get_module,
+            methods=["GET"],
         )
 
     def module_endpoint(self, module: Module) -> str:
@@ -56,14 +61,14 @@ class CofyApi:
                 module_type=module_type,
                 modules=self.get_modules_by_type(module_type),
             )
-            for module_type in self.cofy.modules.keys()
+            for module_type in self.cofy.modules
         ]
 
     def get_modules_by_type(self, module_type: str) -> list[ModuleResponse]:
-        """returns a list of all registered modules of the given type."""
+        """Returns a list of all registered modules of the given type."""
         return [
             self.get_module(module_type, module_name)
-            for module_name in self.cofy.get_modules_by_type(module_type).keys()
+            for module_name in self.cofy.get_modules_by_type(module_type)
         ]
 
     def get_module(self, module_type: str, module_name: str) -> ModuleResponse:
@@ -72,7 +77,8 @@ class CofyApi:
 
         if not module:
             raise HTTPException(
-                status_code=404, detail=f"Module {module_type}/{module_name} not found"
+                status_code=404,
+                detail=f"Module {module_type}/{module_name} not found",
             )
 
         return ModuleResponse(module=module, endpoint=self.module_endpoint(module))

@@ -18,6 +18,11 @@ The demo run task is also available as vscode execution task, making it easy to 
 uv sync
 ```
 
+Activate [pre-commit](https://pre-commit.com/) hooks that enforce code style on every commit:
+```sh
+pre-commit install
+```
+
 #### Run development demo application:
 Our demo application uses some API keys for external services. You can provide these `local.settings.json` file in the root of the repository, following the structure of `local.settings.example.json`.
 
