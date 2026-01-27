@@ -42,13 +42,14 @@ class TestDocsRouter:
     def test_docs_html_with_token_and_auth_scheme(self):
         class CustomMiddleware(BaseHTTPMiddleware):
             async def dispatch(self, request: Request, call_next):
-                request.state.token = "foo"
-                request.state.auth_scheme_used = "bar"
+                request.state.auth_info = {
+                    "scheme": "bar",
+                    "content": "bearer foo",
+                }
                 return await call_next(request)
 
         # ty can't handle this type properly, see https://github.com/Kludex/starlette/discussions/2451 and https://github.com/astral-sh/ty/issues/903
         self.app.add_middleware(CustomMiddleware)  # ty: ignore[invalid-argument-type]
         response = self.client.get("/docs")
         assert response.status_code == 200
-        assert "/openapi.json?token=foo" in response.text
-        assert 'ui.preauthorizeApiKey("bar", "foo")' in response.text
+        assert 'ui.preauthorizeApiKey("bar", "bearer foo")' in response.text

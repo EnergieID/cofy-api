@@ -40,13 +40,19 @@ def token_verifier(tokens: dict):
         ),
     ):
         token = None
-        auth_scheme_used = None
+        auth_info = None
         if header_token and header_token.lower().startswith("bearer "):
             token = header_token[7:]
-            auth_scheme_used = "header"
+            auth_info = {
+                "scheme": "header",
+                "content": header_token,
+            }
         elif query_token:
             token = query_token
-            auth_scheme_used = "query"
+            auth_info = {
+                "scheme": "query",
+                "content": query_token,
+            }
         if not token:
             if header_token:
                 raise HTTPException(
@@ -68,6 +74,6 @@ def token_verifier(tokens: dict):
                 status_code=HTTP_401_UNAUTHORIZED, detail="Token expired"
             )
         request.state.token = token
-        request.state.auth_scheme_used = auth_scheme_used
+        request.state.auth_info = auth_info
 
     return verify

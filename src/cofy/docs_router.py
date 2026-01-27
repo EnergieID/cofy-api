@@ -34,23 +34,20 @@ class DocsRouter(APIRouter):
         )
 
     async def get_swagger_ui_html(self, request: Request):
-        t = request.state.token if hasattr(request.state, "token") else None
-        openapi_url = f"{self.prefix}/openapi.json"
-        if t:
-            openapi_url += f"?token={t}"
         response = get_swagger_ui_html(
-            openapi_url=openapi_url,
+            openapi_url="/openapi.json",
             title=f"{self._title} - Docs",
             swagger_ui_parameters={
+                "spec": await self.get_openapi(),
                 "onComplete": "AUTHORIZE_API",
             },
         )
 
-        if t and hasattr(request.state, "auth_scheme_used"):
+        if hasattr(request.state, "auth_info"):
             content = response.body.decode()
             content = content.replace(
                 '"AUTHORIZE_API"',
-                f'() => ui.preauthorizeApiKey("{request.state.auth_scheme_used}", "{t}")',
+                f'() => ui.preauthorizeApiKey("{request.state.auth_info["scheme"]}", "{request.state.auth_info["content"]}")',
             )
             response = HTMLResponse(content=content, status_code=response.status_code)
         return response
