@@ -30,7 +30,7 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           COVERAGE_FILE_PATH: "cov.info"
       - name: Upload coverage data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-data
           path: cov.xml
@@ -40,7 +40,7 @@ jobs:
     needs: test
     steps:
       - name: Download coverage data
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: coverage-data
       - name: Code Coverage Report
