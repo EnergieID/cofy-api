@@ -270,7 +270,7 @@ wheels = [
 
 [[package]]
 name = "entsoe-py"
-version = "0.7.8"
+version = "0.7.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -278,9 +278,9 @@ dependencies = [
     { name = "pytz" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/17/89/e6f18b055a7ffb7c27d046f9a0a0dd60e8bcf62cb97cfe3de91e7cfec1ed/entsoe_py-0.7.8.tar.gz", hash = "sha256:79f9991fe9f29437ea218c3d709752c9e995fed98a6c76f99da47b880c2fa009", size = 1596836, upload-time = "2025-10-22T14:50:53.616Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/4a/7d3f6d968b2f25cb304ea1798d753d089f249e3126758491d1bb14092934/entsoe_py-0.7.10.tar.gz", hash = "sha256:8aaa8023fc64f7bb55d4a1b182fd9608241ae4b81a8a8c724e99540d99b585b3", size = 1597033, upload-time = "2026-01-26T21:29:38.24Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0c/09/b5aa02657c323e44ba7f16d35d44e1c3e1e40e9658dd86b9c6570b68f280/entsoe_py-0.7.8-py3-none-any.whl", hash = "sha256:70202a7ad8a69f7371cee646a4120874bc968def84b857983b221a3984c69fb8", size = 1620260, upload-time = "2025-10-22T14:50:52.235Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/3b/34d4ac6d4eff150ee5f07410618b357cfe937ebd4b63aba0889bec86acba/entsoe_py-0.7.10-py3-none-any.whl", hash = "sha256:291826716654fa15b265b5423db023a7f5c622bdb95acb68f8c0d9bb1d32bea7", size = 1620390, upload-time = "2026-01-26T21:29:36.671Z" },
 ]
 
 [[package]]
