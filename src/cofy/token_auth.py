@@ -1,13 +1,14 @@
-from fastapi import HTTPException, Depends
+from datetime import datetime
+
+from fastapi import Depends, HTTPException
+from fastapi.security import APIKeyHeader, APIKeyQuery
 from pydantic import BaseModel
 from starlette.status import HTTP_401_UNAUTHORIZED
-from datetime import datetime
-from typing import Optional
-from fastapi.security import APIKeyHeader, APIKeyQuery
+
 
 class TokenInfo(BaseModel):
     name: str
-    expires: Optional[str] = None
+    expires: str | None = None
 
     def __init__(self, info: dict):
         if "name" not in info:
@@ -16,20 +17,25 @@ class TokenInfo(BaseModel):
             try:
                 datetime.fromisoformat(info["expires"])
             except Exception:
-                raise ValueError("Token expires must be in ISO8601 format")
+                raise ValueError("Token expires must be in ISO8601 format") from None
         super().__init__(**info)
-    
+
     def is_expired(self) -> bool:
         if self.expires:
             expires_dt = datetime.fromisoformat(self.expires)
             return datetime.now() > expires_dt
         return False
-    
-def token_verifier(tokens: dict) -> Optional[TokenInfo]:
+
+
+def token_verifier(tokens: dict):
     tokens = {token: TokenInfo(info) for token, info in tokens.items()}
 
-    def verify(header_token: str = Depends(APIKeyHeader(name="Authorization", auto_error=False)),
-                query_token: str = Depends(APIKeyQuery(name="token", auto_error=False))):
+    def verify(
+        header_token: str = Depends(
+            APIKeyHeader(name="Authorization", auto_error=False)
+        ),
+        query_token: str = Depends(APIKeyQuery(name="token", auto_error=False)),
+    ):
         token = None
         if header_token and header_token.lower().startswith("bearer "):
             token = header_token[7:]
@@ -37,14 +43,23 @@ def token_verifier(tokens: dict) -> Optional[TokenInfo]:
             token = query_token
         if not token:
             if header_token:
-                raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token format")
+                raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token format"
+                )
 
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Missing token")
-        
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Missing token"
+            )
+
         token_info = tokens.get(token)
         if not token_info:
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
 
         if token_info.is_expired():
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Token expired")
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Token expired"
+            )
+
     return verify

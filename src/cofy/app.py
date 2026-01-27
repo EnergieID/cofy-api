@@ -1,6 +1,7 @@
 from fastapi import FastAPI
-from src.shared.module import Module
+
 from src.cofy.api import CofyApi
+from src.shared.module import Module
 
 
 class Cofy:
@@ -15,7 +16,8 @@ class Cofy:
             title=settings.get("title", "Cofy cloud API"),
             version=settings.get("version", "0.1.0"),
             description=settings.get(
-                "description", "Modular cloud API for energy data"
+                "description",
+                "Modular cloud API for energy data",
             ),
             dependencies=settings.get("dependencies", []),
         )
@@ -30,7 +32,8 @@ class Cofy:
 
         if module.router:
             self.fastApi.include_router(
-                module.router, prefix=self.cofyApi.module_endpoint(module)
+                module.router,
+                prefix=self.cofyApi.module_endpoint(module),
             )
 
     def get_module(self, module_type: str, module_name: str) -> Module | None:

@@ -1,5 +1,6 @@
 {
   "recommendations": [
-    "charkoal.charkoal"
+    "charkoal.charkoal",
+    "ms-python.python"
   ]
 }
