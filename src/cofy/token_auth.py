@@ -11,9 +11,9 @@ class TokenInfo(BaseModel):
     expires: str | None = None
 
     def __init__(self, info: dict):
-        if "name" not in info:
+        if "name" not in info or not info["name"]:
             raise ValueError("Token info must include a name")
-        if "expires" in info:
+        if "expires" in info and info["expires"] is not None:
             try:
                 datetime.fromisoformat(info["expires"])
             except Exception:
