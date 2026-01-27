@@ -14,8 +14,7 @@ class TestApi:
         self.client = TestClient(self.cofy.fastApi)
 
     def test_get_modules(self):
-        response = self.client.get("/v0"
-        "/")
+        response = self.client.get("/v0/")
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
