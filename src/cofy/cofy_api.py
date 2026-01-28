@@ -41,7 +41,6 @@ class CofyApi(FastAPI):
         self.include_router(
             module,
             prefix=self._modulesRouter.module_endpoint(module),
-            tags=[module.type, f"{module.type}:{module.name}"],
         )
 
     def get_modules(self) -> dict[str, dict[str, Module]]:
