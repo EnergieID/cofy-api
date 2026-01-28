@@ -41,29 +41,11 @@ class CofyApi(FastAPI):
     @property
     def tags_metadata(self) -> list[dict[str, str]]:
         tags = []
-        for module_type, instances in self._modules.items():
-            type_description = ""
-            # Get type description from any instance of the module type
-            for instance in instances.values():
-                type_description = instance.type_description
-                break
-            tags.append(
-                {
-                    "name": module_type,
-                    "description": type_description,
-                    "x-implementations": [
-                        f"{module_type}:{instance.name}"
-                        for instance in instances.values()
-                    ],
-                }
-            )
-            for instance in instances.values():
-                instance_description = instance.instance_description
-                if instance_description:
-                    tags.append(
-                        {
-                            "name": f"{module_type}:{instance.name}",
-                            "description": instance_description,
-                        }
-                    )
+        for instances_of_type in self._modules.values():
+            type_tag = next(iter(instances_of_type.values())).type_tag
+            type_tag["x-implementations"] = [
+                instance.tag["name"] for instance in instances_of_type.values()
+            ]
+            tags.append(type_tag)
+            tags += [instance.tag for instance in instances_of_type.values()]
         return tags
