@@ -3,26 +3,21 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from fastapi import APIRouter
-
     from src.cofy.cofy_api import CofyApi
 
 from abc import ABC, abstractmethod
 
+from fastapi import APIRouter
 
-class Module(ABC):
+
+class Module(APIRouter, ABC):
     cofy: CofyApi
     settings: dict
 
-    def __init__(self, settings: dict):
+    def __init__(self, settings: dict, **kwargs):
+        super().__init__(**kwargs)
         self.settings = settings
-
-    @property
-    @abstractmethod
-    def router(self) -> APIRouter:
-        """:return: A fastAPI router, that exposes the module's API endpoints.
-        :rtype: APIRouter
-        """
+        self.init_routes()
 
     @property
     @abstractmethod
@@ -32,6 +27,10 @@ class Module(ABC):
 
         :rtype: str
         """
+
+    @abstractmethod
+    def init_routes(self):
+        """Initialize the routes of the module."""
 
     @property
     def name(self) -> str:

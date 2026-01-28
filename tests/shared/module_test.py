@@ -10,12 +10,10 @@ class DummyCofy:
 class DummyModule(Module):
     def __init__(self, settings):
         super().__init__(settings)
-        self._router = "router_stub"
         self._type = "dummy"
 
-    @property
-    def router(self):
-        return self._router
+    def init_routes(self):
+        pass
 
     @property
     def type(self):
@@ -37,10 +35,9 @@ def test_module_metadata_default():
     assert m.metadata == {}
 
 
-def test_module_type_and_router():
+def test_module_type():
     m = DummyModule({})
     assert m.type == "dummy"
-    assert m.router == "router_stub"
 
 
 def test_module_is_abstract():

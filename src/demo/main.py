@@ -4,7 +4,7 @@ from fastapi import Depends
 
 from src.cofy.cofy_api import CofyApi
 from src.cofy.token_auth import token_verifier
-from src.modules.tariff.app import TariffApp
+from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
 with open("local.settings.json") as f:
@@ -27,7 +27,7 @@ app = CofyApi(
     ]
 )
 
-tariffs = TariffApp(settings={"api_key": environment.get("ENTSOE_API_KEY", "")})
+tariffs = TariffModule(settings={"api_key": environment.get("ENTSOE_API_KEY", "")})
 app.register_module(tariffs)
 
 ## Tariff app with custom source
@@ -35,11 +35,11 @@ source = EntsoeDayAheadTariffSource(
     country_code="NL",
     api_key=environment.get("ENTSOE_API_KEY", ""),
 )
-nl_tariffs = TariffApp(settings={"source": source, "name": "nl_tariffs"})
+nl_tariffs = TariffModule(settings={"source": source, "name": "nl_tariffs"})
 app.register_module(nl_tariffs)
 
 ## Tariff app with default source and custom settings
-fr_tariffs = TariffApp(
+fr_tariffs = TariffModule(
     settings={
         "country_code": "FR",
         "api_key": environment.get("ENTSOE_API_KEY", ""),
