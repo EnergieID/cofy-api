@@ -10,7 +10,7 @@ class TariffModule(Module):
     source: TariffSource
 
     def __init__(self, settings: dict, **kwargs):
-        super().__init__(settings, prefix="/v0", **kwargs)
+        super().__init__(settings, **kwargs)
         if "source" in settings:
             self.source = settings["source"]
         else:

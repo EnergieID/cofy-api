@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.cofy.cofy_api import CofyApi
+    pass
 
 from abc import ABC, abstractmethod
 
@@ -11,12 +11,15 @@ from fastapi import APIRouter
 
 
 class Module(APIRouter, ABC):
-    cofy: CofyApi
     settings: dict
 
     def __init__(self, settings: dict, **kwargs):
-        super().__init__(**kwargs)
         self.settings = settings
+        default_router_kwargs = {
+            "prefix": f"/{self.type}/{self.name}/{self.version}",
+            "tags": [self.type, f"{self.type}:{self.name}"],
+        }
+        super().__init__(**(default_router_kwargs | kwargs))  # ty: ignore[invalid-argument-type]
         self.init_routes()
 
     @property
@@ -42,10 +45,8 @@ class Module(APIRouter, ABC):
         return self.settings.get("name", "default")
 
     @property
-    def metadata(self) -> dict:
-        """Metadata about the module instance.
-        E.g. the unit of measurement, the data source, the update frequency, etc.
-
-        :rtype: dict
+    def version(self) -> str:
+        """The version of the module.
+        :rtype: str
         """
-        return {}
+        return "v1"
