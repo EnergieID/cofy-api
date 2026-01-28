@@ -7,6 +7,8 @@ from src.shared.module import Module
 
 
 class TariffModule(Module):
+    type: str = "tariff"
+    type_description: str = "Module providing tariff data as time series."
     source: TariffSource
 
     def __init__(self, settings: dict, **kwargs):
@@ -18,10 +20,6 @@ class TariffModule(Module):
                 settings.get("country_code", "BE"),
                 settings.get("api_key", ""),
             )
-
-    @property
-    def type(self) -> str:
-        return "tariff"
 
     def init_routes(self):
         super().init_routes()

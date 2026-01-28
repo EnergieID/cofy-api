@@ -11,6 +11,8 @@ from fastapi import APIRouter
 
 
 class Module(APIRouter, ABC):
+    type: str = "module"
+    type_description: str = "Generic module"
     settings: dict
 
     def __init__(self, settings: dict, **kwargs):
@@ -21,15 +23,6 @@ class Module(APIRouter, ABC):
         }
         super().__init__(**(default_router_kwargs | kwargs))  # ty: ignore[invalid-argument-type]
         self.init_routes()
-
-    @property
-    @abstractmethod
-    def type(self) -> str:
-        """Describes the type of the module, e.g. "tariff", "weather", "storage", etc.
-        Should be unique across all module types and defines the API and data model of the module.
-
-        :rtype: str
-        """
 
     @abstractmethod
     def init_routes(self):
@@ -43,6 +36,14 @@ class Module(APIRouter, ABC):
         :rtype: str
         """
         return self.settings.get("name", "default")
+
+    @property
+    def instance_description(self) -> str:
+        """The description of the module instance.
+
+        :rtype: str
+        """
+        return self.settings.get("description", self.type_description)
 
     @property
     def version(self) -> str:
