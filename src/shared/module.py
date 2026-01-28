@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.cofy.cofy_api import CofyApi
+    pass
 
 from abc import ABC, abstractmethod
 
@@ -11,22 +11,18 @@ from fastapi import APIRouter
 
 
 class Module(APIRouter, ABC):
-    cofy: CofyApi
+    type: str = "module"
+    type_description: str = "Generic module"
     settings: dict
 
     def __init__(self, settings: dict, **kwargs):
-        super().__init__(**kwargs)
         self.settings = settings
+        default_router_kwargs = {
+            "prefix": f"/{self.type}/{self.name}/{self.version}",
+            "tags": [self.type_tag["name"], self.tag["name"]],
+        }
+        super().__init__(**(default_router_kwargs | kwargs))  # ty: ignore[invalid-argument-type]
         self.init_routes()
-
-    @property
-    @abstractmethod
-    def type(self) -> str:
-        """Describes the type of the module, e.g. "tariff", "weather", "storage", etc.
-        Should be unique across all module types and defines the API and data model of the module.
-
-        :rtype: str
-        """
 
     @abstractmethod
     def init_routes(self):
@@ -36,16 +32,27 @@ class Module(APIRouter, ABC):
     def name(self) -> str:
         """The name of the module instance, e.g. "entsoe_tariff", "openweather", etc.
         Use it to differentiate between multiple instances/implementations of the same module type.
-
-        :rtype: str
         """
         return self.settings.get("name", "default")
 
     @property
-    def metadata(self) -> dict:
-        """Metadata about the module instance.
-        E.g. the unit of measurement, the data source, the update frequency, etc.
+    def version(self) -> str:
+        """The version of the module."""
+        return "v1"
 
-        :rtype: dict
-        """
-        return {}
+    @property
+    def type_tag(self) -> dict[str, str]:
+        """The tag info of the module type."""
+        return {
+            "name": self.type,
+            "description": self.type_description,
+        }
+
+    @property
+    def tag(self) -> dict[str, str]:
+        """The tag info of the implementation."""
+        return {
+            "name": f"{self.type}:{self.name}",
+            "description": self.settings.get("description", self.type_description),
+            "x-version": self.version,
+        }
