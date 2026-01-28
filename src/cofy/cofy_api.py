@@ -23,7 +23,7 @@ class CofyApi(FastAPI):
     def __init__(self, **kwargs):
         super().__init__(**DEFAULT_ARGS, **kwargs)
         self._modulesRouter = ModulesRouter(self)
-        self.include_router(self._modulesRouter, tags=["modules"])
+        self.include_router(self._modulesRouter)
         self.include_router(
             DocsRouter(
                 title=self.title,
