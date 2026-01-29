@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from src.cofy.docs_router import DocsRouter
+
 if TYPE_CHECKING:
     pass
 
 from abc import ABC, abstractmethod
 
 from fastapi import APIRouter
+from fastapi.openapi.utils import get_openapi
 
 
 class Module(APIRouter, ABC):
@@ -23,6 +26,16 @@ class Module(APIRouter, ABC):
         }
         super().__init__(**(default_router_kwargs | kwargs))  # ty: ignore[invalid-argument-type]
         self.init_routes()
+        self.include_router(DocsRouter(self.openapi))
+
+    def openapi(self):
+        return get_openapi(
+            title=f"{self.type}:{self.name} API",
+            description=self.tag["description"],
+            version=self.version,
+            routes=self.routes,
+            tags=[self.type_tag, self.tag],
+        )
 
     @abstractmethod
     def init_routes(self):

@@ -14,11 +14,7 @@ class DocsRouter(APIRouter):
             self.get_swagger_ui_html,
             include_in_schema=False,
         )
-        self.add_api_route(
-            "/openapi.json",
-            self.get_openapi,
-            include_in_schema=False,
-        )
+        self.add_api_route("/openapi.json", self.get_openapi, tags=["documentation"])
 
     async def get_swagger_ui_html(self, request: Request):
         response = get_swagger_ui_html(
