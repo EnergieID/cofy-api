@@ -1,16 +1,9 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-from src.cofy.docs_router import DocsRouter
-
-if TYPE_CHECKING:
-    pass
-
 from abc import ABC, abstractmethod
 
 from fastapi import APIRouter
 from fastapi.openapi.utils import get_openapi
+
+from src.cofy.docs_router import DocsRouter
 
 
 class Module(APIRouter, ABC):
