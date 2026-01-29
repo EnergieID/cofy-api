@@ -44,6 +44,7 @@ fr_tariffs = TariffModule(
         "country_code": "FR",
         "api_key": environment.get("ENTSOE_API_KEY", ""),
         "name": "fr_tariffs",
+        "description": "Entsoe tariff data for France",
     },
 )
 app.register_module(fr_tariffs)
