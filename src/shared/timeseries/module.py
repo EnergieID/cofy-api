@@ -3,6 +3,7 @@ from collections.abc import Callable
 
 from fastapi import Response
 from fastapi.responses import JSONResponse
+from pydantic import TypeAdapter
 
 from src.shared.module import Module
 from src.shared.timeseries.model import Timeseries
@@ -46,7 +47,7 @@ class TimeseriesModule(Module):
             "offset": 0,
             "limit": None,
             "format": "json",
-        } | self.settings.get("default_args", {})
+        }
 
     @property
     def resolution(self) -> dt.timedelta:
@@ -61,7 +62,7 @@ class TimeseriesModule(Module):
         format: str | None = None,
     ):
         # apply defaults if None
-        defaults = self.default_args()
+        defaults = self.default_args() | self.settings.get("default_args", {})
         start = start or defaults["start"]()
         end = end or defaults["end"]()
         offset = offset or defaults["offset"]
@@ -69,7 +70,9 @@ class TimeseriesModule(Module):
         format = format or defaults["format"]
 
         # validate inputs
-        if start >= end and limit is None:
+        if limit is None and end is None:
+            raise ValueError("Either end datetime or limit must be provided.")
+        if limit is None and start >= end:
             raise ValueError("Start datetime must be before end datetime.")
         if format not in self.formats:
             raise ValueError(f"Unsupported format: {format}")
@@ -77,12 +80,24 @@ class TimeseriesModule(Module):
         # calculate adjusted start and end based on offset and limit
         if offset is not None:
             start += offset * self.resolution
-            end += offset * self.resolution
+            if end is not None:
+                end += offset * self.resolution
         if limit is not None:
             end = start + limit * self.resolution
 
         # fetch timeseries data
         timeseries = await self.source.fetch_timeseries(start, end)
+
+        timeseries.metadata.update(
+            {
+                "start": start.isoformat(),
+                "end": end.isoformat(),
+                "format": format,
+                "resolution": TypeAdapter(dt.timedelta).dump_python(
+                    self.resolution, mode="json"
+                ),
+            }
+        )
 
         # return in requested format
         return self.formats[format](timeseries)
