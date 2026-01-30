@@ -4,9 +4,9 @@ from collections.abc import Callable
 from fastapi import Response
 from fastapi.responses import JSONResponse
 
-from shared.module import Module
-from shared.timeseries.model import Timeseries
-from shared.timeseries.source import TimeseriesSource
+from src.shared.module import Module
+from src.shared.timeseries.model import Timeseries
+from src.shared.timeseries.source import TimeseriesSource
 
 
 class TimeseriesModule(Module):

@@ -4,11 +4,11 @@ import datetime as dt
 import pandas as pd
 from entsoe import EntsoePandasClient
 
-from src.modules.tariff.model import TariffFrame
-from src.modules.tariff.source import TariffSource
+from src.shared.timeseries.model import Timeseries
+from src.shared.timeseries.source import TimeseriesSource
 
 
-class EntsoeDayAheadTariffSource(TariffSource):
+class EntsoeDayAheadTariffSource(TimeseriesSource):
     def __init__(self, country_code: str, api_key: str):
         super().__init__()
         if not country_code:
@@ -19,7 +19,9 @@ class EntsoeDayAheadTariffSource(TariffSource):
         self.country_code = country_code
         self.client = EntsoePandasClient(api_key=api_key)
 
-    async def fetch_tariffs(self, start: dt.datetime, end: dt.datetime) -> TariffFrame:
+    async def fetch_timeseries(
+        self, start: dt.datetime, end: dt.datetime, **kwargs
+    ) -> Timeseries:
         series = await asyncio.to_thread(
             self.client.query_day_ahead_prices,
             country_code=self.country_code,
@@ -32,4 +34,4 @@ class EntsoeDayAheadTariffSource(TariffSource):
             .rename(columns={"index": "timestamp", 0: "value"})
         )
         df["timestamp"] = pd.to_datetime(df["timestamp"])
-        return TariffFrame(unit="EUR/MWh", entries=df)
+        return Timeseries(frame=df, metadata={"unit": "EUR/MWh"})

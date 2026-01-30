@@ -1,7 +1,7 @@
 import datetime as dt
 from abc import ABC, abstractmethod
 
-from shared.timeseries.model import Timeseries
+from src.shared.timeseries.model import Timeseries
 
 
 class TimeseriesSource(ABC):

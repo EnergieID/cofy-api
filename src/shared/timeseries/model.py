@@ -16,5 +16,11 @@ class Timeseries:
     def to_dict(self):
         return {
             "metadata": self.metadata,
-            "frame": [row for row in self.frame.iter_rows(named=True)],
+            "frame": [
+                {
+                    "timestamp": row["timestamp"].isoformat(),
+                    "value": row["value"],
+                }
+                for row in self.frame.iter_rows(named=True)
+            ],
         }
