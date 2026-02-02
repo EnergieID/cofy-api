@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from fastapi import APIRouter
 
-    from src.cofy.app import Cofy
+    from src.cofy.cofy_api import CofyApi
 
 from abc import ABC, abstractmethod
 
 
 class Module(ABC):
-    cofy: Cofy
+    cofy: CofyApi
     settings: dict
 
     def __init__(self, settings: dict):
