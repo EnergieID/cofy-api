@@ -1,5 +1,6 @@
 import datetime as dt
 
+from src.modules.tariff.formats.kiwatt import to_kiwatt
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 from src.shared.timeseries.module import TimeseriesModule
 
@@ -26,6 +27,7 @@ class TariffModule(TimeseriesModule):
                 settings.get("country_code", "BE"),
                 settings.get("api_key", ""),
             )
+        self.formats = {"kiwatt": to_kiwatt, **super().formats}
 
     def default_args(self):
         return {
@@ -33,7 +35,7 @@ class TariffModule(TimeseriesModule):
             "end": lambda: None,
             "offset": 0,
             "limit": 288,
-            "format": "json",
+            "format": "kiwatt",
         }
 
     @property
