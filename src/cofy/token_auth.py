@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import APIKeyHeader, APIKeyQuery
@@ -23,7 +23,10 @@ class TokenInfo(BaseModel):
     def is_expired(self) -> bool:
         if self.expires:
             expires_dt = datetime.fromisoformat(self.expires)
-            return datetime.now() > expires_dt
+            if expires_dt.tzinfo is None:
+                expires_dt = expires_dt.replace(tzinfo=UTC)
+
+            return datetime.now(UTC) > expires_dt
         return False
 
 
