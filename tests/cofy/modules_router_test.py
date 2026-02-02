@@ -8,7 +8,7 @@ class TestModulesRouter:
     def setup_method(self):
         self.cofy = CofyApi(settings={})
         self.module = DummyModule(
-            name="testmodule", type_="testtype", router=None, metadata={"info": "test"}
+            name="testmodule", type_="testtype", metadata={"info": "test"}
         )
         self.cofy.register_module(self.module)
         self.client = TestClient(self.cofy)
@@ -50,19 +50,13 @@ class TestModulesRouter:
         assert "not found" in data["detail"].lower()
 
     def test_module_router_included_on_endpoint(self):
-        # Create a module with a router
-        from fastapi import APIRouter
+        module = DummyModule(name="modwithrouter", type_="testtype")
 
-        router = APIRouter()
-
-        @router.get("/hello")
+        @module.get("/hello")
         def hello():
             return {"message": "Hello from module"}
 
-        module_with_router = DummyModule(
-            name="modwithrouter", type_="testtype", router=router
-        )
-        self.cofy.register_module(module_with_router)
+        self.cofy.register_module(module)
 
         # Test that the module's router is accessible at the correct endpoint
         response = self.client.get("/v0/testtype/modwithrouter/hello")
