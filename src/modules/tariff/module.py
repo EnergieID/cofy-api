@@ -27,7 +27,7 @@ class TariffModule(TimeseriesModule):
                 settings.get("country_code", "BE"),
                 settings.get("api_key", ""),
             )
-        self.formats = {"kiwatt": to_kiwatt, **super().formats}
+        self.formats = {"kiwatt": to_kiwatt, **self.formats}
 
     def default_args(self):
         return {
