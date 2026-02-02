@@ -3,6 +3,7 @@ import datetime as dt
 
 import pandas as pd
 from entsoe import EntsoePandasClient
+from entsoe.exceptions import NoMatchingDataError
 
 from src.shared.timeseries.model import Timeseries
 from src.shared.timeseries.source import TimeseriesSource
@@ -22,12 +23,15 @@ class EntsoeDayAheadTariffSource(TimeseriesSource):
     async def fetch_timeseries(
         self, start: dt.datetime, end: dt.datetime, **kwargs
     ) -> Timeseries:
-        series = await asyncio.to_thread(
-            self.client.query_day_ahead_prices,
-            country_code=self.country_code,
-            start=pd.Timestamp(start),
-            end=pd.Timestamp(end),
-        )
+        try:
+            series = await asyncio.to_thread(
+                self.client.query_day_ahead_prices,
+                country_code=self.country_code,
+                start=pd.Timestamp(start),
+                end=pd.Timestamp(end),
+            )
+        except NoMatchingDataError:
+            series = pd.Series(dtype=float)
         df = (
             series.to_frame()
             .reset_index()
