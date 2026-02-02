@@ -19,6 +19,7 @@ class TariffModule(TimeseriesModule):
     type_description: str = "Module providing tariff data as time series."
 
     def __init__(self, settings: dict, **kwargs):
+        self.formats = {"kiwatt": to_kiwatt, **self.formats}
         super().__init__(settings, **kwargs)
         if "source" in settings:
             self.source = settings["source"]
@@ -27,7 +28,6 @@ class TariffModule(TimeseriesModule):
                 settings.get("country_code", "BE"),
                 settings.get("api_key", ""),
             )
-        self.formats = {"kiwatt": to_kiwatt, **self.formats}
 
     def default_args(self):
         return {
