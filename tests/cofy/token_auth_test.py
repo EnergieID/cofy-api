@@ -1,12 +1,12 @@
 from datetime import datetime as dt
-from datetime import timedelta
+from datetime import timedelta, timezone
 
 import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from src.cofy.token_auth import token_verifier
+from src.cofy.token_auth import TokenInfo, token_verifier
 
 # Example tokens for testing
 tokens = {
@@ -83,3 +83,29 @@ class TestTokenAuth:
         )
         assert response.status_code == 200
         assert response.json()["message"] == "Access granted"
+
+
+def test_token_expiry_is_timezone_aware():
+    token = TokenInfo(
+        {
+            "name": "timezonetoken",
+            # now + 1 minute in UTC-1, should not be expired
+            "expires": (
+                dt.now(timezone(timedelta(hours=-1))) + timedelta(minutes=1)
+            ).isoformat(),
+        }
+    )
+
+    assert not token.is_expired()
+
+    token = TokenInfo(
+        {
+            "name": "timezonetoken",
+            # now - 1 minute in UTC+1, should be expired
+            "expires": (
+                dt.now(timezone(timedelta(hours=1))) - timedelta(minutes=1)
+            ).isoformat(),
+        }
+    )
+
+    assert token.is_expired()
