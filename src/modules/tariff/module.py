@@ -1,7 +1,10 @@
 import datetime as dt
 
-from src.modules.tariff.formats.kiwatt import to_kiwatt
+from src.modules.tariff.formats.kiwatt import KiwattFormat
+from src.modules.tariff.model import TariffMetadata
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
+from src.shared.timeseries.formats.json import JSONFormat
+from src.shared.timeseries.model import DefaultDataType
 from src.shared.timeseries.module import TimeseriesModule
 
 
@@ -14,12 +17,17 @@ def floor_datetime(dt_obj: dt.datetime, delta: dt.timedelta) -> dt.datetime:
     )
 
 
-class TariffModule(TimeseriesModule):
+class TariffModule(TimeseriesModule[DefaultDataType, TariffMetadata]):
     type: str = "tariff"
     type_description: str = "Module providing tariff data as time series."
 
     def __init__(self, settings: dict, **kwargs):
-        self.formats = {"kiwatt": to_kiwatt, **self.formats}
+        settings["formats"] = [
+            KiwattFormat(),
+            JSONFormat[DefaultDataType, TariffMetadata](
+                DefaultDataType, TariffMetadata
+            ),
+        ] + settings.get("formats", [])
         super().__init__(settings, **kwargs)
         if "source" in settings:
             self.source = settings["source"]

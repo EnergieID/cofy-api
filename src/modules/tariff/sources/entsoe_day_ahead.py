@@ -5,11 +5,12 @@ import pandas as pd
 from entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
 
-from src.shared.timeseries.model import Timeseries
+from modules.tariff.model import TariffMetadata
+from src.shared.timeseries.model import DefaultDataType, Timeseries
 from src.shared.timeseries.source import TimeseriesSource
 
 
-class EntsoeDayAheadTariffSource(TimeseriesSource):
+class EntsoeDayAheadTariffSource(TimeseriesSource[DefaultDataType, TariffMetadata]):
     def __init__(self, country_code: str, api_key: str):
         super().__init__()
         if not country_code:

@@ -1,26 +1,35 @@
+import datetime as dt
+
 import narwhals as nw
+from pydantic import BaseModel
 
 
-class Timeseries:
+class DefaultDataType(BaseModel):
+    timestamp: dt.datetime
+    value: float
+
+
+class DefaultMetadataType(BaseModel):
+    start: dt.datetime | None = None
+    end: dt.datetime | None = None
+    format: str = "unknown"
+    resolution: str | None = None
+
+
+class Timeseries[
+    DataType: BaseModel = DefaultDataType,
+    MetadataType: BaseModel = DefaultMetadataType,
+]:
     frame: nw.DataFrame
-    metadata: dict
+    metadata: MetadataType
 
     @nw.narwhalify
     def __init__(self, frame: nw.DataFrame, metadata: dict | None = None):
         self.frame = frame
-        self.metadata = metadata or {}
+        self.metadata = MetadataType(**(metadata or {}))
 
     def to_csv(self) -> str:
         return self.frame.write_csv()
 
-    def to_dict(self):
-        return {
-            "metadata": self.metadata,
-            "frame": [
-                {
-                    "timestamp": row["timestamp"].isoformat(),
-                    "value": row["value"],
-                }
-                for row in self.frame.iter_rows(named=True)
-            ],
-        }
+    def to_arr(self) -> list[DataType]:
+        return [DataType(**row) for row in self.frame.iter_rows(named=True)]

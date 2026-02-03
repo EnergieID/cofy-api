@@ -1,43 +1,32 @@
 import datetime as dt
-from collections.abc import Callable
-from enum import Enum
 from typing import Annotated
 
-from fastapi import Query, Response
+from fastapi import Query
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from pydantic import TypeAdapter
+from pydantic import BaseModel, TypeAdapter
 
 from src.shared.module import Module
-from src.shared.timeseries.model import Timeseries
+from src.shared.timeseries.format import TimeseriesFormat
+from src.shared.timeseries.formats.csv import CSVFormat
+from src.shared.timeseries.formats.json import JSONFormat
+from src.shared.timeseries.model import DefaultDataType, DefaultMetadataType
 from src.shared.timeseries.source import TimeseriesSource
 
 
-class TimeseriesModule(Module):
+class TimeseriesModule[
+    DataType: BaseModel = DefaultDataType,
+    MetadataType: DefaultMetadataType = DefaultMetadataType,
+](Module):
     type: str = "timeseries"
     type_description: str = "Module providing timeseries data."
-    source: TimeseriesSource
-    formats: dict[str, Callable[[Timeseries], Response]] = {}
-
-    def __init_subclass__(cls):
-        super().__init_subclass__()
-        cls.formats = {
-            "json": cls.to_json_response,
-            "csv": cls.to_csv_response,
-        }
-
-    @classmethod
-    def to_json_response(cls, timeseries: Timeseries) -> Response:
-        return JSONResponse(content=timeseries.to_dict())
-
-    @classmethod
-    def to_csv_response(cls, timeseries: Timeseries) -> Response:
-        return Response(content=timeseries.to_csv(), media_type="text/csv")
+    source: TimeseriesSource[DataType, MetadataType]
+    formats: list[TimeseriesFormat]
 
     def __init__(self, settings: dict, **kwargs):
-        if "formats" in settings:
-            self.formats = settings["formats"] | self.formats
-
+        self.formats = [
+            JSONFormat[DataType, MetadataType](DataType, MetadataType),
+            CSVFormat(),
+        ] + settings.get("formats", [])
         super().__init__(settings, **kwargs)
         if "source" in settings:
             self.source = settings["source"]
@@ -45,8 +34,10 @@ class TimeseriesModule(Module):
     def init_routes(self):
         super().init_routes()
 
-        Format = Enum("Format", {k: k for k in self.formats})
+        for format in self.formats:
+            self.create_format_endpoint(format)
 
+    def create_format_endpoint(self, format: TimeseriesFormat):
         async def get_timeseries(
             start: Annotated[
                 dt.datetime,
@@ -68,10 +59,8 @@ class TimeseriesModule(Module):
             limit: Annotated[
                 int | None, Query(description="Limit number of resolution steps")
             ] = self.merged_default_args["limit"],
-            format: Annotated[
-                Format, Query(description="Response format")
-            ] = self.merged_default_args["format"],
-        ):
+            # format: Annotated[str, Query(include_in_schema=False)]=format.name,
+        ) -> format.ReturnType:
             # validate inputs
             if limit is None and end is None:
                 raise RequestValidationError(
@@ -81,8 +70,6 @@ class TimeseriesModule(Module):
                 raise RequestValidationError(
                     "Start datetime must be before end datetime."
                 )
-            if format.value not in self.formats:
-                raise RequestValidationError(f"Unsupported format: {format}")
             # If no timezone is provided, assume UTC
             if start.tzinfo is None:
                 start = start.replace(tzinfo=dt.UTC)
@@ -104,22 +91,18 @@ class TimeseriesModule(Module):
             # fetch timeseries data
             timeseries = await self.source.fetch_timeseries(start, end)
 
-            timeseries.metadata.update(
-                {
-                    "start": start.isoformat(),
-                    "end": end.isoformat(),
-                    "format": format.value,
-                    "resolution": TypeAdapter(dt.timedelta).dump_python(
-                        self.resolution, mode="json"
-                    ),
-                }
+            # add metadata
+            timeseries.metadata.start = start
+            timeseries.metadata.end = end
+            timeseries.metadata.resolution = TypeAdapter(dt.timedelta).dump_python(
+                self.resolution, mode="json"
             )
+            timeseries.metadata.format = format.name
 
             # return in requested format
-            return self.formats[format.value](timeseries)
+            return format.format(timeseries)
 
-        self.get_timeseries = get_timeseries
-        self.add_api_route("/", self.get_timeseries, methods=["GET"])
+        self.add_api_route(f".{format.name}", get_timeseries, methods=["GET"])
 
     @property
     def default_args(self):

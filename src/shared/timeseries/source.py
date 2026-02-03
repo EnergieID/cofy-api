@@ -1,12 +1,17 @@
 import datetime as dt
 from abc import ABC, abstractmethod
 
-from src.shared.timeseries.model import Timeseries
+from pydantic import BaseModel
+
+from src.shared.timeseries.model import DefaultDataType, DefaultMetadataType, Timeseries
 
 
-class TimeseriesSource(ABC):
+class TimeseriesSource[
+    DataType: BaseModel = DefaultDataType,
+    MetadataType: BaseModel = DefaultMetadataType,
+](ABC):
     @abstractmethod
     async def fetch_timeseries(
         self, start: dt.datetime, end: dt.datetime, **kwargs
-    ) -> Timeseries:
+    ) -> Timeseries[DataType, MetadataType]:
         """Fetch timeseries data between start and end datetimes."""
