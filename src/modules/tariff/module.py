@@ -1,5 +1,7 @@
 import datetime as dt
 
+from fastapi.params import Query
+
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 from src.shared.timeseries.formats.csv import CSVFormat
 from src.shared.timeseries.formats.json import (
@@ -37,13 +39,26 @@ class TariffModule(TimeseriesModule):
                 CSVFormat(),
             ],
         )
+        if (
+            "country_code" not in settings
+            and "source" not in settings
+            and (
+                "extra_args" not in settings
+                or "country_code" not in settings["extra_args"]
+            )
+        ):
+            settings["extra_args"] = settings.get("extra_args", {})
+            settings["extra_args"]["country_code"] = (
+                str,
+                Query(default="BE", description="Country code for ENTSOE"),
+            )
         super().__init__(settings, **kwargs)
         if "source" in settings:
             self.source = settings["source"]
         else:
             self.source = EntsoeDayAheadTariffSource(
-                settings.get("country_code", "BE"),
                 settings.get("api_key", ""),
+                settings.get("country_code", "BE"),
             )
 
     def default_args(self):

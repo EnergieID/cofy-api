@@ -14,8 +14,13 @@ app = CofyApi(
     ]
 )
 
-tariffs = TariffModule(settings={"api_key": environ.get("ENTSOE_API_KEY", "")})
-app.register_module(tariffs)
+entsoe = TariffModule(
+    settings={
+        "api_key": environ.get("ENTSOE_API_KEY", ""),
+        "name": "entsoe",
+    }
+)
+app.register_module(entsoe)
 
 ## Tariff app with custom source
 source = EntsoeDayAheadTariffSource(

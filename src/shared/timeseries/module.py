@@ -1,8 +1,9 @@
 import datetime as dt
 from typing import Annotated
 
-from fastapi import Query
+from fastapi import Depends, Query
 from fastapi.exceptions import RequestValidationError
+from pydantic import create_model
 
 from src.shared.module import Module
 from src.shared.timeseries.format import TimeseriesFormat
@@ -35,7 +36,13 @@ class TimeseriesModule(Module):
         for format in self.formats:
             self.create_format_endpoint(format)
 
+    @property
+    def DynamicParameters(self):
+        return create_model("DynamicParameters", **self.settings.get("extra_args", {}))
+
     def create_format_endpoint(self, format: TimeseriesFormat):
+        params_default = Depends()
+
         async def get_timeseries(
             start: Annotated[
                 dt.datetime,
@@ -57,7 +64,7 @@ class TimeseriesModule(Module):
             limit: Annotated[
                 int | None, Query(description="Limit number of resolution steps")
             ] = self.merged_default_args["limit"],
-            # format: Annotated[str, Query(include_in_schema=False)]=format.name,
+            params: self.DynamicParameters = params_default,
         ):
             # validate inputs
             if limit is None and end is None:
@@ -86,8 +93,11 @@ class TimeseriesModule(Module):
                     "Either end datetime or limit must be provided."
                 )
 
+            # extract extra args
+            extra_args = params.dict(exclude_unset=True)
+
             # fetch timeseries data
-            timeseries = await self.source.fetch_timeseries(start, end)
+            timeseries = await self.source.fetch_timeseries(start, end, **extra_args)
 
             # add metadata
             timeseries.metadata["start"] = start

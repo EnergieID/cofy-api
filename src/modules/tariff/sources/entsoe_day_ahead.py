@@ -10,10 +10,8 @@ from src.shared.timeseries.source import TimeseriesSource
 
 
 class EntsoeDayAheadTariffSource(TimeseriesSource):
-    def __init__(self, country_code: str, api_key: str):
+    def __init__(self, api_key: str, country_code: str | None = None):
         super().__init__()
-        if not country_code:
-            raise ValueError("country_code must be provided")
         if not api_key:
             raise ValueError("api_key must be provided")
 
@@ -21,12 +19,16 @@ class EntsoeDayAheadTariffSource(TimeseriesSource):
         self.client = EntsoePandasClient(api_key=api_key)
 
     async def fetch_timeseries(
-        self, start: dt.datetime, end: dt.datetime, **kwargs
+        self,
+        start: dt.datetime,
+        end: dt.datetime,
+        country_code: str | None = None,
+        **kwargs,
     ) -> Timeseries:
         try:
             series = await asyncio.to_thread(
                 self.client.query_day_ahead_prices,
-                country_code=self.country_code,
+                country_code=country_code or self.country_code,
                 start=pd.Timestamp(start),
                 end=pd.Timestamp(end),
             )
