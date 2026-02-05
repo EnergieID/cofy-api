@@ -1,4 +1,4 @@
-import json
+from os import environ
 
 from fastapi import Depends
 
@@ -6,9 +6,6 @@ from src.cofy.cofy_api import CofyApi
 from src.cofy.token_auth import token_verifier
 from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
-
-with open("local.settings.json") as f:
-    environment = json.load(f)
 
 app = CofyApi(
     dependencies=[
@@ -27,13 +24,13 @@ app = CofyApi(
     ]
 )
 
-tariffs = TariffModule(settings={"api_key": environment.get("ENTSOE_API_KEY", "")})
+tariffs = TariffModule(settings={"api_key": environ.get("ENTSOE_API_KEY", "")})
 app.register_module(tariffs)
 
 ## Tariff app with custom source
 source = EntsoeDayAheadTariffSource(
     country_code="NL",
-    api_key=environment.get("ENTSOE_API_KEY", ""),
+    api_key=environ.get("ENTSOE_API_KEY", ""),
 )
 nl_tariffs = TariffModule(settings={"source": source, "name": "nl_tariffs"})
 app.register_module(nl_tariffs)
@@ -42,7 +39,7 @@ app.register_module(nl_tariffs)
 fr_tariffs = TariffModule(
     settings={
         "country_code": "FR",
-        "api_key": environment.get("ENTSOE_API_KEY", ""),
+        "api_key": environ.get("ENTSOE_API_KEY", ""),
         "name": "fr_tariffs",
         "description": "Entsoe tariff data for France",
     },
