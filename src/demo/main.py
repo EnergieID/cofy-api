@@ -10,18 +10,7 @@ from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSour
 
 app = CofyApi(
     dependencies=[
-        Depends(
-            token_verifier(
-                {
-                    "foo": {"name": "Demo Token", "expires": "2030-12-31T23:59:59"},
-                    "bar": {
-                        "name": "Expired Token",
-                        "expires": "2020-01-01T00:00:00",
-                    },
-                    "bas": {"name": "Infinity Token"},
-                }
-            )
-        )
+        Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))
     ]
 )
 
