@@ -15,7 +15,9 @@ class CSVFormat(TimeseriesFormat):
             content=timeseries.to_csv(),
             media_type="text/csv",
             headers={
-                "metadata": DefaultMetadataType(**timeseries.metadata).model_dump_json()
+                "x-metadata": DefaultMetadataType(
+                    **timeseries.metadata
+                ).model_dump_json()
             },
         )
 
@@ -34,6 +36,12 @@ class CSVFormat(TimeseriesFormat):
                     }
                 },
                 "description": "Timeseries data in CSV format",
+                "headers": {
+                    "x-metadata": {
+                        "description": "Metadata for the timeseries in JSON format",
+                        "schema": DefaultMetadataType.model_json_schema(),
+                    }
+                },
             }
         }
 
