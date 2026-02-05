@@ -5,7 +5,7 @@ import pandas as pd
 from entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
 
-from modules.tariff.model import TariffMetadata
+from src.modules.tariff.model import TariffMetadata
 from src.shared.timeseries.model import DefaultDataType, Timeseries
 from src.shared.timeseries.source import TimeseriesSource
 
