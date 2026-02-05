@@ -94,7 +94,7 @@ class TimeseriesModule(Module):
                 )
 
             # extract extra args
-            extra_args = params.dict(exclude_unset=True)
+            extra_args = params.model_dump(exclude_unset=True)
 
             # fetch timeseries data
             timeseries = await self.source.fetch_timeseries(start, end, **extra_args)

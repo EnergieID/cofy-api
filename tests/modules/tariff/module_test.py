@@ -9,10 +9,6 @@ from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSour
 from tests.modules.tariff.dummy_source import DummySource
 
 
-class DummyAPI:
-    router = "dummy_router"
-
-
 @pytest.mark.parametrize(
     "settings, expected_source_type",
     [
@@ -32,19 +28,22 @@ def test_tariffmodule_type_property():
 
 class TestTariffModule:
     def setup_method(self):
-        self.module = TariffModule({"source": DummySource()})
-        self.start = dt.datetime(2026, 1, 1, 0, 0)
-        self.end = dt.datetime(2026, 1, 1, 3, 0)
+        self.module = TariffModule(
+            {"source": DummySource(), "default_args": {"limit": None}}
+        )
+        self.start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
+        self.end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
 
     @pytest.mark.asyncio
-    async def test_get_tariffs(self):
-        # Simulate FastAPI dependency injection
-        result = await self.module.get_tariffs(self.start, self.end)
-        assert isinstance(result, list)
-        assert len(result) == 3
-        for i, entry in enumerate(result):
-            assert entry.value == i * 10.0
-            assert entry.timestamp == self.start + dt.timedelta(hours=i)
+    async def test_fetch_timeseries(self):
+        # The DummySource returns a TariffFrame with a DataFrame
+        result = await self.module.source.fetch_timeseries(self.start, self.end)
+        assert hasattr(result, "frame")
+        df = result.frame
+        assert len(df) == 3
+        for i, row in enumerate(result.to_arr()):
+            assert row["value"] == i * 10.0
+            assert row["timestamp"] == self.start + dt.timedelta(hours=i)
 
     def test_api_endpoint(self):
         app = FastAPI()
@@ -56,11 +55,13 @@ class TestTariffModule:
             params={"start": self.start.isoformat(), "end": self.end.isoformat()},
         )
         assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, list)
+        result = response.json()
+        assert isinstance(result, dict)
+        assert "data" in result
+        data = result.get("data")
         assert len(data) == 3
         for i, entry in enumerate(data):
             assert entry["value"] == i * 10.0
-            assert (
-                entry["timestamp"] == (self.start + dt.timedelta(hours=i)).isoformat()
-            )
+            assert dt.datetime.fromisoformat(
+                entry["timestamp"]
+            ) == self.start + dt.timedelta(hours=i)
