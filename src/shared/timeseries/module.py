@@ -33,14 +33,14 @@ class TimeseriesModule(Module):
     def init_routes(self):
         super().init_routes()
 
-        for format in self.formats:
-            self.create_format_endpoint(format)
+        for i, format in enumerate(self.formats):
+            self.create_format_endpoint(format, default=(i == 0))
 
     @property
     def DynamicParameters(self):
         return create_model("DynamicParameters", **self.settings.get("extra_args", {}))
 
-    def create_format_endpoint(self, format: TimeseriesFormat):
+    def create_format_endpoint(self, format: TimeseriesFormat, default: bool = False):
         params_default = Depends()
 
         async def get_timeseries(
@@ -109,7 +109,7 @@ class TimeseriesModule(Module):
             return format.format(timeseries)
 
         self.add_api_route(
-            f".{format.name}",
+            "" if default else f".{format.name}",
             get_timeseries,
             methods=["GET"],
             responses=format.responses,
