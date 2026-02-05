@@ -1,6 +1,8 @@
 import datetime as dt
+from typing import Annotated
 
 from fastapi.params import Query
+from pydantic import Field
 
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 from src.shared.timeseries.formats.csv import CSVFormat
@@ -48,10 +50,10 @@ class TariffModule(TimeseriesModule):
             )
         ):
             settings["extra_args"] = settings.get("extra_args", {})
-            settings["extra_args"]["country_code"] = (
+            settings["extra_args"]["country_code"] = Annotated[
                 str,
-                Query(default="BE", description="Country code for ENTSOE"),
-            )
+                Field(Query(default="BE", description="Country code for ENTSOE")),
+            ]
         super().__init__(settings, **kwargs)
         if "source" in settings:
             self.source = settings["source"]
