@@ -13,17 +13,17 @@ def to_utc_timestring(dt: datetime | str) -> str:
 
 
 class PriceRecordModel(BaseModel):
-    startUTC: str
-    value: float
+    startUTC: str = "2025-08-28T22:00:00"
+    value: float = 82.10
 
 
 class ResponseModel(BaseModel):
-    generatedAtUTC: str
-    periodStartUTC: str
-    periodEndUTC: str
-    source: str
-    unit: str
-    resolution: str
+    generatedAtUTC: str = "2025-08-28T11:15:00"
+    periodStartUTC: str = "2025-08-28T22:00:00"
+    periodEndUTC: str = "2025-08-29T22:00:00"
+    source: str = "Cofy-API-Demo"
+    unit: str = "EUR/MWh"
+    resolution: str = "PT15M"
     prices: list[PriceRecordModel]
 
 
@@ -32,12 +32,16 @@ class KiwattFormat(TimeseriesFormat):
 
     name = "kiwatt"
 
+    def __init__(self, source: str = "Cofy-API-Demo"):
+        super().__init__()
+        self.source = source
+
     def format(self, timeseries: Timeseries[DefaultDataType, TariffMetadata]):
         return ResponseModel(
             generatedAtUTC=to_utc_timestring(datetime.now(UTC)),
             periodStartUTC=to_utc_timestring(timeseries.metadata.start),
             periodEndUTC=to_utc_timestring(timeseries.metadata.end),
-            source="Energy-ID-DeltaWind",
+            source=self.source,
             unit=timeseries.metadata.unit,
             resolution=timeseries.metadata.resolution,
             prices=[

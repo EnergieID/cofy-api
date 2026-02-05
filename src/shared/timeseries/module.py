@@ -63,7 +63,7 @@ class TimeseriesModule[
                 int | None, Query(description="Limit number of resolution steps")
             ] = self.merged_default_args["limit"],
             # format: Annotated[str, Query(include_in_schema=False)]=format.name,
-        ) -> format.ReturnType:
+        ):
             # validate inputs
             if limit is None and end is None:
                 raise RequestValidationError(
@@ -105,7 +105,13 @@ class TimeseriesModule[
             # return in requested format
             return format.format(timeseries)
 
-        self.add_api_route(f".{format.name}", get_timeseries, methods=["GET"])
+        self.add_api_route(
+            f".{format.name}",
+            get_timeseries,
+            methods=["GET"],
+            responses=format.responses,
+            response_class=format.response_class,
+        )
 
     @property
     def default_args(self):
