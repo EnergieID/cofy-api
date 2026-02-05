@@ -3,30 +3,25 @@ from typing import Annotated
 
 from fastapi import Query
 from fastapi.exceptions import RequestValidationError
-from pydantic import BaseModel, TypeAdapter
 
 from src.shared.module import Module
 from src.shared.timeseries.format import TimeseriesFormat
 from src.shared.timeseries.formats.csv import CSVFormat
 from src.shared.timeseries.formats.json import JSONFormat
-from src.shared.timeseries.model import DefaultDataType, DefaultMetadataType
 from src.shared.timeseries.source import TimeseriesSource
 
 
-class TimeseriesModule[
-    DataType: BaseModel = DefaultDataType,
-    MetadataType: DefaultMetadataType = DefaultMetadataType,
-](Module):
+class TimeseriesModule(Module):
     type: str = "timeseries"
     type_description: str = "Module providing timeseries data."
-    source: TimeseriesSource[DataType, MetadataType]
+    source: TimeseriesSource
     formats: list[TimeseriesFormat]
 
     def __init__(self, settings: dict, **kwargs):
         self.formats = settings.get(
             "formats",
             [
-                JSONFormat[DataType, MetadataType](DataType, MetadataType),
+                JSONFormat(),
                 CSVFormat(),
             ],
         )
@@ -95,12 +90,10 @@ class TimeseriesModule[
             timeseries = await self.source.fetch_timeseries(start, end)
 
             # add metadata
-            timeseries.metadata.start = start
-            timeseries.metadata.end = end
-            timeseries.metadata.resolution = TypeAdapter(dt.timedelta).dump_python(
-                self.resolution, mode="json"
-            )
-            timeseries.metadata.format = format.name
+            timeseries.metadata["start"] = start
+            timeseries.metadata["end"] = end
+            timeseries.metadata["resolution"] = self.resolution
+            timeseries.metadata["format"] = format.name
 
             # return in requested format
             return format.format(timeseries)

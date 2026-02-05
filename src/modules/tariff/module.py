@@ -1,11 +1,17 @@
 import datetime as dt
 
-from src.modules.tariff.model import TariffMetadata
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 from src.shared.timeseries.formats.csv import CSVFormat
-from src.shared.timeseries.formats.json import JSONFormat
-from src.shared.timeseries.model import DefaultDataType
+from src.shared.timeseries.formats.json import (
+    DefaultDataType,
+    DefaultMetadataType,
+    JSONFormat,
+)
 from src.shared.timeseries.module import TimeseriesModule
+
+
+class TariffMetadata(DefaultMetadataType):
+    unit: str
 
 
 def floor_datetime(dt_obj: dt.datetime, delta: dt.timedelta) -> dt.datetime:
@@ -17,7 +23,7 @@ def floor_datetime(dt_obj: dt.datetime, delta: dt.timedelta) -> dt.datetime:
     )
 
 
-class TariffModule(TimeseriesModule[DefaultDataType, TariffMetadata]):
+class TariffModule(TimeseriesModule):
     type: str = "tariff"
     type_description: str = "Module providing tariff data as time series."
 

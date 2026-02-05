@@ -1,10 +1,9 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from pydantic import BaseModel
 
-from src.modules.tariff.model import TariffMetadata
 from src.shared.timeseries.format import TimeseriesFormat
-from src.shared.timeseries.model import DefaultDataType, Timeseries
+from src.shared.timeseries.model import Timeseries
 
 
 def to_utc_timestring(dt: datetime | str) -> str:
@@ -23,7 +22,7 @@ class ResponseModel(BaseModel):
     periodEndUTC: str = "2025-08-29T22:00:00"
     source: str = "Cofy-API-Demo"
     unit: str = "EUR/MWh"
-    resolution: str = "PT15M"
+    resolution: timedelta = timedelta(minutes=15)
     prices: list[PriceRecordModel]
 
 
@@ -36,17 +35,17 @@ class KiwattFormat(TimeseriesFormat):
         super().__init__()
         self.source = source
 
-    def format(self, timeseries: Timeseries[DefaultDataType, TariffMetadata]):
+    def format(self, timeseries: Timeseries):
         return ResponseModel(
             generatedAtUTC=to_utc_timestring(datetime.now(UTC)),
-            periodStartUTC=to_utc_timestring(timeseries.metadata.start),
-            periodEndUTC=to_utc_timestring(timeseries.metadata.end),
+            periodStartUTC=to_utc_timestring(timeseries.metadata["start"]),
+            periodEndUTC=to_utc_timestring(timeseries.metadata["end"]),
             source=self.source,
-            unit=timeseries.metadata.unit,
-            resolution=timeseries.metadata.resolution,
+            unit=timeseries.metadata["unit"],
+            resolution=timeseries.metadata["resolution"],
             prices=[
                 PriceRecordModel(
-                    startUTC=to_utc_timestring(row.timestamp), value=row.value
+                    startUTC=to_utc_timestring(row["timestamp"]), value=row["value"]
                 )
                 for row in timeseries.to_arr()
             ],

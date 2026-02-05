@@ -1,6 +1,7 @@
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 
 from src.shared.timeseries.format import TimeseriesFormat
+from src.shared.timeseries.formats.json import DefaultMetadataType
 from src.shared.timeseries.model import Timeseries
 
 
@@ -9,16 +10,18 @@ class CSVFormat(TimeseriesFormat):
 
     name = "csv"
 
-    def format(self, timeseries: Timeseries) -> FileResponse:
-        return FileResponse(
+    def format(self, timeseries: Timeseries) -> StreamingResponse:
+        return StreamingResponse(
             content=timeseries.to_csv(),
             media_type="text/csv",
-            headers={"metadata": timeseries.metadata},
+            headers={
+                "metadata": DefaultMetadataType(**timeseries.metadata).model_dump_json()
+            },
         )
 
     @property
     def ReturnType(self) -> type:
-        return FileResponse
+        return StreamingResponse
 
     @property
     def responses(self) -> dict:
@@ -35,6 +38,6 @@ class CSVFormat(TimeseriesFormat):
         }
 
     @property
-    def response_class(self) -> type:
+    def response_class(self) -> type[StreamingResponse]:
         """Return the response class for this format."""
-        return FileResponse
+        return StreamingResponse

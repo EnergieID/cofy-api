@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from fastapi import Response
 from fastapi.responses import JSONResponse
 
 from src.shared.timeseries.model import Timeseries
@@ -31,6 +32,6 @@ class TimeseriesFormat(ABC):
         }
 
     @property
-    def response_class(self) -> type:
+    def response_class(self) -> type[Response]:
         """Return the response class for this format."""
         return JSONResponse
