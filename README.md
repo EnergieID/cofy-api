@@ -33,7 +33,7 @@ pre-commit install
 ```
 
 #### Run development demo application:
-Our demo application uses some API keys for external services. You can provide these `local.settings.json` file in the root of the repository, following the structure of `local.settings.example.json`.
+Our demo application uses some API keys for external services. You can provide these `.env.local` file in the root of the repository, following the structure of `.env.example`.
 
 ```sh
 poe demo
