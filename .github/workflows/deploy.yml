@@ -72,6 +72,16 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DF919D45654846169172C82891B61E9C }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CD3E335D7A664EB183BE2C24A056612E }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CDD992831AC44171941F1C8C81844240 }}
+      - name: Set startup command for FastAPI
+        run: |
+          az webapp config set \
+            --name func-cofy-api-dev \
+            --resource-group ${{ secrets.AZUREAPPSERVICE_RESOURCEGROUP }} \
+            --startup-file "uvicorn src.demo.main:app --host 0.0.0.0 --port 8000"
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CDD992831AC44171941F1C8C81844240 }}
+          AZURE_CLIENT_ID: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DF919D45654846169172C82891B61E9C }}
+          AZURE_TENANT_ID: ${{ secrets.AZUREAPPSERVICE_TENANTID_CD3E335D7A664EB183BE2C24A056612E }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
