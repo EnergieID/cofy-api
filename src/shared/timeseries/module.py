@@ -128,7 +128,7 @@ class TimeseriesModule(Module):
 
     @property
     def merged_default_args(self):
-        return self.default_args() | self.settings.get("default_args", {})
+        return self.default_args | self.settings.get("default_args", {})
 
     @property
     def resolution(self) -> dt.timedelta:

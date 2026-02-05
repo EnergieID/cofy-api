@@ -21,9 +21,23 @@ def test_tariffmodule_source_selection(settings, expected_source_type):
     assert isinstance(module.source, expected_source_type)
 
 
+def test_if_no_country_code_specified_extra_args_is_set():
+    module = TariffModule({"api_key": "key"})
+    assert "country_code" in module.DynamicParameters.model_fields
+
+
 def test_tariffmodule_type_property():
     module = TariffModule({"country_code": "DE", "api_key": "key"})
     assert module.type == "tariff"
+
+
+def test_floor_datetime():
+    from src.modules.tariff.module import floor_datetime
+
+    dt_obj = dt.datetime(2026, 1, 1, 10, 37, 45, tzinfo=dt.UTC)
+    delta = dt.timedelta(hours=1)
+    floored = floor_datetime(dt_obj, delta)
+    assert floored == dt.datetime(2026, 1, 1, 10, 0, 0, tzinfo=dt.UTC)
 
 
 class TestTariffModule:

@@ -63,6 +63,7 @@ class TariffModule(TimeseriesModule):
                 settings.get("country_code", "BE"),
             )
 
+    @property
     def default_args(self):
         return {
             "start": lambda: floor_datetime(dt.datetime.now(dt.UTC), self.resolution),
