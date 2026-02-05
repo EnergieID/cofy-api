@@ -2,7 +2,7 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python app to Azure Web App - func-cofy-api-dev
+name: Deploy to Azure
 
 on:
   push:
@@ -23,6 +23,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.14'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: '0.9.21'
+      - name: Generate requirements.txt
+        run: uv pip compile pyproject.toml -o requirements.txt
 
       # 🛠️ Local Build Section (Optional)
       # The following section in your workflow is designed to catch build issues early on the client side, before deployment. This can be helpful for debugging and validation. However, if this step significantly increases deployment time and early detection is not critical for your workflow, you may remove this section to streamline the deployment process.
