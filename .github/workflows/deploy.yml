@@ -6,8 +6,8 @@ name: Build and deploy Python app to Azure Web App - func-cofy-api-dev
 
 on:
   push:
-    # branches:
-    #   - main
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
