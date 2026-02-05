@@ -1,8 +1,8 @@
 import datetime as dt
 
-from src.modules.tariff.formats.kiwatt import KiwattFormat
 from src.modules.tariff.model import TariffMetadata
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
+from src.shared.timeseries.formats.csv import CSVFormat
 from src.shared.timeseries.formats.json import JSONFormat
 from src.shared.timeseries.model import DefaultDataType
 from src.shared.timeseries.module import TimeseriesModule
@@ -22,12 +22,15 @@ class TariffModule(TimeseriesModule[DefaultDataType, TariffMetadata]):
     type_description: str = "Module providing tariff data as time series."
 
     def __init__(self, settings: dict, **kwargs):
-        settings["formats"] = [
-            KiwattFormat(),
-            JSONFormat[DefaultDataType, TariffMetadata](
-                DefaultDataType, TariffMetadata
-            ),
-        ] + settings.get("formats", [])
+        settings["formats"] = settings.get(
+            "formats",
+            [
+                JSONFormat[DefaultDataType, TariffMetadata](
+                    DefaultDataType, TariffMetadata
+                ),
+                CSVFormat(),
+            ],
+        )
         super().__init__(settings, **kwargs)
         if "source" in settings:
             self.source = settings["source"]

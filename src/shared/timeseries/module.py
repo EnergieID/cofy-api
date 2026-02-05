@@ -23,10 +23,13 @@ class TimeseriesModule[
     formats: list[TimeseriesFormat]
 
     def __init__(self, settings: dict, **kwargs):
-        self.formats = [
-            JSONFormat[DataType, MetadataType](DataType, MetadataType),
-            CSVFormat(),
-        ] + settings.get("formats", [])
+        self.formats = settings.get(
+            "formats",
+            [
+                JSONFormat[DataType, MetadataType](DataType, MetadataType),
+                CSVFormat(),
+            ],
+        )
         super().__init__(settings, **kwargs)
         if "source" in settings:
             self.source = settings["source"]

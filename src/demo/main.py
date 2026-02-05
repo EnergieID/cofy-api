@@ -4,6 +4,7 @@ from fastapi import Depends
 
 from src.cofy.cofy_api import CofyApi
 from src.cofy.token_auth import token_verifier
+from src.modules.tariff.formats.kiwatt import KiwattFormat
 from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
@@ -32,16 +33,13 @@ source = EntsoeDayAheadTariffSource(
     country_code="NL",
     api_key=environ.get("ENTSOE_API_KEY", ""),
 )
-nl_tariffs = TariffModule(settings={"source": source, "name": "nl_tariffs"})
-app.register_module(nl_tariffs)
-
-## Tariff app with default source and custom settings
-fr_tariffs = TariffModule(
+kiwatt = TariffModule(
     settings={
-        "country_code": "FR",
-        "api_key": environ.get("ENTSOE_API_KEY", ""),
-        "name": "fr_tariffs",
-        "description": "Entsoe tariff data for France",
-    },
+        "source": source,
+        "name": "kiwatt",
+        "formats": [
+            KiwattFormat(),
+        ],
+    }
 )
-app.register_module(fr_tariffs)
+app.register_module(kiwatt)
