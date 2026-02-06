@@ -1,28 +1,38 @@
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.routing import Route
 
 from src.cofy.docs_router import DocsRouter
 
 
-# Dummy endpoint for testing
-async def dummy_endpoint(request: Request):
-    return {"message": "ok"}
-
-
 class TestDocsRouter:
     def setup_method(self):
-        routes = [Route("/dummy", dummy_endpoint)]
-        self.docs_router = DocsRouter(title="Test API", version="0.1.0", routes=routes)
+        self.docs_router = DocsRouter(
+            lambda: {
+                "openapi": "3.0.0",
+                "info": {
+                    "title": "Test API",
+                    "version": "0.1.0",
+                },
+                "paths": {
+                    "/dummy": {
+                        "get": {
+                            "responses": {
+                                "200": {
+                                    "description": "Successful Response",
+                                }
+                            }
+                        }
+                    }
+                },
+            }
+        )
         self.app = FastAPI(
             docs_url=None,
             redoc_url=None,
             openapi_url=None,
         )
         self.app.include_router(self.docs_router)
-        for route in routes:
-            self.app.router.routes.append(route)
         self.client = TestClient(self.app)
 
     def test_openapi_json(self):
