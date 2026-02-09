@@ -4,6 +4,8 @@ from fastapi import Depends
 
 from src.cofy.cofy_api import CofyApi
 from src.cofy.token_auth import token_verifier
+from src.modules.production.module import ProductionModule
+from src.modules.production.sources.energyID_production import EnergyIDProduction
 from src.modules.tariff.formats.kiwatt import KiwattFormat
 from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
@@ -37,3 +39,14 @@ kiwatt = TariffModule(
     }
 )
 app.register_module(kiwatt)
+
+wind = ProductionModule(
+    settings={
+        "source": EnergyIDProduction(
+            api_key=environ.get("ENERGY_ID_API_KEY", ""),
+            record_id=environ.get("ENERGY_ID_RECORD_ID", ""),
+        ),
+        "name": "wind",
+    }
+)
+app.register_module(wind)
