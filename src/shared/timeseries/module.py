@@ -67,6 +67,8 @@ class TimeseriesModule(Module):
             params: self.DynamicParameters = params_default,
         ):
             # validate inputs
+            if start is None:
+                raise RequestValidationError("Start datetime must be provided.")
             if limit is None and end is None:
                 raise RequestValidationError(
                     "Either end datetime or limit must be provided."
@@ -88,10 +90,7 @@ class TimeseriesModule(Module):
             if limit is not None:
                 end = start + limit * self.resolution
 
-            if end is None:
-                raise RequestValidationError(
-                    "Either end datetime or limit must be provided."
-                )
+            assert end is not None  # for type checker, we know end is not None here
 
             # extract extra args
             extra_args = params.model_dump(exclude_unset=True)
