@@ -41,37 +41,37 @@ class TariffModule(TimeseriesModule):
                 CSVFormat(),
             ],
         )
-        if (
-            "country_code" not in settings
-            and "source" not in settings
-            and (
-                "extra_args" not in settings
-                or "country_code" not in settings["extra_args"]
-            )
-        ):
-            settings["extra_args"] = settings.get("extra_args", {})
-            settings["extra_args"]["country_code"] = Annotated[
-                str,
-                Field(Query(default="BE", description="Country code for ENTSOE")),
-            ]
-        super().__init__(settings, **kwargs)
-        if "source" in settings:
-            self.source = settings["source"]
-        else:
-            self.source = EntsoeDayAheadTariffSource(
+
+        if "source" not in settings:
+            # use default source, with its own defaults for country_code and resolution
+
+            settings["source"] = EntsoeDayAheadTariffSource(
                 settings.get("api_key", ""),
                 settings.get("country_code", "BE"),
             )
 
+            if "country_code" not in settings and (
+                "extra_args" not in settings
+                or "country_code" not in settings["extra_args"]
+            ):
+                settings["extra_args"] = settings.get("extra_args", {})
+                settings["extra_args"]["country_code"] = Annotated[
+                    str,
+                    Field(Query(default="BE", description="Country code for ENTSOE")),
+                ]
+
+        if "supported_resolutions" not in settings:
+            settings["supported_resolutions"] = [dt.timedelta(minutes=15)]
+        super().__init__(settings, **kwargs)
+
     @property
     def default_args(self):
         return {
-            "start": lambda: floor_datetime(dt.datetime.now(dt.UTC), self.resolution),
+            "start": lambda: floor_datetime(
+                dt.datetime.now(dt.UTC), dt.timedelta(minutes=15)
+            ),
             "end": lambda: None,
             "offset": 0,
             "limit": 288,
+            "resolution": dt.timedelta(minutes=15),
         }
-
-    @property
-    def resolution(self) -> dt.timedelta:
-        return self.settings.get("resolution", dt.timedelta(minutes=15))

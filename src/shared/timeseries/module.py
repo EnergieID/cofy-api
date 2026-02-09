@@ -64,6 +64,17 @@ class TimeseriesModule(Module):
             limit: Annotated[
                 int | None, Query(description="Limit number of resolution steps")
             ] = self.merged_default_args["limit"],
+            resolution: Annotated[
+                dt.timedelta | None,
+                Query(
+                    description="Resolution of the timeseries in ISO8601 duration format (e.g. PT1H for 1 hour).",
+                    enum=self.settings.get("supported_resolutions", []),
+                    include_in_schema=len(
+                        self.settings.get("supported_resolutions", [])
+                    )
+                    != 1,
+                ),
+            ] = self.merged_default_args["resolution"],
             params: self.DynamicParameters = params_default,
         ):
             # validate inputs
@@ -77,6 +88,8 @@ class TimeseriesModule(Module):
                 raise RequestValidationError(
                     "Start datetime must be before end datetime."
                 )
+            if resolution is None:
+                raise RequestValidationError("Resolution must be provided.")
             # If no timezone is provided, assume UTC
             if start.tzinfo is None:
                 start = start.replace(tzinfo=dt.UTC)
@@ -84,11 +97,11 @@ class TimeseriesModule(Module):
                 end = end.replace(tzinfo=dt.UTC)
             # calculate adjusted start and end based on offset and limit
             if offset is not None:
-                start += offset * self.resolution
+                start += offset * resolution
                 if end is not None:
-                    end += offset * self.resolution
+                    end += offset * resolution
             if limit is not None:
-                end = start + limit * self.resolution
+                end = start + limit * resolution
 
             assert end is not None  # for type checker, we know end is not None here
 
@@ -96,12 +109,14 @@ class TimeseriesModule(Module):
             extra_args = params.model_dump(exclude_unset=True)
 
             # fetch timeseries data
-            timeseries = await self.source.fetch_timeseries(start, end, **extra_args)
+            timeseries = await self.source.fetch_timeseries(
+                start, end, resolution, **extra_args
+            )
 
             # add metadata
             timeseries.metadata["start"] = start
             timeseries.metadata["end"] = end
-            timeseries.metadata["resolution"] = self.resolution
+            timeseries.metadata["resolution"] = resolution
             timeseries.metadata["format"] = format.name
 
             # return in requested format
@@ -122,12 +137,9 @@ class TimeseriesModule(Module):
             "end": lambda: dt.datetime.now(dt.UTC),
             "offset": 0,
             "limit": None,
+            "resolution": dt.timedelta(hours=1),
         }
 
     @property
     def merged_default_args(self):
         return self.default_args | self.settings.get("default_args", {})
-
-    @property
-    def resolution(self) -> dt.timedelta:
-        return self.settings.get("resolution", dt.timedelta(hours=1))

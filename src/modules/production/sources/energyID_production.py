@@ -3,6 +3,7 @@ import datetime as dt
 
 import polars as pl
 import requests
+from pydantic import TypeAdapter
 
 from src.shared.timeseries.model import Timeseries
 from src.shared.timeseries.source import TimeseriesSource
@@ -26,13 +27,15 @@ class EnergyIDProduction(TimeseriesSource):
         self,
         start: dt.datetime,
         end: dt.datetime,
+        resolution: dt.timedelta,
         **kwargs,
     ) -> Timeseries:
         start_date = start.date().isoformat()
         end_date = end.date().isoformat()
+        resolution_iso = TypeAdapter(dt.timedelta).dump_python(resolution, mode="json")
         respone = await asyncio.to_thread(
             requests.get,
-            f"https://api.energyid.eu/api/v1/records/{self.record_id}/data/energyProduction?start={start_date}&end={end_date}",
+            f"https://api.energyid.eu/api/v1/records/{self.record_id}/data/energyProduction?start={start_date}&end={end_date}&interval={resolution_iso}",
             headers=self.headers,
         )
         if respone.status_code != 200:
