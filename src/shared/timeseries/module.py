@@ -122,7 +122,6 @@ class TimeseriesModule(Module):
             "end": lambda: dt.datetime.now(dt.UTC),
             "offset": 0,
             "limit": None,
-            "format": "json",
         }
 
     @property

@@ -70,7 +70,6 @@ class TariffModule(TimeseriesModule):
             "end": lambda: None,
             "offset": 0,
             "limit": 288,
-            "format": "kiwatt",
         }
 
     @property
