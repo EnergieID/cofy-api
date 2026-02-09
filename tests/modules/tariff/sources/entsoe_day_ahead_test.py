@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import narwhals as nw
 import pandas as pd
 import pytest
+from entsoe.exceptions import NoMatchingDataError
 
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 from src.shared.timeseries.model import Timeseries
@@ -62,3 +63,16 @@ async def test_fetch_timeseries():
     filtered = result.frame.filter(nw.col("timestamp") == ts)
     first = list(filtered.iter_rows(named=True))[0]
     assert first["value"] == 111.45
+
+
+@pytest.mark.asyncio
+async def test_returns_empty_when_no_data():
+    src = EntsoeDayAheadTariffSource("key", "BE")
+    src.client = MagicMock()
+    src.client.query_day_ahead_prices.side_effect = NoMatchingDataError("No data")
+
+    start = dt.datetime(2026, 1, 21)
+    end = dt.datetime(2026, 1, 22)
+    result = await src.fetch_timeseries(start, end)
+    assert isinstance(result, Timeseries)
+    assert result.frame.is_empty
