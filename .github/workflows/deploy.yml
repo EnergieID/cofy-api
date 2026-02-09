@@ -69,14 +69,14 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DF919D45654846169172C82891B61E9C }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CD3E335D7A664EB183BE2C24A056612E }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CDD992831AC44171941F1C8C81844240 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_898275A1D38C4CFEA9399B6059E6C1DA }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5459A16B050343E797945DDC2470BFC1 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A79FCF05F45D40E296014CE19E8C0D70 }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'func-cofy-api-dev'
+          app-name: 'app-cofy-api-dev'
           slot-name: 'Production'
           
