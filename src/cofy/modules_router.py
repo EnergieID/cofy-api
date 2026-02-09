@@ -65,10 +65,7 @@ class ModulesRouter(APIRouter):
 
     def get_modules_by_type(self, module_type: str) -> list[ModuleResponse]:
         """Returns a list of all registered modules of the given type."""
-        return [
-            self.get_module(module_type, module_name)
-            for module_name in self.cofy.get_modules_by_type(module_type)
-        ]
+        return [self.get_module(module_type, module_name) for module_name in self.cofy.get_modules_by_type(module_type)]
 
     def get_module(self, module_type: str, module_name: str) -> ModuleResponse:
         """Returns the module with the given type and name."""

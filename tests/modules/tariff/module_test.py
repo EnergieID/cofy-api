@@ -61,6 +61,4 @@ class TestTariffModule:
         assert len(data) == 3
         for i, entry in enumerate(data):
             assert entry["value"] == i * 10.0
-            assert (
-                entry["timestamp"] == (self.start + dt.timedelta(hours=i)).isoformat()
-            )
+            assert entry["timestamp"] == (self.start + dt.timedelta(hours=i)).isoformat()

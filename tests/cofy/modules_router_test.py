@@ -7,9 +7,7 @@ from tests.cofy.dummy_module import DummyModule
 class TestModulesRouter:
     def setup_method(self):
         self.cofy = CofyApi(settings={})
-        self.module = DummyModule(
-            name="testmodule", type_="testtype", metadata={"info": "test"}
-        )
+        self.module = DummyModule(name="testmodule", type_="testtype", metadata={"info": "test"})
         self.cofy.register_module(self.module)
         self.client = TestClient(self.cofy)
 
