@@ -50,6 +50,7 @@ class EnergyIDProduction(TimeseriesSource):
                 f"Failed to fetch data from EnergyID API: {respone.status_code} - {respone.text}"
             )
         json = respone.json()
+        print(json)
 
         assert "value" in json, (
             "Response from EnergyID API does not contain 'value' field"

@@ -61,7 +61,7 @@ class TariffModule(TimeseriesModule):
                 ]
 
         if "supported_resolutions" not in settings:
-            settings["supported_resolutions"] = [dt.timedelta(minutes=15)]
+            settings["supported_resolutions"] = ["PT15M"]
         super().__init__(settings, **kwargs)
 
     @property
