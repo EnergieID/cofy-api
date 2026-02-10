@@ -43,19 +43,26 @@ class TimeseriesModule(Module):
         return create_model("DynamicParameters", **self.settings.get("extra_args", {}))
 
     def create_format_endpoint(self, format: TimeseriesFormat, default: bool = False):
+        supported_resolutions = self.settings.get("supported_resolutions", [])
+
         def resolution_query(
             resolution: Annotated[
                 str | None,
                 Query(
                     description="Resolution of the timeseries in ISO8601 duration format (e.g. PT1H for 1 hour).",
-                    enum=self.settings.get("supported_resolutions", []),
-                    include_in_schema=len(
-                        self.settings.get("supported_resolutions", [])
-                    )
-                    != 1,
+                    enum=supported_resolutions,
+                    include_in_schema=len(supported_resolutions) != 1,
                 ),
             ] = self.merged_default_args["resolution"],
         ) -> ISODuration | None:
+            if resolution is None:
+                raise RequestValidationError("Resolution must be provided.")
+
+            if supported_resolutions and resolution not in supported_resolutions:
+                raise RequestValidationError(
+                    f"Resolution {resolution} is not supported. Supported resolutions are: {', '.join(supported_resolutions)}"
+                )
+
             return parse_duration(resolution) if resolution is not None else None
 
         # ty doesn't allow defining these inside the function definitions
@@ -83,7 +90,7 @@ class TimeseriesModule(Module):
             limit: Annotated[
                 int | None, Query(description="Limit number of resolution steps")
             ] = self.merged_default_args["limit"],
-            resolution: ISODuration | None = resolution_default,
+            resolution: ISODuration = resolution_default,
             params: self.DynamicParameters = params_default,
         ):
             # validate inputs
@@ -97,8 +104,6 @@ class TimeseriesModule(Module):
                 raise RequestValidationError(
                     "Start datetime must be before end datetime."
                 )
-            if resolution is None:
-                raise RequestValidationError("Resolution must be provided.")
             # If no timezone is provided, assume UTC
             if start.tzinfo is None:
                 start = start.replace(tzinfo=dt.UTC)

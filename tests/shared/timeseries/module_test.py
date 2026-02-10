@@ -19,16 +19,13 @@ class DummyTimeseriesSource(TimeseriesSource):
     ):
         import pandas as pd
 
-        timedelta_resolution = (
-            resolution
-            if isinstance(resolution, dt.timedelta)
-            else resolution.totimedelta(start=start)
-        )
+        data = []
 
-        data = [
-            {"timestamp": start + i * timedelta_resolution, "value": i * 10.0}
-            for i in range(int((end - start) // timedelta_resolution))
-        ]
+        i = 0
+        while start + i * resolution < end:
+            data.append({"timestamp": start + i * resolution, "value": i * 10.0})
+            i += 1
+
         frame = pd.DataFrame(data)
         return Timeseries(metadata={"foo": "bar", **kwargs}, frame=frame)
 
@@ -62,6 +59,9 @@ class TestTimeseriesModule:
         )
         self.start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
         self.end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
+        self.app = FastAPI()
+        self.app.include_router(self.module)
+        self.client = TestClient(self.app)
 
     @pytest.mark.asyncio
     async def test_fetch_timeseries(self):
@@ -76,11 +76,7 @@ class TestTimeseriesModule:
             assert row["timestamp"] == self.start + dt.timedelta(hours=i)
 
     def test_api_endpoint(self):
-        app = FastAPI()
-        app.include_router(self.module)
-        client = TestClient(app)
-
-        response = client.get(
+        response = self.client.get(
             self.module.prefix,
             params={"start": self.start.isoformat(), "end": self.end.isoformat()},
         )
@@ -156,15 +152,8 @@ class TestTimeseriesModule:
         assert response.status_code == 422
 
     def test_end_before_start_should_fail(self):
-        app = FastAPI()
-        module = TimeseriesModule(
-            {"source": DummyTimeseriesSource(), "default_args": {"limit": None}}
-        )
-        app.include_router(module)
-        client = TestClient(app)
-
-        response = client.get(
-            module.prefix,
+        response = self.client.get(
+            self.module.prefix,
             params={
                 "start": self.end.isoformat(),
                 "end": self.start.isoformat(),
@@ -186,6 +175,47 @@ class TestTimeseriesModule:
         response = client.get(
             module.prefix,
             params={"end": self.end.isoformat()},
+        )
+        assert response.status_code == 422
+
+    def test_no_resolution_should_fail(self):
+        app = FastAPI()
+        module = TimeseriesModule(
+            {
+                "source": DummyTimeseriesSource(),
+                "default_args": {"limit": None, "resolution": None},
+            }
+        )
+        app.include_router(module)
+        client = TestClient(app)
+
+        response = client.get(
+            module.prefix,
+            params={
+                "start": self.start.isoformat(),
+                "end": self.end.isoformat(),
+            },
+        )
+        assert response.status_code == 422
+
+    def test_resolution_should_be_in_supported_resolutions(self):
+        app = FastAPI()
+        module = TimeseriesModule(
+            {
+                "source": DummyTimeseriesSource(),
+                "supported_resolutions": ["PT15M", "PT1H"],
+            }
+        )
+        app.include_router(module)
+        client = TestClient(app)
+
+        response = client.get(
+            module.prefix,
+            params={
+                "start": self.start.isoformat(),
+                "end": self.end.isoformat(),
+                "resolution": "PT30M",
+            },
         )
         assert response.status_code == 422
 
@@ -211,18 +241,11 @@ class TestTimeseriesModule:
         self.assert_iso_equals_datetime(result["metadata"]["end"], self.end)
 
     def test_utc_used_if_no_timezone(self):
-        app = FastAPI()
-        module = TimeseriesModule(
-            {"source": DummyTimeseriesSource(), "default_args": {"limit": None}}
-        )
-        app.include_router(module)
-        client = TestClient(app)
-
         start_naive = self.start.replace(tzinfo=None)
         end_naive = self.end.replace(tzinfo=None)
 
-        response = client.get(
-            module.prefix,
+        response = self.client.get(
+            self.module.prefix,
             params={
                 "start": start_naive.isoformat(),
                 "end": end_naive.isoformat(),
@@ -236,15 +259,8 @@ class TestTimeseriesModule:
         self.assert_iso_equals_datetime(result["metadata"]["end"], self.end)
 
     def test_offset_and_limit(self):
-        app = FastAPI()
-        module = TimeseriesModule(
-            {"source": DummyTimeseriesSource(), "default_args": {"limit": None}}
-        )
-        app.include_router(module)
-        client = TestClient(app)
-
-        response = client.get(
-            module.prefix,
+        response = self.client.get(
+            self.module.prefix,
             params={
                 "start": self.start.isoformat(),
                 "offset": 1,
@@ -263,15 +279,8 @@ class TestTimeseriesModule:
         )
 
     def test_csv_format(self):
-        app = FastAPI()
-        module = TimeseriesModule(
-            {"source": DummyTimeseriesSource(), "default_args": {"limit": None}}
-        )
-        app.include_router(module)
-        client = TestClient(app)
-
-        response = client.get(
-            f"{module.prefix}.csv",
+        response = self.client.get(
+            f"{self.module.prefix}.csv",
             params={
                 "start": self.start.isoformat(),
                 "end": self.end.isoformat(),
@@ -282,3 +291,111 @@ class TestTimeseriesModule:
         lines = csv_content.strip().split("\n")
         assert lines[0] == "timestamp,value"
         assert len(lines) == 4
+
+    def test_multiple_resolutions(self):
+        response = self.client.get(
+            self.module.prefix,
+            params={
+                "start": self.start.isoformat(),
+                "end": self.end.isoformat(),
+                "resolution": "PT30M",
+            },
+        )
+        assert response.status_code == 200
+        result = response.json()
+        data = result.get("data")
+        assert len(data) == 6
+        for i, entry in enumerate(data):
+            assert entry["value"] == i * 10.0
+            self.assert_iso_equals_datetime(
+                entry["timestamp"], self.start + dt.timedelta(minutes=30 * i)
+            )
+
+    def test_can_use_resolution_with_limit(self):
+        response = self.client.get(
+            self.module.prefix,
+            params={
+                "start": self.start.isoformat(),
+                "resolution": "PT30M",
+                "limit": 2,
+            },
+        )
+        assert response.status_code == 200
+        result = response.json()
+        data = result.get("data")
+        assert len(data) == 2
+        for i, entry in enumerate(data):
+            assert entry["value"] == i * 10.0
+            self.assert_iso_equals_datetime(
+                entry["timestamp"], self.start + dt.timedelta(minutes=30 * i)
+            )
+
+    @pytest.mark.parametrize(
+        "resolution, limit, start, end",
+        [
+            (
+                "PT15M",
+                2,
+                dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
+                dt.datetime(2026, 1, 1, 0, 30, tzinfo=dt.UTC),
+            ),
+            (
+                "PT30M",
+                3,
+                dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
+                dt.datetime(2026, 1, 1, 1, 30, tzinfo=dt.UTC),
+            ),
+            (
+                "PT1H",
+                2,
+                dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
+                dt.datetime(2026, 1, 1, 2, 0, tzinfo=dt.UTC),
+            ),
+            (
+                "P1D",
+                1,
+                dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
+                dt.datetime(2026, 1, 2, 0, 0, tzinfo=dt.UTC),
+            ),
+            (
+                "P7D",
+                15,
+                dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
+                dt.datetime(2026, 4, 16, 0, 0, tzinfo=dt.UTC),
+            ),
+            (
+                "P1M",
+                14,
+                dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
+                dt.datetime(2027, 3, 1, 0, 0, tzinfo=dt.UTC),
+            ),
+            (
+                "P1Y",
+                10,
+                dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
+                dt.datetime(2036, 1, 1, 0, 0, tzinfo=dt.UTC),
+            ),
+            (
+                "P1Y2M3DT4H5M6S",
+                2,
+                dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
+                dt.datetime(2028, 5, 7, 8, 10, 12, tzinfo=dt.UTC),
+            ),
+        ],
+    )
+    def test_resolution_limit_and_start_determine_end(
+        self, resolution, limit, start, end
+    ):
+        response = self.client.get(
+            self.module.prefix,
+            params={
+                "start": start.isoformat(),
+                "resolution": resolution,
+                "limit": limit,
+            },
+        )
+        assert response.status_code == 200
+        result = response.json()
+        data = result.get("data")
+        assert len(data) == limit
+        self.assert_iso_equals_datetime(result["metadata"]["end"], end)
