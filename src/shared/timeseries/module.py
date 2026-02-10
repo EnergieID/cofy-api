@@ -3,12 +3,14 @@ from typing import Annotated
 
 from fastapi import Depends, Query
 from fastapi.exceptions import RequestValidationError
+from isodate import parse_duration
 from pydantic import create_model
 
 from src.shared.module import Module
 from src.shared.timeseries.format import TimeseriesFormat
 from src.shared.timeseries.formats.csv import CSVFormat
 from src.shared.timeseries.formats.json import JSONFormat
+from src.shared.timeseries.model import ResolutionType
 from src.shared.timeseries.source import TimeseriesSource
 
 
@@ -41,6 +43,23 @@ class TimeseriesModule(Module):
         return create_model("DynamicParameters", **self.settings.get("extra_args", {}))
 
     def create_format_endpoint(self, format: TimeseriesFormat, default: bool = False):
+        def resolution_query(
+            resolution: Annotated[
+                str | None,
+                Query(
+                    description="Resolution of the timeseries in ISO8601 duration format (e.g. PT1H for 1 hour).",
+                    enum=self.settings.get("supported_resolutions", []),
+                    include_in_schema=len(
+                        self.settings.get("supported_resolutions", [])
+                    )
+                    != 1,
+                ),
+            ] = self.merged_default_args["resolution"],
+        ) -> ResolutionType | None:
+            return parse_duration(resolution) if resolution is not None else None
+
+        # ty doesn't allow defining these inside the function definitions
+        resolution_default = Depends(resolution_query)
         params_default = Depends()
 
         async def get_timeseries(
@@ -64,17 +83,7 @@ class TimeseriesModule(Module):
             limit: Annotated[
                 int | None, Query(description="Limit number of resolution steps")
             ] = self.merged_default_args["limit"],
-            resolution: Annotated[
-                dt.timedelta | None,
-                Query(
-                    description="Resolution of the timeseries in ISO8601 duration format (e.g. PT1H for 1 hour).",
-                    enum=self.settings.get("supported_resolutions", []),
-                    include_in_schema=len(
-                        self.settings.get("supported_resolutions", [])
-                    )
-                    != 1,
-                ),
-            ] = self.merged_default_args["resolution"],
+            resolution: ResolutionType | None = resolution_default,
             params: self.DynamicParameters = params_default,
         ):
             # validate inputs
@@ -137,7 +146,7 @@ class TimeseriesModule(Module):
             "end": lambda: dt.datetime.now(dt.UTC),
             "offset": 0,
             "limit": None,
-            "resolution": dt.timedelta(hours=1),
+            "resolution": "PT1H",
         }
 
     @property

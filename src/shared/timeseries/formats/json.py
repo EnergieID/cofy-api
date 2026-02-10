@@ -1,9 +1,9 @@
 import datetime as dt
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from src.shared.timeseries.format import TimeseriesFormat
-from src.shared.timeseries.model import Timeseries
+from src.shared.timeseries.model import ResolutionType, Timeseries
 
 
 class DefaultDataType(BaseModel):
@@ -12,10 +12,11 @@ class DefaultDataType(BaseModel):
 
 
 class DefaultMetadataType(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     start: dt.datetime | None = None
     end: dt.datetime | None = None
     format: str = "json"
-    resolution: dt.timedelta | None = None
+    resolution: ResolutionType | None = None
 
 
 class ResponseModel[
