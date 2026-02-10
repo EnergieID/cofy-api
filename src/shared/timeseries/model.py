@@ -5,7 +5,7 @@ import narwhals as nw
 from isodate import Duration, parse_duration, strftime
 from pydantic import BeforeValidator, Field, PlainSerializer
 
-ResolutionType = Annotated[
+ISODuration = Annotated[
     timedelta | Duration,
     BeforeValidator(lambda v: parse_duration(v) if isinstance(v, str) else v),
     PlainSerializer(lambda v: strftime(v, "P%P"), return_type=str),

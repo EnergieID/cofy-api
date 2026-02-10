@@ -3,9 +3,9 @@ import datetime as dt
 
 import polars as pl
 import requests
-from isodate import Duration, strftime
+from isodate import strftime
 
-from src.shared.timeseries.model import Timeseries
+from src.shared.timeseries.model import ISODuration, Timeseries
 from src.shared.timeseries.source import TimeseriesSource
 
 
@@ -27,7 +27,7 @@ class EnergyIDProduction(TimeseriesSource):
         self,
         start: dt.datetime,
         end: dt.datetime,
-        resolution: dt.timedelta | Duration,
+        resolution: ISODuration,
         **kwargs,
     ) -> Timeseries:
         start_date = start.date().isoformat()

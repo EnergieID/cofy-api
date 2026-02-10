@@ -3,7 +3,7 @@ import datetime as dt
 from pydantic import BaseModel, ConfigDict
 
 from src.shared.timeseries.format import TimeseriesFormat
-from src.shared.timeseries.model import ResolutionType, Timeseries
+from src.shared.timeseries.model import ISODuration, Timeseries
 
 
 class DefaultDataType(BaseModel):
@@ -16,7 +16,7 @@ class DefaultMetadataType(BaseModel):
     start: dt.datetime | None = None
     end: dt.datetime | None = None
     format: str = "json"
-    resolution: ResolutionType | None = None
+    resolution: ISODuration | None = None
 
 
 class ResponseModel[

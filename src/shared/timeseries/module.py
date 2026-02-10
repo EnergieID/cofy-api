@@ -10,7 +10,7 @@ from src.shared.module import Module
 from src.shared.timeseries.format import TimeseriesFormat
 from src.shared.timeseries.formats.csv import CSVFormat
 from src.shared.timeseries.formats.json import JSONFormat
-from src.shared.timeseries.model import ResolutionType
+from src.shared.timeseries.model import ISODuration
 from src.shared.timeseries.source import TimeseriesSource
 
 
@@ -55,7 +55,7 @@ class TimeseriesModule(Module):
                     != 1,
                 ),
             ] = self.merged_default_args["resolution"],
-        ) -> ResolutionType | None:
+        ) -> ISODuration | None:
             return parse_duration(resolution) if resolution is not None else None
 
         # ty doesn't allow defining these inside the function definitions
@@ -83,7 +83,7 @@ class TimeseriesModule(Module):
             limit: Annotated[
                 int | None, Query(description="Limit number of resolution steps")
             ] = self.merged_default_args["limit"],
-            resolution: ResolutionType | None = resolution_default,
+            resolution: ISODuration | None = resolution_default,
             params: self.DynamicParameters = params_default,
         ):
             # validate inputs

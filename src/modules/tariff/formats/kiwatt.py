@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from pydantic import BaseModel, ConfigDict
 
 from src.shared.timeseries.format import TimeseriesFormat
-from src.shared.timeseries.model import ResolutionType, Timeseries
+from src.shared.timeseries.model import ISODuration, Timeseries
 
 
 def to_utc_timestring(dt: datetime | str) -> str:
@@ -23,7 +23,7 @@ class ResponseModel(BaseModel):
     periodEndUTC: str = "2025-08-29T22:00:00"
     source: str = "Cofy-API-Demo"
     unit: str = "EUR/MWh"
-    resolution: ResolutionType = timedelta(minutes=15)
+    resolution: ISODuration = timedelta(minutes=15)
     prices: list[PriceRecordModel]
 
 
