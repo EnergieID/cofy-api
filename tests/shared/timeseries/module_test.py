@@ -8,18 +8,26 @@ from pydantic import BaseModel
 
 from src.shared.timeseries.formats.csv import CSVFormat
 from src.shared.timeseries.formats.json import DefaultDataType, JSONFormat
-from src.shared.timeseries.model import Timeseries
+from src.shared.timeseries.model import ISODuration, Timeseries
 from src.shared.timeseries.module import TimeseriesModule
 from src.shared.timeseries.source import TimeseriesSource
 
 
 class DummyTimeseriesSource(TimeseriesSource):
-    async def fetch_timeseries(self, start: dt.datetime, end: dt.datetime, **kwargs):
+    async def fetch_timeseries(
+        self, start: dt.datetime, end: dt.datetime, resolution: ISODuration, **kwargs
+    ):
         import pandas as pd
 
+        timedelta_resolution = (
+            resolution
+            if isinstance(resolution, dt.timedelta)
+            else resolution.totimedelta(start=start)
+        )
+
         data = [
-            {"timestamp": start + dt.timedelta(hours=i), "value": i * 10.0}
-            for i in range(int((end - start).total_seconds() // 3600))
+            {"timestamp": start + i * timedelta_resolution, "value": i * 10.0}
+            for i in range(int((end - start) // timedelta_resolution))
         ]
         frame = pd.DataFrame(data)
         return Timeseries(metadata={"foo": "bar", **kwargs}, frame=frame)
@@ -57,7 +65,9 @@ class TestTimeseriesModule:
 
     @pytest.mark.asyncio
     async def test_fetch_timeseries(self):
-        result = await self.module.source.fetch_timeseries(self.start, self.end)
+        result = await self.module.source.fetch_timeseries(
+            self.start, self.end, dt.timedelta(hours=1)
+        )
         assert hasattr(result, "frame")
         df = result.frame
         assert len(df) == 3

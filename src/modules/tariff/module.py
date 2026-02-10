@@ -73,5 +73,5 @@ class TariffModule(TimeseriesModule):
             "end": lambda: None,
             "offset": 0,
             "limit": 288,
-            "resolution": dt.timedelta(minutes=15),
+            "resolution": "PT15M",
         }

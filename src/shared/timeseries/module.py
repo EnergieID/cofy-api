@@ -119,7 +119,7 @@ class TimeseriesModule(Module):
 
             # fetch timeseries data
             timeseries = await self.source.fetch_timeseries(
-                start, end, resolution, **extra_args
+                start=start, end=end, resolution=resolution, **extra_args
             )
 
             # add metadata
