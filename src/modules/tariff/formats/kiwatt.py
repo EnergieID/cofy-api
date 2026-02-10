@@ -1,9 +1,9 @@
 from datetime import UTC, datetime, timedelta
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from src.shared.timeseries.format import TimeseriesFormat
-from src.shared.timeseries.model import Timeseries
+from src.shared.timeseries.model import ISODuration, Timeseries
 
 
 def to_utc_timestring(dt: datetime | str) -> str:
@@ -17,12 +17,13 @@ class PriceRecordModel(BaseModel):
 
 
 class ResponseModel(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     generatedAtUTC: str = "2025-08-28T11:15:00"
     periodStartUTC: str = "2025-08-28T22:00:00"
     periodEndUTC: str = "2025-08-29T22:00:00"
     source: str = "Cofy-API-Demo"
     unit: str = "EUR/MWh"
-    resolution: timedelta = timedelta(minutes=15)
+    resolution: ISODuration = timedelta(minutes=15)
     prices: list[PriceRecordModel]
 
 
