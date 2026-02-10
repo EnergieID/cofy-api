@@ -10,6 +10,8 @@ from src.shared.timeseries.source import TimeseriesSource
 
 
 class EnergyIDProduction(TimeseriesSource):
+    SUPPORTED_RESOLUTIONS = ["PT5M", "PT15M", "PT1H", "P1D", "P7D", "P1M", "P1Y"]
+
     def __init__(self, api_key: str, record_id: str) -> None:
         super().__init__()
         assert api_key, "API key must be provided"
@@ -33,6 +35,11 @@ class EnergyIDProduction(TimeseriesSource):
         start_date = start.date().isoformat()
         end_date = end.date().isoformat()
         resolution_iso = strftime(resolution, format="P%P")
+
+        assert resolution_iso in self.SUPPORTED_RESOLUTIONS, (
+            f"Resolution {resolution_iso} is not supported. Supported resolutions are: {', '.join(self.SUPPORTED_RESOLUTIONS)}"
+        )
+
         respone = await asyncio.to_thread(
             requests.get,
             f"https://api.energyid.eu/api/v1/records/{self.record_id}/data/energyProduction?start={start_date}&end={end_date}&interval={resolution_iso}",

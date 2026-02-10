@@ -47,7 +47,7 @@ wind = ProductionModule(
             record_id=environ.get("ENERGY_ID_RECORD_ID", ""),
         ),
         "name": "wind",
-        "supported_resolutions": ["PT5M", "PT15M", "PT1H", "P1D", "P7D", "P1M", "P1Y"],
+        "supported_resolutions": EnergyIDProduction.SUPPORTED_RESOLUTIONS,
     }
 )
 app.register_module(wind)

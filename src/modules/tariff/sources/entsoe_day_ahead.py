@@ -22,7 +22,7 @@ class EntsoeDayAheadTariffSource(TimeseriesSource):
         self,
         start: dt.datetime,
         end: dt.datetime,
-        resolution: ISODuration,
+        resolution: ISODuration = dt.timedelta(minutes=15),
         country_code: str | None = None,
         **kwargs,
     ) -> Timeseries:
