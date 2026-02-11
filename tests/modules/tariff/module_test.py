@@ -52,7 +52,7 @@ class TestTariffModule:
         client = TestClient(app)
 
         response = client.get(
-            "/v0/",
+            self.module.prefix,
             params={"start": self.start.isoformat(), "end": self.end.isoformat()},
         )
         assert response.status_code == 200
