@@ -39,7 +39,7 @@ skip_covered = true
 [tool.coverage.run]
 omit = ["src/demo/*"]
 [tool.ruff]
-line-length = 200
+line-length = 120
 [tool.ruff.lint]
 select = [
     "E", # pycodestyle
