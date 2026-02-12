@@ -8,7 +8,7 @@ from src.modules.members.models.eb_member import EBMember, EBProduct
 from src.modules.members.source import MemberSource
 
 
-class EBCSVSource(MemberSource[EBMember]):
+class EBCSVSource(MemberSource):
     members: dict[str, EBMember] = {}
 
     def __init__(self, file_path: str):

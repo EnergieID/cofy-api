@@ -1,9 +1,7 @@
 import datetime as dt
 from enum import StrEnum
 
-from pydantic import BaseModel
-
-from src.modules.members.model import Member
+from sqlmodel import Field, Relationship, SQLModel
 
 
 class EBClientType(StrEnum):
@@ -27,9 +25,10 @@ class GridOperator(StrEnum):
     LIMBURG = "Fluvius Limburg"
 
 
-class EBProduct(BaseModel):
-    id: int
-    member_id: str
+class EBProduct(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    member_id: str = Field(foreign_key="ebmember.id")
+    member: "EBMember" = Relationship(back_populates="products")
     name: str
     ean: int
     connection_type: EBConnectionType
@@ -38,10 +37,11 @@ class EBProduct(BaseModel):
     grid_operator: GridOperator
 
 
-class EBMember(Member):
+class EBMember(SQLModel, table=True):
     """EBMember is a member of the EnergyBar community."""
 
+    id: str | None = Field(default=None, primary_key=True)
     email: str
     type: EBClientType
     social_tariff: bool = False
-    products: list[EBProduct] = []
+    products: list[EBProduct] = Relationship(back_populates="member")
