@@ -1,5 +1,8 @@
 import csv
 import datetime as dt
+from typing import Annotated
+
+from fastapi import Query
 
 from src.modules.members.models.eb_member import EBMember, EBProduct
 from src.modules.members.source import MemberSource
@@ -46,6 +49,19 @@ class EBCSVSource(MemberSource[EBMember]):
                     )
                 )
 
-    def list(self) -> list[EBMember]:
+    def list(
+        self,
+        email: Annotated[
+            str | None, Query(description="Filter by email of the member")
+        ] = None,
+        ean: Annotated[
+            int | None, Query(description="Filter by EAN of the product")
+        ] = None,
+    ) -> list[EBMember]:
         """List all members from the CSV file."""
-        return list(self.members.values())
+        return [
+            member
+            for member in self.members.values()
+            if (email is None or member.email == email)
+            and (ean is None or any(product.ean == ean for product in member.products))
+        ]
