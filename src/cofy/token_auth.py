@@ -35,12 +35,8 @@ def token_verifier(tokens: dict):
 
     def verify(
         request: Request,
-        header_token: str = Depends(
-            APIKeyHeader(name="Authorization", auto_error=False, scheme_name="header")
-        ),
-        query_token: str = Depends(
-            APIKeyQuery(name="token", auto_error=False, scheme_name="query")
-        ),
+        header_token: str = Depends(APIKeyHeader(name="Authorization", auto_error=False, scheme_name="header")),
+        query_token: str = Depends(APIKeyQuery(name="token", auto_error=False, scheme_name="query")),
     ):
         token = None
         auth_info = None
@@ -58,24 +54,16 @@ def token_verifier(tokens: dict):
             }
         if not token:
             if header_token:
-                raise HTTPException(
-                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token format"
-                )
+                raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token format")
 
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED, detail="Missing token"
-            )
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Missing token")
 
         token_info = tokens.get(token)
         if not token_info:
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
-            )
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
         if token_info.is_expired():
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED, detail="Token expired"
-            )
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Token expired")
         request.state.token = token
         request.state.auth_info = auth_info
 

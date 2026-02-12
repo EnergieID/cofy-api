@@ -33,11 +33,7 @@ class TestCofyApiModuleRegistration:
         self.cofy.register_module(self.module)
         tags_metadata = self.cofy.tags_metadata
         type_tag = next(
-            (
-                tag
-                for tag in tags_metadata
-                if tag["name"] == self.module.type_tag["name"]
-            ),
+            (tag for tag in tags_metadata if tag["name"] == self.module.type_tag["name"]),
             None,
         )
         module_tag = next(

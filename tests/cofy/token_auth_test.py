@@ -45,23 +45,17 @@ class TestTokenAuth:
         assert response.json()["detail"] == "Missing token"
 
     def test_invalid_token(self):
-        response = self.client.get(
-            "/protected", headers={"Authorization": "Bearer wrongtoken"}
-        )
+        response = self.client.get("/protected", headers={"Authorization": "Bearer wrongtoken"})
         assert response.status_code == HTTP_401_UNAUTHORIZED
         assert response.json()["detail"] == "Invalid token"
 
     def test_expired_token(self):
-        response = self.client.get(
-            "/protected", headers={"Authorization": "Bearer expiredtoken"}
-        )
+        response = self.client.get("/protected", headers={"Authorization": "Bearer expiredtoken"})
         assert response.status_code == HTTP_401_UNAUTHORIZED
         assert response.json()["detail"] == "Token expired"
 
     def test_valid_token_header(self):
-        response = self.client.get(
-            "/protected", headers={"Authorization": "Bearer validtoken"}
-        )
+        response = self.client.get("/protected", headers={"Authorization": "Bearer validtoken"})
         assert response.status_code == 200
         assert response.json()["message"] == "Access granted"
 
@@ -71,16 +65,12 @@ class TestTokenAuth:
         assert response.json()["message"] == "Access granted"
 
     def test_invalid_token_format(self):
-        response = self.client.get(
-            "/protected", headers={"Authorization": "InvalidFormat validtoken"}
-        )
+        response = self.client.get("/protected", headers={"Authorization": "InvalidFormat validtoken"})
         assert response.status_code == HTTP_401_UNAUTHORIZED
         assert response.json()["detail"] == "Invalid token format"
 
     def test_infinitetoken(self):
-        response = self.client.get(
-            "/protected", headers={"Authorization": "Bearer infinitetoken"}
-        )
+        response = self.client.get("/protected", headers={"Authorization": "Bearer infinitetoken"})
         assert response.status_code == 200
         assert response.json()["message"] == "Access granted"
 
@@ -90,9 +80,7 @@ def test_token_expiry_is_timezone_aware():
         {
             "name": "timezonetoken",
             # now + 1 minute in UTC-1, should not be expired
-            "expires": (
-                dt.now(timezone(timedelta(hours=-1))) + timedelta(minutes=1)
-            ).isoformat(),
+            "expires": (dt.now(timezone(timedelta(hours=-1))) + timedelta(minutes=1)).isoformat(),
         }
     )
 
@@ -102,9 +90,7 @@ def test_token_expiry_is_timezone_aware():
         {
             "name": "timezonetoken",
             # now - 1 minute in UTC+1, should be expired
-            "expires": (
-                dt.now(timezone(timedelta(hours=1))) - timedelta(minutes=1)
-            ).isoformat(),
+            "expires": (dt.now(timezone(timedelta(hours=1))) - timedelta(minutes=1)).isoformat(),
         }
     )
 
