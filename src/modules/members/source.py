@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from modules.members.model import Member
+from src.modules.members.model import Member
 
 
 class MemberSource[T: Member](ABC):

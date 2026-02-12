@@ -12,7 +12,7 @@ class EBClientType(StrEnum):
 
 
 class EBConnectionType(StrEnum):
-    ELECTRICITY = "electriciteit"
+    ELECTRICITY = "elektriciteit"
     GAS = "gas"
 
 
@@ -29,7 +29,7 @@ class GridOperator(StrEnum):
 
 class EBProduct(BaseModel):
     id: int
-    member_id: int
+    member_id: str
     name: str
     ean: int
     connection_type: EBConnectionType

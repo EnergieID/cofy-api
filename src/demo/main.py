@@ -1,9 +1,12 @@
+from importlib import resources
 from os import environ
 
 from fastapi import Depends
 
 from src.cofy.cofy_api import CofyApi
 from src.cofy.token_auth import token_verifier
+from src.modules.members.module import MembersModule
+from src.modules.members.sources.eb_csv_source import EBCSVSource
 from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
@@ -45,3 +48,12 @@ fr_tariffs = TariffModule(
     },
 )
 app.register_module(fr_tariffs)
+
+# members endpoint for EnergyBar members, using a CSV file as source
+CSV_PATH = resources.files("src.modules.members.sources").joinpath(
+    "eb_members_example.csv"
+)
+members = MembersModule(
+    settings={"source": EBCSVSource(str(CSV_PATH)), "name": "energy_bar"}
+)
+app.register_module(members)

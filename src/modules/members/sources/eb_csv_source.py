@@ -1,6 +1,7 @@
 import csv
+import datetime as dt
 
-from modules.members.models.eb_member import EBMember, EBProduct
+from src.modules.members.models.eb_member import EBMember, EBProduct
 from src.modules.members.source import MemberSource
 
 
@@ -33,8 +34,14 @@ class EBCSVSource(MemberSource[EBMember]):
                         name=row["PRODUCT"],
                         ean=int(row["EAN"]),
                         connection_type=row["AANSLUITING"],
-                        start_date=row["STARTDATUM"],
-                        end_date=row["EINDDATUM"] if row["EINDDATUM"] else None,
+                        start_date=dt.datetime.strptime(
+                            row["STARTDATUM"], "%d/%m/%Y %H:%M:%S"
+                        ).date(),
+                        end_date=dt.datetime.strptime(
+                            row["EINDDATUM"], "%d/%m/%Y %H:%M:%S"
+                        ).date()
+                        if row["EINDDATUM"]
+                        else None,
                         grid_operator=row["DISTRIBUTIENET"],
                     )
                 )
