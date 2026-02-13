@@ -14,5 +14,9 @@ class MembersModule(Module):
     def init_routes(self):
         # Define your API routes here
         self.add_api_route(
-            "/", self.source.list, methods=["GET"], summary="List members"
+            "/",
+            self.source.list,
+            methods=["GET"],
+            summary="List members",
+            response_model=list[self.source.response_model],
         )
