@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 
-from modules.members.model import Member
+from src.modules.members.model import Member
 
 
 class MemberSource[T](ABC):
     @abstractmethod
-    def list(self, **kwargs) -> list[T]:
+    def list(self) -> list[T]:
         """List all members."""
 
     @property

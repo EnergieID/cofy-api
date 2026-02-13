@@ -2,6 +2,7 @@ import datetime as dt
 from enum import StrEnum
 
 from pydantic import BaseModel
+from sqlalchemy.orm import Mapped
 from sqlmodel import Field, Relationship, SQLModel
 
 from src.modules.members.model import Member
@@ -31,7 +32,7 @@ class GridOperator(StrEnum):
 class EBProduct(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     member_id: str = Field(foreign_key="ebmember.id")
-    member = Relationship(back_populates="products")
+    member: Mapped["EBMember"] = Relationship(back_populates="products")
     name: str
     ean: int
     connection_type: EBConnectionType
@@ -47,7 +48,7 @@ class EBMember(SQLModel, table=True):
     email: str
     type: EBClientType
     social_tariff: bool = False
-    products = Relationship(back_populates="member")
+    products: Mapped[list[EBProduct]] = Relationship(back_populates="member")
 
 
 class EBProductOut(BaseModel):

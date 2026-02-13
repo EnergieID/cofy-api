@@ -20,7 +20,6 @@ class EBDbSource(MemberSource[EBMember]):
         ean: Annotated[
             int | None, Query(description="Filter by EAN of the product")
         ] = None,
-        **kwargs,
     ) -> list[EBMember]:
         with Session(self.db_engine) as session:
             statement = select(EBMember).options(joinedload(EBMember.products))
