@@ -1,13 +1,36 @@
+from contextlib import asynccontextmanager
+from importlib import resources
 from os import environ
 
 from fastapi import Depends
+from sqlmodel import SQLModel, create_engine
 
 from src.cofy.cofy_api import CofyApi
 from src.cofy.token_auth import token_verifier
+from src.modules.members.jobs.eb_load_from_csv import EBLoadFromCSV
+from src.modules.members.module import MembersModule
+from src.modules.members.sources.eb_db_source import EBDbSource
 from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
+MEMBERS_CSV_PATH = str(
+    resources.files("src.modules.members.jobs").joinpath("eb_members_example.csv")
+)
+SQLITE_URL = f"sqlite:///{resources.files('src.demo').joinpath('database.db')}"
+engine = create_engine(SQLITE_URL, connect_args={"check_same_thread": False})
+
+
+@asynccontextmanager
+async def lifespan(app: CofyApi):
+    # Startup code
+    SQLModel.metadata.create_all(engine)
+    EBLoadFromCSV(MEMBERS_CSV_PATH, engine)()
+    yield
+    # Shutdown code (if needed)
+
+
 app = CofyApi(
+    lifespan=lifespan,
     dependencies=[
         Depends(
             token_verifier(
@@ -21,7 +44,7 @@ app = CofyApi(
                 }
             )
         )
-    ]
+    ],
 )
 
 tariffs = TariffModule(settings={"api_key": environ.get("ENTSOE_API_KEY", "")})
@@ -45,3 +68,8 @@ fr_tariffs = TariffModule(
     },
 )
 app.register_module(fr_tariffs)
+
+# members endpoint for EnergyBar members, using a CSV file as source
+app.register_module(
+    MembersModule(settings={"source": EBDbSource(engine), "name": "energybar"})
+)
