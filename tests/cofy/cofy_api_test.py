@@ -32,22 +32,17 @@ class TestCofyApiModuleRegistration:
     def test_tags_metadata_includes_module_tags(self):
         self.cofy.register_module(self.module)
         tags_metadata = self.cofy.tags_metadata
-        type_tag = next(
-            (
-                tag
-                for tag in tags_metadata
-                if tag["name"] == self.module.type_tag["name"]
-            ),
-            None,
-        )
         module_tag = next(
             (tag for tag in tags_metadata if tag["name"] == self.module.tag["name"]),
             None,
         )
-        assert type_tag is not None
         assert module_tag is not None
-        assert "x-implementations" in type_tag
-        assert self.module.tag["name"] in type_tag["x-implementations"]
+        assert "x-module-type" in module_tag
+        assert module_tag["x-module-type"] == self.module.type
+        assert "x-version" in module_tag
+        assert module_tag["x-version"] == self.module.version
+        assert "x-display-name" in module_tag
+        assert module_tag["x-display-name"] == self.module.name
 
     def test_openapi_includes_module_routes(self):
         self.cofy.register_module(self.module)
@@ -76,13 +71,8 @@ class TestCofyApiModuleRegistration:
         assert response.status_code == 200
         data = response.json()
         tags = data.get("tags", [])
-        type_tag = next(
-            (tag for tag in tags if tag["name"] == self.module.type_tag["name"]),
-            None,
-        )
         module_tag = next(
             (tag for tag in tags if tag["name"] == self.module.tag["name"]),
             None,
         )
-        assert type_tag is not None
         assert module_tag is not None
