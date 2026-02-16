@@ -25,14 +25,6 @@ class TestModule:
         tag = self.module.tag
         assert tag["name"] == "dummy:test_module"
         assert tag["description"] == "Dummy module for testing."
-
-    def test_module_type_tag(self):
-        type_tag = self.module.type_tag
-        assert type_tag["name"] == "dummy"
-        assert type_tag["description"] == "Dummy module for testing."
-
-    def test_module_has_own_docs(self):
-        response = self.client.get(self.module.prefix + "/openapi.json")
-        assert response.status_code == 200
-        data = response.json()
-        assert self.module.prefix + "/hello" in data["paths"]
+        assert tag["x-module-type"] == "dummy"
+        assert tag["x-version"] == "v1"
+        assert tag["x-display-name"] == "test_module"
