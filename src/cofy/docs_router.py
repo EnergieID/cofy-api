@@ -27,7 +27,9 @@ class DocsRouter(APIRouter):
         )
 
         if hasattr(request.state, "auth_info"):
-            content = response.body.decode()
+            body = request.body
+            assert isinstance(body, bytes)
+            content = body.decode()
             content = content.replace(
                 '"AUTHORIZE_API"',
                 f'() => ui.preauthorizeApiKey("{request.state.auth_info["scheme"]}", "{request.state.auth_info["content"]}")',
