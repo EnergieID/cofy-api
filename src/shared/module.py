@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from fastapi import APIRouter
 from fastapi.openapi.utils import get_openapi
@@ -47,7 +48,7 @@ class Module(APIRouter, ABC):
         return "v1"
 
     @property
-    def type_tag(self) -> dict[str, str]:
+    def type_tag(self) -> dict[str, Any]:
         """The tag info of the module type."""
         return {
             "name": self.type,
@@ -55,7 +56,7 @@ class Module(APIRouter, ABC):
         }
 
     @property
-    def tag(self) -> dict[str, str]:
+    def tag(self) -> dict[str, Any]:
         """The tag info of the implementation."""
         return {
             "name": f"{self.type}:{self.name}",
