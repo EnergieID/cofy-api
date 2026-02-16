@@ -27,6 +27,7 @@ class DocsRouter(APIRouter):
         )
 
         if hasattr(request.state, "auth_info"):
+            assert isinstance(response.body, bytes)
             content = response.body.decode()
             content = content.replace(
                 '"AUTHORIZE_API"',

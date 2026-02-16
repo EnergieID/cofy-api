@@ -39,7 +39,7 @@ class CofyApi(FastAPI):
         self.include_router(module)
 
     @property
-    def tags_metadata(self) -> list[dict[str, str]]:
+    def tags_metadata(self) -> list[dict[str, Any]]:
         tags = []
         for instances_of_type in self._modules.values():
             type_tag = next(iter(instances_of_type.values())).type_tag

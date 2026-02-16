@@ -46,7 +46,7 @@ async def test_fetch_tariffs():
             parse_dates=True,
         )
         .squeeze()
-        .rename(0)  # ty: ignore[possibly-missing-attribute, no-matching-overload]
+        .rename(0)  # ty: ignore[unresolved-attribute, no-matching-overload]
     )
 
     start = dt.datetime(2026, 1, 21)
