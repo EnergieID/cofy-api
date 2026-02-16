@@ -42,6 +42,7 @@ fr_tariffs = TariffModule(
         "api_key": environ.get("ENTSOE_API_KEY", ""),
         "name": "fr_tariffs",
         "description": "Entsoe tariff data for France",
+        "display_name": "French Tariffs",
     },
 )
 app.register_module(fr_tariffs)

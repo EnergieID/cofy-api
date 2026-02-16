@@ -40,12 +40,8 @@ class CofyApi(FastAPI):
 
     @property
     def tags_metadata(self) -> list[dict[str, Any]]:
-        tags = []
-        for instances_of_type in self._modules.values():
-            type_tag = next(iter(instances_of_type.values())).type_tag
-            type_tag["x-implementations"] = [
-                instance.tag["name"] for instance in instances_of_type.values()
-            ]
-            tags.append(type_tag)
-            tags += [instance.tag for instance in instances_of_type.values()]
-        return tags
+        return [
+            instance.tag
+            for instances_of_type in self._modules.values()
+            for instance in instances_of_type.values()
+        ]
