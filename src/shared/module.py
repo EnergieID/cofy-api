@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter
-from fastapi.openapi.utils import get_openapi
 from sqlalchemy.sql.schema import MetaData
-
-from src.cofy.docs_router import DocsRouter
 
 
 class Module(APIRouter, ABC):
@@ -20,20 +18,10 @@ class Module(APIRouter, ABC):
         self.settings = settings
         default_router_kwargs = {
             "prefix": f"/{self.type}/{self.name}/{self.version}",
-            "tags": [self.type_tag["name"], self.tag["name"]],
+            "tags": [self.tag["name"]],
         }
         super().__init__(**(default_router_kwargs | kwargs))  # ty: ignore[invalid-argument-type]
         self.init_routes()
-        self.include_router(DocsRouter(self.openapi))
-
-    def openapi(self):
-        return get_openapi(
-            title=f"{self.type}:{self.name} API",
-            description=self.tag["description"],
-            version=self.version,
-            routes=self.routes,
-            tags=[self.type_tag, self.tag],
-        )
 
     @abstractmethod
     def init_routes(self):
@@ -52,20 +40,14 @@ class Module(APIRouter, ABC):
         return "v1"
 
     @property
-    def type_tag(self) -> dict[str, str]:
-        """The tag info of the module type."""
-        return {
-            "name": self.type,
-            "description": self.type_description,
-        }
-
-    @property
-    def tag(self) -> dict[str, str]:
+    def tag(self) -> dict[str, Any]:
         """The tag info of the implementation."""
         return {
             "name": f"{self.type}:{self.name}",
             "description": self.settings.get("description", self.type_description),
+            "x-module-type": self.type,
             "x-version": self.version,
+            "x-display-name": self.settings.get("display_name", self.name),
         }
 
     @property
