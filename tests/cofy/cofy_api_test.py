@@ -2,12 +2,12 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.cofy.cofy_api import CofyApi
+from src.cofy.db.cofy_db import CofyDB
 from tests.mocks.dummy_module import DummyModule
 
 
 def test_cofy_initialization():
-    settings = {"title": "Test API", "version": "1.2.3", "description": "Test desc"}
-    cofy = CofyApi(**settings)
+    cofy = CofyApi(title="Test API", version="1.2.3", description="Test desc")
     assert isinstance(cofy, FastAPI)
     assert cofy.title == "Test API"
     assert cofy.version == "1.2.3"
@@ -16,7 +16,7 @@ def test_cofy_initialization():
 
 class TestCofyApiModuleRegistration:
     def setup_method(self):
-        self.cofy = CofyApi()
+        self.cofy = CofyApi(db=CofyDB())
         self.module = DummyModule("test_module")
         self.client = TestClient(self.cofy)
 
@@ -86,3 +86,61 @@ class TestCofyApiModuleRegistration:
         )
         assert type_tag is not None
         assert module_tag is not None
+
+    def test_get_migration_locations_empty_for_non_db_modules(self):
+        self.cofy.register_module(self.module)
+        db = self.cofy.db
+        assert db is not None
+        assert db.migration_locations == []
+
+    def test_get_migration_locations_for_db_modules(self):
+        class DummyDbModule(DummyModule):
+            uses_database = True
+            migration_locations = ["/tmp/migrations/a", "/tmp/migrations/a"]
+
+        db_module_a = DummyDbModule("db_a")
+        db_module_b = DummyDbModule("db_b")
+        db_module_b.migration_locations = ["/tmp/migrations/b"]
+
+        self.cofy.register_module(db_module_a)
+        self.cofy.register_module(db_module_b)
+
+        db = self.cofy.db
+        assert db is not None
+        assert db.migration_locations == [
+            "/tmp/migrations/a",
+            "/tmp/migrations/b",
+        ]
+
+    def test_get_target_metadata_empty_for_non_db_modules(self):
+        self.cofy.register_module(self.module)
+        db = self.cofy.db
+        assert db is not None
+        assert db.target_metadata == []
+
+    def test_get_target_metadata_for_db_modules(self):
+        class DummyDbModule(DummyModule):
+            uses_database = True
+            target_metadata = object()
+
+        db_module_a = DummyDbModule("db_a")
+        db_module_b = DummyDbModule("db_b")
+        db_module_b.target_metadata = object()
+
+        self.cofy.register_module(db_module_a)
+        self.cofy.register_module(db_module_b)
+
+        db = self.cofy.db
+        assert db is not None
+        assert db.target_metadata == [
+            db_module_a.target_metadata,
+            db_module_b.target_metadata,
+        ]
+
+    def test_cofy_db_property_exists(self):
+        assert self.cofy.db is not None
+
+
+def test_cofy_db_is_optional():
+    cofy = CofyApi()
+    assert cofy.db is None

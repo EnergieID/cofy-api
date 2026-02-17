@@ -3,33 +3,30 @@ from importlib import resources
 from os import environ
 
 from fastapi import Depends
-from sqlmodel import SQLModel, create_engine
 
 from src.cofy.cofy_api import CofyApi
+from src.cofy.db.cofy_db import CofyDB
 from src.cofy.token_auth import token_verifier
-from src.modules.members.jobs.eb_load_from_csv import EBLoadFromCSV
 from src.modules.members.module import MembersModule
 from src.modules.members.sources.eb_db_source import EBDbSource
 from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
-MEMBERS_CSV_PATH = str(
-    resources.files("src.modules.members.jobs").joinpath("eb_members_example.csv")
-)
-SQLITE_URL = f"sqlite:///{resources.files('src.demo').joinpath('database.db')}"
-engine = create_engine(SQLITE_URL, connect_args={"check_same_thread": False})
+SQLITE_URL = f"sqlite:///{resources.files('src.demo.db').joinpath('database.db')}"
 
 
 @asynccontextmanager
 async def lifespan(app: CofyApi):
     # Startup code
-    SQLModel.metadata.create_all(engine)
-    EBLoadFromCSV(MEMBERS_CSV_PATH, engine)()
+    app.db.run_migrations()
     yield
     # Shutdown code (if needed)
 
 
-app = CofyApi(
+cofy = CofyApi(
+    db=CofyDB(
+        db_url=SQLITE_URL, engine_kwargs={"connect_args": {"check_same_thread": False}}
+    ),
     lifespan=lifespan,
     dependencies=[
         Depends(
@@ -48,7 +45,7 @@ app = CofyApi(
 )
 
 tariffs = TariffModule(settings={"api_key": environ.get("ENTSOE_API_KEY", "")})
-app.register_module(tariffs)
+cofy.register_module(tariffs)
 
 ## Tariff app with custom source
 source = EntsoeDayAheadTariffSource(
@@ -56,7 +53,7 @@ source = EntsoeDayAheadTariffSource(
     api_key=environ.get("ENTSOE_API_KEY", ""),
 )
 nl_tariffs = TariffModule(settings={"source": source, "name": "nl_tariffs"})
-app.register_module(nl_tariffs)
+cofy.register_module(nl_tariffs)
 
 ## Tariff app with default source and custom settings
 fr_tariffs = TariffModule(
@@ -67,9 +64,11 @@ fr_tariffs = TariffModule(
         "description": "Entsoe tariff data for France",
     },
 )
-app.register_module(fr_tariffs)
+cofy.register_module(fr_tariffs)
 
 # members endpoint for EnergyBar members, using a CSV file as source
-app.register_module(
-    MembersModule(settings={"source": EBDbSource(engine), "name": "energybar"})
+cofy.register_module(
+    MembersModule(settings={"source": EBDbSource(cofy.db.engine), "name": "energybar"})
 )
+
+app = cofy

@@ -1,9 +1,18 @@
+from pathlib import Path
+
+from sqlmodel import SQLModel
+
 from src.shared.module import Module
 
 
 class MembersModule(Module):
     type: str = "members"
     type_description: str = "Module for member-related functionalities"
+    uses_database: bool = True
+    migration_locations: list[str] = [
+        str(Path(__file__).resolve().parent / "migrations" / "versions")
+    ]
+    target_metadata = SQLModel.metadata
 
     def __init__(self, settings: dict, **kwargs):
         if "source" not in settings:
