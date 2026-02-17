@@ -1,12 +1,33 @@
+from collections.abc import Sequence
+from pathlib import Path
+
 from src.cofy.cofy_api import CofyApi
 from src.cofy.db.cofy_db import CofyDB
+from src.modules.members.model import Member
+from src.modules.members.module import MembersModule
 from tests.mocks.dummy_module import DummyModule
 
 
-class DummyDbModule(DummyModule):
-    uses_database = True
-    migration_locations = ["/tmp/migrations/a", "/tmp/migrations/a"]
-    target_metadata = object()
+class DummyDbMemberSource:
+    response_model = Member
+
+    def __init__(self, migration_location: str, metadata: object):
+        self._migration_locations = [migration_location, migration_location]
+        self._target_metadata = metadata
+
+    def list(self, email=None, **filters) -> list[Member]:
+        return []
+
+    def verify(self, activation_code: str) -> Member | None:
+        return None
+
+    @property
+    def migration_locations(self) -> Sequence[str]:
+        return self._migration_locations
+
+    @property
+    def target_metadata(self) -> object:
+        return self._target_metadata
 
 
 def test_db_engine_requires_db_url():
@@ -36,43 +57,36 @@ def test_db_engine_is_cached():
     assert first_engine is db.engine
 
 
-def test_migration_locations_and_target_metadata_from_modules():
+def test_migration_locations_and_target_metadata_from_sources():
     cofy = CofyApi(db=CofyDB(db_url="sqlite:///:memory:"))
-    db_module_a = DummyDbModule("db_a")
-    db_module_b = DummyDbModule("db_b")
-    db_module_b.migration_locations = ["/tmp/migrations/b"]
-    db_module_b.target_metadata = object()
+    metadata_a = object()
+    metadata_b = object()
+
+    db_module_a = MembersModule(
+        settings={
+            "name": "db_a",
+            "source": DummyDbMemberSource("/tmp/migrations/a", metadata_a),
+        }
+    )
+    db_module_b = MembersModule(
+        settings={
+            "name": "db_b",
+            "source": DummyDbMemberSource("/tmp/migrations/b", metadata_b),
+        }
+    )
+    non_db_module = DummyModule("no_db")
 
     cofy.register_module(db_module_a)
     cofy.register_module(db_module_b)
+    cofy.register_module(non_db_module)
 
     db = cofy.db
     assert db is not None
     assert db.migration_locations == [
-        "/tmp/migrations/a",
-        "/tmp/migrations/b",
+        str(Path("/tmp/migrations/a").resolve()),
+        str(Path("/tmp/migrations/b").resolve()),
     ]
     assert db.target_metadata == [
-        db_module_a.target_metadata,
-        db_module_b.target_metadata,
+        metadata_a,
+        metadata_b,
     ]
-
-
-# def test_run_migrations_uses_bundled_alembic_runtime(monkeypatch):
-#     captured: dict[str, object] = {}
-
-#     def fake_upgrade(config, target):
-#         captured["config"] = config
-#         captured["target"] = target
-
-#     cofy = CofyApi(db=CofyDB(db_url="sqlite:///:memory:"))
-#     cofy.register_module(DummyDbModule("db_a"))
-#     monkeypatch.setattr("src.cofy.db.cofy_db.command.upgrade", fake_upgrade)
-
-#     cofy.db.run_migrations()
-
-#     config = captured["config"]
-#     assert captured["target"] == "heads"
-#     assert config.get_main_option("sqlalchemy.url") == "sqlite:///:memory:"
-#     assert config.get_main_option("script_location").endswith("src/cofy/db/alembic")
-#     assert "/tmp/migrations/a" in config.get_main_option("version_locations")

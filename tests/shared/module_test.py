@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from src.modules.members.model import Member
 from src.modules.members.module import MembersModule
 from tests.mocks.dummy_module import DummyModule
 
@@ -32,17 +33,16 @@ class TestModule:
 
 
 class _DummyMemberSource:
-    response_model = str
+    response_model = Member
 
-    def list(self) -> list[str]:
+    def list(self, email=None, **filters) -> list[Member]:
         return []
 
+    def verify(self, activation_code: str) -> Member | None:
+        return None
 
-def test_members_module_database_contract():
+
+def test_members_module_initialization():
     module = MembersModule(settings={"source": _DummyMemberSource()})
-    assert module.uses_database is True
-    assert module.target_metadata is not None
-    assert module.migration_locations
-    resolved = module.resolved_migration_locations
-    assert len(resolved) == 1
-    assert resolved[0].endswith("src/modules/members/migrations/versions")
+    assert module.type == "members"
+    assert module.prefix == "/members/default/v1"

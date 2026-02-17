@@ -7,8 +7,8 @@ from fastapi import Depends
 from src.cofy.cofy_api import CofyApi
 from src.cofy.db.cofy_db import CofyDB
 from src.cofy.token_auth import token_verifier
+from src.demo.members.source import DemoMembersDbSource
 from src.modules.members.module import MembersModule
-from src.modules.members.sources.eb_db_source import EBDbSource
 from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
@@ -69,7 +69,9 @@ cofy.register_module(fr_tariffs)
 
 # members endpoint for EnergyBar members, using a CSV file as source
 cofy.register_module(
-    MembersModule(settings={"source": EBDbSource(cofy.db.engine), "name": "energybar"})
+    MembersModule(
+        settings={"source": DemoMembersDbSource(cofy.db.engine), "name": "energybar"}
+    )
 )
 
 app = cofy

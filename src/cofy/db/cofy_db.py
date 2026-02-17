@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from importlib import resources
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from alembic import command
 from alembic.config import Config
 from sqlmodel import create_engine
+
+from src.cofy.db.database_backed_source import DatabaseBackedSource
 
 if TYPE_CHECKING:
     from sqlalchemy.engine import Engine
@@ -19,30 +22,35 @@ class CofyDB:
         db_url: str | None = None,
         engine_kwargs: dict[str, Any] | None = None,
     ):
-        self._modules: list[Module] = []
+        self._sources: list[DatabaseBackedSource] = []
         self._db_url = db_url
         self._engine_kwargs = engine_kwargs or {}
         self._engine: Engine | None = None
 
     def register_module(self, module: Module):
-        if module.uses_database:
-            self._modules.append(module)
+        source = getattr(module, "source", None)
+        if isinstance(source, DatabaseBackedSource):
+            self._sources.append(source)
 
     @property
     def migration_locations(self) -> list[str]:
         locations: list[str] = []
-        for module in self._modules:
-            for location in module.resolved_migration_locations:
-                if location not in locations:
-                    locations.append(location)
+        for source in self._sources:
+            for location in source.migration_locations:
+                resolved_location = str(Path(location).resolve())
+                if resolved_location not in locations:
+                    locations.append(resolved_location)
         return locations
 
     @property
     def target_metadata(self) -> list[Any]:
         metadata: list[Any] = []
-        for module in self._modules:
-            if module.target_metadata not in metadata:
-                metadata.append(module.target_metadata)
+        for source in self._sources:
+            if (
+                source.target_metadata is not None
+                and source.target_metadata not in metadata
+            ):
+                metadata.append(source.target_metadata)
         return metadata
 
     @property

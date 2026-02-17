@@ -1,18 +1,13 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter
-from sqlalchemy.sql.schema import MetaData
 
 
 class Module(APIRouter, ABC):
     type: str = "module"
     type_description: str = "Generic module"
     settings: dict
-    uses_database: bool = False
-    migration_locations: list[str] = []
-    target_metadata: MetaData | None = None
 
     def __init__(self, settings: dict, **kwargs):
         self.settings = settings
@@ -49,12 +44,3 @@ class Module(APIRouter, ABC):
             "x-version": self.version,
             "x-display-name": self.settings.get("display_name", self.name),
         }
-
-    @property
-    def resolved_migration_locations(self) -> list[str]:
-        """Resolved absolute migration locations for this module."""
-        return [
-            str(Path(location).resolve())
-            for location in self.migration_locations
-            if location
-        ]
