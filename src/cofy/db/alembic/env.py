@@ -2,7 +2,8 @@ from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
-from sqlmodel import SQLModel
+
+from src.cofy.db.base import Base
 
 config = context.config
 
@@ -11,13 +12,11 @@ if config.config_file_name is not None:
 
 configured_metadata = config.attributes.get("target_metadata")
 if isinstance(configured_metadata, list):
-    target_metadata = (
-        configured_metadata[0] if configured_metadata else SQLModel.metadata
-    )
+    target_metadata = configured_metadata[0] if configured_metadata else Base.metadata
 elif configured_metadata is not None:
     target_metadata = configured_metadata
 else:
-    target_metadata = SQLModel.metadata
+    target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:

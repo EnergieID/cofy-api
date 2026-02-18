@@ -7,7 +7,7 @@ from fastapi import Depends
 from src.cofy.cofy_api import CofyApi
 from src.cofy.db.cofy_db import CofyDB
 from src.cofy.token_auth import token_verifier
-from src.demo.members.source import DemoMembersDbSource
+from src.demo.members.sources.db_source import DemoMembersDbSource
 from src.modules.members.module import MembersModule
 from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource

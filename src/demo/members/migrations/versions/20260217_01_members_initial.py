@@ -19,17 +19,6 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.create_table(
-        "member",
-        sa.Column("id", sa.String(), nullable=False),
-        sa.Column("email", sa.String(), nullable=False),
-        sa.Column("activation_code", sa.String(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("activation_code"),
-    )
-
-    op.create_table(
         "product",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("member_id", sa.String(), nullable=False),
@@ -46,4 +35,3 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("product")
-    op.drop_table("member")

@@ -3,8 +3,10 @@ from pathlib import Path
 
 from src.cofy.cofy_api import CofyApi
 from src.cofy.db.cofy_db import CofyDB
+from src.demo.members.sources.db_source import DemoMembersDbSource
 from src.modules.members.model import Member
 from src.modules.members.module import MembersModule
+from src.modules.members.sources.db_source import MembersDbSource
 from tests.mocks.dummy_module import DummyModule
 
 
@@ -15,7 +17,7 @@ class DummyDbMemberSource:
         self._migration_locations = [migration_location, migration_location]
         self._target_metadata = metadata
 
-    def list(self, email=None, **filters) -> list[Member]:
+    def list(self, email=None) -> list[Member]:
         return []
 
     def verify(self, activation_code: str) -> Member | None:
@@ -90,3 +92,25 @@ def test_migration_locations_and_target_metadata_from_sources():
         metadata_a,
         metadata_b,
     ]
+
+
+def test_core_and_demo_db_sources_contribute_migration_locations():
+    cofy = CofyApi(db=CofyDB(db_url="sqlite:///:memory:"))
+    db_module = MembersModule(
+        settings={"name": "core", "source": MembersDbSource(cofy.db.engine)}
+    )
+    demo_module = MembersModule(
+        settings={"name": "demo", "source": DemoMembersDbSource(cofy.db.engine)}
+    )
+
+    cofy.register_module(db_module)
+    cofy.register_module(demo_module)
+
+    db = cofy.db
+    assert db is not None
+    assert str(Path("src/modules/members/migrations/versions").resolve()) in (
+        db.migration_locations
+    )
+    assert str(Path("src/demo/members/migrations/versions").resolve()) in (
+        db.migration_locations
+    )

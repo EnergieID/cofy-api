@@ -15,7 +15,6 @@ dependencies = [
     "narwhals>=2.15.0",
     "pandas>=3.0.0",
     "polars>=1.37.1",
-    "sqlmodel>=0.0.33",
 ]
 [dependency-groups]
 dev = [

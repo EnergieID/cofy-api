@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from alembic import command
 from alembic.config import Config
-from sqlmodel import create_engine
+from sqlalchemy import create_engine
 
 from src.cofy.db.database_backed_source import DatabaseBackedSource
 

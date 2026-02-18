@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import HTTPException, Request
+from fastapi import HTTPException
 
 from src.modules.members.model import VerifyMemberRequest
 from src.modules.members.source import MemberSource
@@ -20,7 +20,7 @@ class MembersModule(Module):
     def init_routes(self):
         self.add_api_route(
             "/",
-            self.list_members,
+            self.source.list,
             methods=["GET"],
             summary="List members",
             response_model=list.__class_getitem__(self.source.response_model),
@@ -32,11 +32,6 @@ class MembersModule(Module):
             summary="Verify member activation code",
             response_model=self.source.response_model,
         )
-
-    def list_members(self, request: Request) -> list[Any]:
-        filters = dict(request.query_params)
-        email = filters.pop("email", None)
-        return self.source.list(email=email, **filters)
 
     def verify(self, body: VerifyMemberRequest) -> Any:
         member = self.source.verify(body.activation_code)

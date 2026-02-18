@@ -1,7 +1,7 @@
 import csv
 import datetime as dt
 
-from sqlmodel import Session
+from sqlalchemy.orm import Session
 
 from src.demo.members.models import DemoMember, DemoProduct
 

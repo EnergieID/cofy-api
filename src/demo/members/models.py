@@ -1,30 +1,28 @@
 import datetime as dt
 
 from pydantic import BaseModel
-from sqlalchemy.orm import Mapped
-from sqlmodel import Field, Relationship, SQLModel
+from sqlalchemy import Date, ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.cofy.db.base import Base
 from src.cofy.db.timestamp_mixin import TimestampMixin
 from src.modules.members.model import Member
+from src.modules.members.models.db_member import DBMember
 
 
-class DemoProduct(TimestampMixin, SQLModel, table=True):
+class DemoProduct(TimestampMixin, Base):
     __tablename__ = "product"
-    id: int | None = Field(default=None, primary_key=True)
-    member_id: str = Field(foreign_key="member.id")
-    member: Mapped["DemoMember"] = Relationship(back_populates="products")
-    name: str
-    ean: int
-    start_date: dt.date
-    end_date: dt.date | None = None
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    member_id: Mapped[str] = mapped_column(ForeignKey("member.id"), nullable=False)
+    member: Mapped["DemoMember"] = relationship(back_populates="products")
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    ean: Mapped[int] = mapped_column(Integer, nullable=False)
+    start_date: Mapped[dt.date] = mapped_column(Date, nullable=False)
+    end_date: Mapped[dt.date | None] = mapped_column(Date, nullable=True)
 
 
-class DemoMember(TimestampMixin, SQLModel, table=True):
-    __tablename__ = "member"
-    id: str | None = Field(default=None, primary_key=True)
-    email: str
-    activation_code: str = Field(index=True, unique=True)
-    products: Mapped[list[DemoProduct]] = Relationship(back_populates="member")
+class DemoMember(DBMember):
+    products: Mapped[list[DemoProduct]] = relationship(back_populates="member")
 
 
 class DemoProductOut(BaseModel):
