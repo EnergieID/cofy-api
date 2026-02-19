@@ -6,7 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.cofy.db.database_backed_source import DatabaseBackedSource
-from src.modules.members.model import Member
 from src.modules.members.models.db_member import DBMember
 from src.modules.members.source import MemberSource
 
@@ -35,10 +34,6 @@ class MembersDbSource(MemberSource[Any], DatabaseBackedSource):
                 self.model.activation_code == activation_code
             )
             return session.scalars(statement).first()
-
-    @property
-    def response_model(self) -> type:
-        return Member
 
     @property
     def migration_locations(self) -> Sequence[str]:
