@@ -1,27 +1,27 @@
 from collections.abc import Sequence
+from importlib import resources
 from pathlib import Path
 
+import pytest
+import sqlalchemy as sa
+
 from src.cofy.cofy_api import CofyApi
+from src.cofy.db.base import Base
 from src.cofy.db.cofy_db import CofyDB
-from src.demo.members.sources.db_source import DemoMembersDbSource
-from src.modules.members.model import Member
-from src.modules.members.module import MembersModule
-from src.modules.members.sources.db_source import MembersDbSource
+from src.cofy.db.database_backed_source import DatabaseBackedSource
 from tests.mocks.dummy_module import DummyModule
 
 
-class DummyDbMemberSource:
-    response_model = Member
+class DummySourcedModule(DummyModule):
+    def __init__(self, name: str, migration_locations: list[str], metadata: object):
+        super().__init__(name)
+        self.source = DummyDbSource(migration_locations, metadata)
 
-    def __init__(self, migration_location: str, metadata: object):
-        self._migration_locations = [migration_location, migration_location]
+
+class DummyDbSource(DatabaseBackedSource):
+    def __init__(self, migration_locations: list[str], metadata: object):
+        self._migration_locations = migration_locations
         self._target_metadata = metadata
-
-    def list(self, email=None) -> list[Member]:
-        return []
-
-    def verify(self, activation_code: str) -> Member | None:
-        return None
 
     @property
     def migration_locations(self) -> Sequence[str]:
@@ -32,27 +32,22 @@ class DummyDbMemberSource:
         return self._target_metadata
 
 
-def test_db_engine_requires_db_url():
-    cofy = CofyApi(db=CofyDB())
-    db = cofy.db
-    assert db is not None
-    try:
-        _ = db.engine
-    except ValueError as exc:
-        assert "No database URL configured" in str(exc)
-    else:
-        raise AssertionError("Expected ValueError when db_url is not configured")
+def test_db_requires_db_url():
+    with pytest.raises(
+        ValueError, match="CofyDB requires a database URL to be configured."
+    ):
+        CofyDB()
 
 
 def test_db_engine_available_with_db_url():
-    cofy = CofyApi(db=CofyDB(db_url="sqlite:///:memory:"))
+    cofy = CofyApi(db=CofyDB(url="sqlite:///:memory:"))
     db = cofy.db
     assert db is not None
     assert db.engine is not None
 
 
 def test_db_engine_is_cached():
-    cofy = CofyApi(db=CofyDB(db_url="sqlite:///:memory:"))
+    cofy = CofyApi(db=CofyDB(url="sqlite:///:memory:"))
     db = cofy.db
     assert db is not None
     first_engine = db.engine
@@ -60,21 +55,19 @@ def test_db_engine_is_cached():
 
 
 def test_migration_locations_and_target_metadata_from_sources():
-    cofy = CofyApi(db=CofyDB(db_url="sqlite:///:memory:"))
+    cofy = CofyApi(db=CofyDB(url="sqlite:///:memory:"))
     metadata_a = object()
     metadata_b = object()
 
-    db_module_a = MembersModule(
-        settings={
-            "name": "db_a",
-            "source": DummyDbMemberSource("/tmp/migrations/a", metadata_a),
-        }
+    db_module_a = DummySourcedModule(
+        name="db_a",
+        migration_locations=["/tmp/migrations/a"],
+        metadata=metadata_a,
     )
-    db_module_b = MembersModule(
-        settings={
-            "name": "db_b",
-            "source": DummyDbMemberSource("/tmp/migrations/b", metadata_b),
-        }
+    db_module_b = DummySourcedModule(
+        name="db_b",
+        migration_locations=["/tmp/migrations/b", "/tmp/migrations/c"],
+        metadata=metadata_b,
     )
     non_db_module = DummyModule("no_db")
 
@@ -87,6 +80,7 @@ def test_migration_locations_and_target_metadata_from_sources():
     assert db.migration_locations == [
         str(Path("/tmp/migrations/a").resolve()),
         str(Path("/tmp/migrations/b").resolve()),
+        str(Path("/tmp/migrations/c").resolve()),
     ]
     assert db.target_metadata == [
         metadata_a,
@@ -94,23 +88,35 @@ def test_migration_locations_and_target_metadata_from_sources():
     ]
 
 
-def test_core_and_demo_db_sources_contribute_migration_locations():
-    cofy = CofyApi(db=CofyDB(db_url="sqlite:///:memory:"))
-    db_module = MembersModule(
-        settings={"name": "core", "source": MembersDbSource(cofy.db.engine)}
-    )
-    demo_module = MembersModule(
-        settings={"name": "demo", "source": DemoMembersDbSource(cofy.db.engine)}
-    )
+def test_run_migrations(tmp_path: Path):
+    db_file = tmp_path / "cofy_test.db"
+    cofy_db = CofyDB(url=f"sqlite:///{db_file}")
 
-    cofy.register_module(db_module)
-    cofy.register_module(demo_module)
+    class Foo(Base):
+        __tablename__ = "foo"
+        id = sa.Column(sa.Integer, primary_key=True)
+        name = sa.Column(sa.String, nullable=False)
+        bar = sa.Column(sa.String, nullable=True)
 
-    db = cofy.db
-    assert db is not None
-    assert str(Path("src/modules/members/migrations/versions").resolve()) in (
-        db.migration_locations
-    )
-    assert str(Path("src/demo/members/migrations/versions").resolve()) in (
-        db.migration_locations
-    )
+    with resources.as_file(
+        resources.files("tests.cofy.dumy_migrations")
+    ) as migrations_path:
+        module = DummySourcedModule(
+            name="test_module",
+            migration_locations=[str(migrations_path)],
+            metadata=Foo.metadata,
+        )
+        cofy_db.register_module(module)
+
+        cofy_db.run_migrations()
+
+        with cofy_db.engine.connect() as connection:
+            statement = sa.text(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='foo';"
+            )
+            result = connection.execute(statement)
+            assert result.fetchone() is not None
+
+            statement = sa.text("SELECT bar FROM foo;")
+            result = connection.execute(statement)
+            assert result.fetchone() is None

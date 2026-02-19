@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from pathlib import Path
+from importlib import resources
 from typing import Any
 
 from sqlalchemy import select
@@ -42,7 +42,10 @@ class MembersDbSource(MemberSource[Any], DatabaseBackedSource):
 
     @property
     def migration_locations(self) -> Sequence[str]:
-        return [str(Path(__file__).resolve().parent.parent / "migrations" / "versions")]
+        with resources.as_file(
+            resources.files("src.modules.members.migrations.versions")
+        ) as path:
+            return [str(path)]
 
     @property
     def target_metadata(self):

@@ -56,6 +56,7 @@ class CofyDB:
             "script_location", str(resources.files("src.cofy.db").joinpath("alembic"))
         )
         config.set_main_option("sqlalchemy.url", self._url)
+        config.set_main_option("path_separator", "os")
 
         if self.migration_locations:
             config.set_main_option(

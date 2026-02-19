@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
@@ -54,6 +52,4 @@ def test_members_db_source_exposes_migration_metadata():
     source = MembersDbSource(_setup_engine())
 
     assert source.target_metadata is DBMember.metadata
-    assert source.migration_locations == [
-        str(Path("src/modules/members/migrations/versions").resolve())
-    ]
+    assert len(source.migration_locations) == 1

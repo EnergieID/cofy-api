@@ -18,7 +18,7 @@ class DummyMemberSource:
             Member(id="2", email="b@example.com"),
         ]
 
-    def list(self, email=None, **filters) -> list[Member]:
+    def list(self, email=None) -> list[Member]:
         members = self.members
         if email is not None:
             members = [member for member in members if member.email == email]

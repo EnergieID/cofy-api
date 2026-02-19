@@ -1,13 +1,10 @@
 from collections.abc import Sequence
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.cofy.cofy_api import CofyApi
-from src.cofy.db.cofy_db import CofyDB
 from src.modules.members.model import Member
-from src.modules.members.module import MembersModule
 from tests.mocks.dummy_module import DummyModule
 
 
@@ -43,7 +40,7 @@ def test_cofy_initialization():
 
 class TestCofyApiModuleRegistration:
     def setup_method(self):
-        self.cofy = CofyApi(db=CofyDB())
+        self.cofy = CofyApi()
         self.module = DummyModule("test_module")
         self.client = TestClient(self.cofy)
 
@@ -100,69 +97,6 @@ class TestCofyApiModuleRegistration:
             None,
         )
         assert module_tag is not None
-
-    def test_get_migration_locations_empty_for_non_db_sources(self):
-        self.cofy.register_module(self.module)
-        db = self.cofy.db
-        assert db is not None
-        assert db.migration_locations == []
-
-    def test_get_migration_locations_for_db_sources(self):
-        db_module_a = MembersModule(
-            settings={
-                "name": "db_a",
-                "source": DummyDbMemberSource("/tmp/migrations/a", object()),
-            }
-        )
-        db_module_b = MembersModule(
-            settings={
-                "name": "db_b",
-                "source": DummyDbMemberSource("/tmp/migrations/b", object()),
-            }
-        )
-
-        self.cofy.register_module(db_module_a)
-        self.cofy.register_module(db_module_b)
-
-        db = self.cofy.db
-        assert db is not None
-        assert db.migration_locations == [
-            str(Path("/tmp/migrations/a").resolve()),
-            str(Path("/tmp/migrations/b").resolve()),
-        ]
-
-    def test_get_target_metadata_empty_for_non_db_sources(self):
-        self.cofy.register_module(self.module)
-        db = self.cofy.db
-        assert db is not None
-        assert db.target_metadata == []
-
-    def test_get_target_metadata_for_db_sources(self):
-        metadata_a = object()
-        metadata_b = object()
-
-        db_module_a = MembersModule(
-            settings={
-                "name": "db_a",
-                "source": DummyDbMemberSource("/tmp/migrations/a", metadata_a),
-            }
-        )
-        db_module_b = MembersModule(
-            settings={
-                "name": "db_b",
-                "source": DummyDbMemberSource("/tmp/migrations/b", metadata_b),
-            }
-        )
-
-        self.cofy.register_module(db_module_a)
-        self.cofy.register_module(db_module_b)
-
-        db = self.cofy.db
-        assert db is not None
-        assert db.target_metadata == [metadata_a, metadata_b]
-
-    def test_cofy_db_property_exists(self):
-        assert self.cofy.db is not None
 
 
 def test_cofy_db_is_optional():
