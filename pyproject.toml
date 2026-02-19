@@ -39,6 +39,9 @@ env = { PYTHONPATH = "." }
 [tool.poe.tasks.db-reset]
 cmd = "python -m src.demo.db.reset"
 envfile = ".env.local"
+[tool.poe.tasks.db-migrate]
+cmd = "python -m src.demo.db.migrate"
+envfile = ".env.local"
 env = { PYTHONPATH = "." }
 [tool.poe.tasks.test]
 cmd = "pytest --cov=src --cov-report=term-missing --import-mode=importlib"
