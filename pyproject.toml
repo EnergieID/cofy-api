@@ -49,7 +49,7 @@ env = { PYTHONPATH = "." }
 [tool.coverage.report]
 skip_covered = true
 [tool.coverage.run]
-omit = ["src/demo/*"]
+omit = ["src/demo/*", "src/modules/*/migrations/*", "src/cofy/db/alembic/*"]
 [tool.ruff.lint]
 select = [
     "E", # pycodestyle
