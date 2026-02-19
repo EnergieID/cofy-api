@@ -37,9 +37,7 @@ class MembersDbSource(MemberSource[Any], DatabaseBackedSource):
 
     @property
     def migration_locations(self) -> Sequence[str]:
-        return [
-            str(resources.files("src.modules.members.migrations").joinpath("versions"))
-        ]
+        return [str(resources.files("src.modules.members").joinpath("migrations"))]
 
     @property
     def target_metadata(self):
