@@ -50,7 +50,7 @@ class CofyDB:
                 metadata.append(source.target_metadata)
         return metadata
 
-    def run_migrations(self, revision: str = "heads") -> None:
+    def _build_config(self) -> Config:
         config = Config()
         config.set_main_option(
             "script_location", str(resources.files("src.cofy.db").joinpath("alembic"))
@@ -64,7 +64,33 @@ class CofyDB:
             )
 
         config.attributes["target_metadata"] = self.target_metadata
-        command.upgrade(config, revision)
+        return config
+
+    def run_migrations(self, revision: str = "heads") -> None:
+        command.upgrade(self._build_config(), revision)
+
+    def generate_migration(
+        self,
+        message: str,
+        head: str,
+        rev_id: str | None = None,
+        autogenerate: bool = True,
+    ) -> None:
+        """Generate a new Alembic migration revision for a specific module branch.
+
+        Args:
+            message: Description of the migration.
+            head: The branch head to extend, e.g. "members_core@head".
+            rev_id: Optional custom revision ID. If None, Alembic generates one.
+            autogenerate: Whether to autogenerate the migration from model changes.
+        """
+        command.revision(
+            self._build_config(),
+            message=message,
+            autogenerate=autogenerate,
+            head=head,
+            rev_id=rev_id,
+        )
 
     def reset(self) -> None:
         """usefull in development to reset the database to a clean state

@@ -43,6 +43,10 @@ envfile = ".env.local"
 cmd = "python -m src.demo.db.migrate"
 envfile = ".env.local"
 env = { PYTHONPATH = "." }
+[tool.poe.tasks.db-generate]
+cmd = "python -m src.demo.db.generate"
+envfile = ".env.local"
+env = { PYTHONPATH = "." }
 [tool.poe.tasks.test]
 cmd = "pytest --cov=src --cov-report=term-missing --import-mode=importlib"
 env = { PYTHONPATH = "." }

@@ -1,3 +1,4 @@
+import shutil
 from collections.abc import Sequence
 from importlib import resources
 from pathlib import Path
@@ -160,3 +161,75 @@ class TestDBWithMigrations:
             )
             result = connection.execute(statement)
             assert result.fetchone() is None
+
+
+class TestGenerateMigration:
+    @pytest.fixture(autouse=True)
+    def setup_method(self, tmp_path):
+        # Copy the existing dumy_migrations to a temp directory so generated
+        # files don't pollute the source tree
+        src_dir = str(resources.files("tests.cofy").joinpath("dumy_migrations"))
+        self.migrations_dir = tmp_path / "dumy_migrations"
+        shutil.copytree(src_dir, self.migrations_dir)
+
+        self.db_file = tmp_path / "gen_test.db"
+        self.cofy_db = CofyDB(url=f"sqlite:///{self.db_file}")
+
+        self.module = DummySourcedModule(
+            name="gen_module",
+            migration_locations=[str(self.migrations_dir)],
+            metadata=Base.metadata,
+        )
+        self.cofy_db.register_module(self.module)
+
+        # Apply the existing migrations so the branch exists in the DB
+        self.cofy_db.run_migrations()
+
+    def _generated_files(self) -> set[Path]:
+        return {
+            f
+            for f in self.migrations_dir.iterdir()
+            if f.suffix == ".py" and f.name not in ("foo.py", "bar.py")
+        }
+
+    def test_generate_migration_creates_file(self):
+        assert self._generated_files() == set()
+
+        self.cofy_db.generate_migration(
+            message="add column",
+            head="dummy@head",
+            rev_id="baz",
+            autogenerate=False,
+        )
+
+        new_files = self._generated_files()
+        assert len(new_files) == 1
+
+        new_file = new_files.pop()
+        assert "baz" in new_file.name
+        assert "add_column" in new_file.name
+
+    def test_generate_migration_file_contains_correct_revision(self):
+        self.cofy_db.generate_migration(
+            message="second revision",
+            head="dummy@head",
+            rev_id="baz",
+            autogenerate=False,
+        )
+
+        generated = self._generated_files().pop()
+        content = generated.read_text()
+        assert "revision: str = 'baz'" in content
+        assert "down_revision: str | Sequence[str] | None = 'bar'" in content
+
+    def test_generate_migration_with_autogenerate(self):
+        self.cofy_db.generate_migration(
+            message="auto migration",
+            head="dummy@head",
+            rev_id="baz",
+            autogenerate=True,
+        )
+
+        generated = self._generated_files().pop()
+        content = generated.read_text()
+        assert "revision: str = 'baz'" in content
