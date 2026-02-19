@@ -88,29 +88,27 @@ def test_migration_locations_and_target_metadata_from_sources():
     ]
 
 
-def test_run_migrations(tmp_path: Path):
-    db_file = tmp_path / "cofy_test.db"
-    cofy_db = CofyDB(url=f"sqlite:///{db_file}")
+class TestDBWithMigrations:
+    @pytest.fixture(autouse=True)
+    def setup_method(self, tmp_path):
+        self.db_file = tmp_path / "cofy_test.db"
+        self.cofy_db = CofyDB(url=f"sqlite:///{self.db_file}")
 
-    class Foo(Base):
-        __tablename__ = "foo"
-        id = sa.Column(sa.Integer, primary_key=True)
-        name = sa.Column(sa.String, nullable=False)
-        bar = sa.Column(sa.String, nullable=True)
+        with resources.as_file(
+            resources.files("tests.cofy").joinpath("dumy_migrations")
+        ) as migrations_path:
+            self.module = DummySourcedModule(
+                name="test_module",
+                migration_locations=[str(migrations_path)],
+                metadata=Base.metadata,
+            )
 
-    with resources.as_file(
-        resources.files("tests.cofy.dumy_migrations")
-    ) as migrations_path:
-        module = DummySourcedModule(
-            name="test_module",
-            migration_locations=[str(migrations_path)],
-            metadata=Foo.metadata,
-        )
-        cofy_db.register_module(module)
+            self.cofy_db.register_module(self.module)
 
-        cofy_db.run_migrations()
+    def test_run_migrations(self):
+        self.cofy_db.run_migrations()
 
-        with cofy_db.engine.connect() as connection:
+        with self.cofy_db.engine.connect() as connection:
             statement = sa.text(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name='foo';"
             )
@@ -118,5 +116,47 @@ def test_run_migrations(tmp_path: Path):
             assert result.fetchone() is not None
 
             statement = sa.text("SELECT bar FROM foo;")
+            result = connection.execute(statement)
+            assert result.fetchone() is None
+
+    def test_db_reset_empties_tables(self):
+        self.cofy_db.run_migrations()
+
+        with self.cofy_db.engine.connect() as connection:
+            statement = sa.text("INSERT INTO foo (name, bar) VALUES ('test', 'value');")
+            connection.execute(statement)
+            connection.commit()
+            statement = sa.text("SELECT bar FROM foo WHERE name='test';")
+            result = connection.execute(statement)
+            assert result.fetchone() == ("value",)
+
+        self.cofy_db.reset()
+
+        with self.cofy_db.engine.connect() as connection:
+            statement = sa.text("SELECT bar FROM foo WHERE name='test';")
+            result = connection.execute(statement)
+            assert result.fetchone() is None
+
+    def test_db_reset_drops_non_schema_tables(self):
+        self.cofy_db.run_migrations()
+
+        with self.cofy_db.engine.connect() as connection:
+            statement = sa.text(
+                "CREATE TABLE temp_table (id INTEGER PRIMARY KEY, value TEXT);"
+            )
+            connection.execute(statement)
+            connection.commit()
+            statement = sa.text(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='temp_table';"
+            )
+            result = connection.execute(statement)
+            assert result.fetchone() is not None
+
+        self.cofy_db.reset()
+
+        with self.cofy_db.engine.connect() as connection:
+            statement = sa.text(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='temp_table';"
+            )
             result = connection.execute(statement)
             assert result.fetchone() is None
