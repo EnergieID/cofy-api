@@ -3,9 +3,7 @@ from importlib import resources
 from src.demo.main import cofy
 from src.demo.members.jobs.load_from_csv import LoadMembersFromCSV
 
-MEMBERS_CSV_PATH = str(
-    resources.files("src.demo.members.jobs").joinpath("members_example.csv")
-)
+MEMBERS_CSV_PATH = str(resources.files("src.demo.members.jobs").joinpath("example.csv"))
 
 
 def main() -> None:

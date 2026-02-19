@@ -1,9 +1,8 @@
 import csv
-import datetime as dt
 
 from sqlalchemy.orm import Session
 
-from src.demo.members.models import DemoMember, DemoProduct
+from src.modules.members.models.db_member import DBMember
 
 
 class LoadMembersFromCSV:
@@ -19,9 +18,9 @@ class LoadMembersFromCSV:
                 email = row["EMAIL"]
                 activation_code = row["ACTIVATIECODE"]
 
-                member = session.get(DemoMember, member_id)
+                member = session.get(DBMember, member_id)
                 if member is None:
-                    member = DemoMember(
+                    member = DBMember(
                         id=member_id,
                         email=email,
                         activation_code=activation_code,
@@ -30,33 +29,4 @@ class LoadMembersFromCSV:
                     member.email = email
                     member.activation_code = activation_code
                 session.add(member)
-
-                product_id = int(row["EAN"])
-                start_date = dt.datetime.strptime(
-                    row["STARTDATUM"], "%d/%m/%Y %H:%M:%S"
-                ).date()
-                end_date = (
-                    dt.datetime.strptime(row["EINDDATUM"], "%d/%m/%Y %H:%M:%S").date()
-                    if row["EINDDATUM"]
-                    else None
-                )
-
-                product = session.get(DemoProduct, product_id)
-                if product is None:
-                    product = DemoProduct(
-                        id=product_id,
-                        member_id=member_id,
-                        name=row["PRODUCT"],
-                        ean=product_id,
-                        start_date=start_date,
-                        end_date=end_date,
-                    )
-                else:
-                    product.member_id = member_id
-                    product.name = row["PRODUCT"]
-                    product.ean = product_id
-                    product.start_date = start_date
-                    product.end_date = end_date
-                session.add(product)
-
             session.commit()

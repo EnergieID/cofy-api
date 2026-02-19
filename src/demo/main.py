@@ -7,8 +7,8 @@ from fastapi import Depends
 from src.cofy.cofy_api import CofyApi
 from src.cofy.db.cofy_db import CofyDB
 from src.cofy.token_auth import token_verifier
-from src.demo.members.sources.db_source import DemoMembersDbSource
 from src.modules.members.module import MembersModule
+from src.modules.members.sources.db_source import MembersDbSource
 from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
@@ -24,9 +24,7 @@ async def lifespan(app: CofyApi):
 
 
 cofy = CofyApi(
-    db=CofyDB(
-        db_url=SQLITE_URL, engine_kwargs={"connect_args": {"check_same_thread": False}}
-    ),
+    db=CofyDB(url=SQLITE_URL, connect_args={"check_same_thread": False}),
     lifespan=lifespan,
     dependencies=[
         Depends(
@@ -70,7 +68,7 @@ cofy.register_module(fr_tariffs)
 # members endpoint for EnergyBar members, using a CSV file as source
 cofy.register_module(
     MembersModule(
-        settings={"source": DemoMembersDbSource(cofy.db.engine), "name": "energybar"}
+        settings={"source": MembersDbSource(cofy.db.engine), "name": "energybar"}
     )
 )
 

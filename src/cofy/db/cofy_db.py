@@ -72,6 +72,4 @@ class CofyDB:
         meta = MetaData()
         meta.reflect(bind=self.engine)
         meta.drop_all(bind=self.engine)
-        for metadata in self.target_metadata:
-            metadata.create_all(bind=self.engine)
         self.run_migrations()
