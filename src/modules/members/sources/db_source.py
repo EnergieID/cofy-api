@@ -27,15 +27,14 @@ class MembersDbSource(MemberSource[Any], DatabaseBackedSource):
             statement = select(self.model)
             if email is not None:
                 statement = statement.where(self.model.email == email)
-            results = session.execute(statement)
-            return list(results.scalars().all())
+            return list(session.scalars(statement).all())
 
     def verify(self, activation_code: str) -> Any | None:
         with Session(self.db_engine) as session:
             statement = select(self.model).where(
                 self.model.activation_code == activation_code
             )
-            return session.execute(statement).scalars().first()
+            return session.scalars(statement).first()
 
     @property
     def response_model(self) -> type:

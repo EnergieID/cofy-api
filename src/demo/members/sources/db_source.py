@@ -25,8 +25,7 @@ class DemoMembersDbSource(MembersDbSource):
                 statement = statement.where(self.model.email == email)
             if ean is not None:
                 statement = statement.join(DemoProduct).where(DemoProduct.ean == ean)
-            results = session.execute(statement)
-            return list(results.unique().scalars().all())
+            return list(session.scalars(statement).unique().all())
 
     def verify(self, activation_code: str) -> Any | None:
         with Session(self.db_engine) as session:
@@ -35,8 +34,7 @@ class DemoMembersDbSource(MembersDbSource):
                 .options(joinedload(self.model.products))
                 .where(self.model.activation_code == activation_code)
             )
-            results = session.execute(statement)
-            return results.unique().scalars().first()
+            return session.scalars(statement).unique().first()
 
     @property
     def response_model(self) -> type:
