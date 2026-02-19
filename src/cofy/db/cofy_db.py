@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 
 from src.cofy.db.database_backed_source import DatabaseBackedSource
 
@@ -17,15 +17,12 @@ if TYPE_CHECKING:
 
 
 class CofyDB:
-    def __init__(
-        self,
-        db_url: str | None = None,
-        engine_kwargs: dict[str, Any] | None = None,
-    ):
+    def __init__(self, url: str | None = None, **engine_kwargs):
+        if url is None:
+            raise ValueError("CofyDB requires a database URL to be configured.")
         self._sources: list[DatabaseBackedSource] = []
-        self._db_url = db_url
-        self._engine_kwargs = engine_kwargs or {}
-        self._engine: Engine | None = None
+        self._url = url
+        self.engine: Engine = create_engine(self._url, **engine_kwargs)
 
     def register_module(self, module: Module):
         source = getattr(module, "source", None)
@@ -53,23 +50,12 @@ class CofyDB:
                 metadata.append(source.target_metadata)
         return metadata
 
-    @property
-    def engine(self):
-        if self._engine is None:
-            if self._db_url is None:
-                raise ValueError("No database URL configured for CofyDB.")
-            self._engine = create_engine(self._db_url, **self._engine_kwargs)
-        return self._engine
-
     def run_migrations(self, revision: str = "heads") -> None:
-        if self._db_url is None:
-            raise ValueError("No database URL configured for CofyDB.")
-
         config = Config()
         config.set_main_option(
             "script_location", str(resources.files("src.cofy.db").joinpath("alembic"))
         )
-        config.set_main_option("sqlalchemy.url", self._db_url)
+        config.set_main_option("sqlalchemy.url", self._url)
 
         if self.migration_locations:
             config.set_main_option(
@@ -78,3 +64,14 @@ class CofyDB:
 
         config.attributes["target_metadata"] = self.target_metadata
         command.upgrade(config, revision)
+
+    def reset(self) -> None:
+        """usefull in development to reset the database to a clean state
+        Warning: this will delete all data in the database, use with caution!
+        """
+        meta = MetaData()
+        meta.reflect(bind=self.engine)
+        meta.drop_all(bind=self.engine)
+        for metadata in self.target_metadata:
+            metadata.create_all(bind=self.engine)
+        self.run_migrations()

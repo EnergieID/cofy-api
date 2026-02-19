@@ -1,12 +1,8 @@
-from importlib import resources
-from pathlib import Path
-
-DB_PATH = Path(str(resources.files("src.demo.db").joinpath("database.db")))
+from src.demo.main import cofy
 
 
 def main() -> None:
-    if DB_PATH.exists():
-        DB_PATH.unlink()
+    cofy.db.reset()
 
 
 if __name__ == "__main__":
