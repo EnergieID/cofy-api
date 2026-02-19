@@ -1,5 +1,3 @@
-from contextlib import asynccontextmanager
-from importlib import resources
 from os import environ
 
 from fastapi import Depends
@@ -12,20 +10,11 @@ from src.modules.members.sources.db_source import MembersDbSource
 from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
-SQLITE_URL = f"sqlite:///{resources.files('src.demo.db').joinpath('database.db')}"
-
-
-@asynccontextmanager
-async def lifespan(app: CofyApi):
-    # Startup code
-    app.db.run_migrations()
-    yield
-    # Shutdown code (if needed)
-
-
 cofy = CofyApi(
-    db=CofyDB(url=SQLITE_URL, connect_args={"check_same_thread": False}),
-    lifespan=lifespan,
+    db=CofyDB(
+        url=environ.get("DB_URL", "sqlite:///./demo.db"),
+        connect_args={"check_same_thread": False},
+    ),
     dependencies=[
         Depends(
             token_verifier(
