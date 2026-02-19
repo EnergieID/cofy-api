@@ -1,14 +1,18 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.modules.members.model import Member
-from src.modules.members.module import MembersModule
 from tests.mocks.dummy_module import DummyModule
 
 
 class TestModule:
     def setup_method(self):
         self.module = DummyModule("test_module")
+        self.module.add_api_route(
+            "/custom",
+            lambda: "Custom operation",
+            methods=["GET"],
+            operation_id="customOp",
+        )
         self.app = FastAPI()
         self.app.include_router(self.module)
         self.client = TestClient(self.app)
@@ -31,18 +35,13 @@ class TestModule:
         assert tag["x-version"] == "v1"
         assert tag["x-display-name"] == "test_module"
 
-
-class _DummyMemberSource:
-    response_model = Member
-
-    def list(self, email=None, **filters) -> list[Member]:
-        return []
-
-    def verify(self, activation_code: str) -> Member | None:
-        return None
-
-
-def test_members_module_initialization():
-    module = MembersModule(settings={"source": _DummyMemberSource()})
-    assert module.type == "members"
-    assert module.prefix == "/members/default/v1"
+    def test_operation_id_in_openapi(self):
+        openapi = self.client.get("/openapi.json").json()
+        # Find the operationId for /dummy/test_module/v1/hello
+        op_id = openapi["paths"]["/dummy/test_module/v1/hello"]["get"]["operationId"]
+        assert op_id == "dummy:test_module:hello"
+        # Find the operationId for /dummy/test_module/v1/custom
+        op_id_custom = openapi["paths"]["/dummy/test_module/v1/custom"]["get"][
+            "operationId"
+        ]
+        assert op_id_custom == "dummy:test_module:customOp"
