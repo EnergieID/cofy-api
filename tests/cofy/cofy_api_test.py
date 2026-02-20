@@ -6,8 +6,7 @@ from tests.mocks.dummy_module import DummyModule
 
 
 def test_cofy_initialization():
-    settings = {"title": "Test API", "version": "1.2.3", "description": "Test desc"}
-    cofy = CofyApi(**settings)
+    cofy = CofyApi(title="Test API", version="1.2.3", description="Test desc")
     assert isinstance(cofy, FastAPI)
     assert cofy.title == "Test API"
     assert cofy.version == "1.2.3"
@@ -22,9 +21,7 @@ class TestCofyApiModuleRegistration:
 
     def test_register_module(self):
         self.cofy.register_module(self.module)
-        assert "dummy" in self.cofy._modules
-        assert "test_module" in self.cofy._modules["dummy"]
-        assert self.cofy._modules["dummy"]["test_module"] is self.module
+        assert self.module in self.cofy.modules
         response = self.client.get(self.module.prefix + "/hello")
         assert response.status_code == 200
         assert response.text == '"Hello from DummyModule test_module"'
@@ -55,9 +52,8 @@ class TestCofyApiModuleRegistration:
         module2 = DummyModule("another_module")
         self.cofy.register_module(self.module)
         self.cofy.register_module(module2)
-        assert "dummy" in self.cofy._modules
-        assert "test_module" in self.cofy._modules["dummy"]
-        assert "another_module" in self.cofy._modules["dummy"]
+        assert self.module in self.cofy.modules
+        assert module2 in self.cofy.modules
         response1 = self.client.get(self.module.prefix + "/hello")
         response2 = self.client.get(module2.prefix + "/hello")
         assert response1.status_code == 200

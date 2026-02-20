@@ -211,3 +211,6 @@ __marimo__/
 
 local.settings.json
 .env.local
+
+# SQLite database files
+*.db

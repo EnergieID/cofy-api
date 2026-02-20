@@ -32,8 +32,20 @@ Activate [pre-commit](https://pre-commit.com/) hooks that enforce code style on 
 pre-commit install
 ```
 
-#### Run development demo application:
+#### Configure environment variables:
 Our demo application uses some API keys for external services. You can provide these `.env.local` file in the root of the repository, following the structure of `.env.example`.
+
+#### Set up the database:
+The demo application uses a SQLite database. A different database can be configured via the environment variables.
+To create the database and seed it with example data:
+
+```sh
+poe db-seed
+```
+
+This will run all pending migrations and load the example CSV data into the database.
+
+#### Run development demo application:
 
 ```sh
 poe demo
@@ -52,3 +64,68 @@ poe test
 ```
 #### Build & publish
 TODO
+
+## Database & Migrations
+
+Cofy uses [Alembic](https://alembic.sqlalchemy.org/) for database migrations. Each module that needs database storage owns its own migration branch, keeping schemas independent and composable.
+
+### Commands
+
+| Command | Description |
+|---|---|
+| `poe db-seed` | Run all migrations and seed the database with example data |
+| `poe db-migrate` | Run all pending migrations |
+| `poe db-reset` | Drop all tables and re-run migrations (⚠️ destroys all data) |
+| `poe db-generate` | Generate a new migration file for a specific module branch |
+
+### Generating a migration
+
+When you change a module's SQLAlchemy model, generate a migration for that module's branch:
+
+```sh
+poe db-generate "add phone number to member" --head members_core@head --rev-id members_core_0002
+```
+
+| Argument | Required | Description |
+|---|---|---|
+| `message` (positional) | ✅ | Short description of the change |
+| `--head` | ✅ | Branch to extend, e.g. `members_core@head` |
+| `--rev-id` | ❌ | Custom revision ID (Alembic generates one if omitted) |
+| `--no-autogenerate` | ❌ | Create an empty migration instead of diffing model changes |
+
+The generated file will be placed in the module's own `migrations/versions/` directory automatically.
+
+### How branches work
+
+Each module declares its own Alembic branch label in its initial migration. This allows multiple modules to coexist in the same database without interfering with each other.
+
+For example, the members module uses branch `members_core`:
+
+```
+src/modules/members/migrations/versions/
+├── members_core_0001_members_core_initial.py   # branch_labels = ("members_core",)
+└── members_core_0002_add_phone_number.py       # extends members_core@head
+```
+
+A separate module `foo` would have its own branch `foo_core` with revisions in its own directory:
+
+```
+src/modules/foo/migrations/versions/
+├── foo_core_0001_initial.py                    # branch_labels = ("foo_core",)
+└── foo_core_0002_add_index.py                  # extends foo_core@head
+```
+
+When `poe db-migrate` runs, Alembic upgrades all branches to their latest head — both `members_core` and `foo_core` are applied independently.
+
+### Extending a module's schema
+
+If you build a custom implementation that extends an existing module's schema, you can create a new branch that depends on a specific revision:
+
+```python
+revision = "members_custom_0001"
+down_revision = None
+branch_labels = ("members_custom",)
+depends_on = "members_core_0001"  # ensures the base schema exists first
+```
+
+This guarantees the base tables are created before your extension runs, while keeping both migration chains independent.

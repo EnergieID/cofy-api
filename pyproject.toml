@@ -9,6 +9,7 @@ description = "An open-source modular framework for ingesting, standardising, st
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.18.4",
     "entsoe-py>=0.7.10",
     "fastapi[standard]>=0.128.0",
     "narwhals>=2.15.0",
@@ -31,6 +32,21 @@ check = "ty check"
 cmd = "fastapi dev src/demo/main.py"
 env = { PYTHONPATH = "." }
 envfile = ".env.local"
+[tool.poe.tasks.db-seed]
+cmd = "python -m src.demo.db.seed"
+envfile = ".env.local"
+env = { PYTHONPATH = "." }
+[tool.poe.tasks.db-reset]
+cmd = "python -m src.demo.db.reset"
+envfile = ".env.local"
+[tool.poe.tasks.db-migrate]
+cmd = "python -m src.demo.db.migrate"
+envfile = ".env.local"
+env = { PYTHONPATH = "." }
+[tool.poe.tasks.db-generate]
+cmd = "python -m src.demo.db.generate"
+envfile = ".env.local"
+env = { PYTHONPATH = "." }
 [tool.poe.tasks.test]
 cmd = "pytest --cov=src --cov-report=term-missing --import-mode=importlib"
 env = { PYTHONPATH = "." }
@@ -38,7 +54,7 @@ env = { PYTHONPATH = "." }
 skip_covered = true
 [tool.coverage.run]
 source = ["src"]
-omit = ["src/demo/*"]
+omit = ["src/demo/*", "src/modules/*/migrations/*", "src/cofy/db/alembic/*"]
 [tool.ruff]
 line-length = 120
 [tool.ruff.lint]

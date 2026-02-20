@@ -15,12 +15,17 @@
 ### [FastAPI](https://fastapi.tiangolo.com/)
 - We use this as our standard web framework for building the cofy cloud api
 
+### [Pydantic](https://pydantic.dev/)
+- data validation using python type annotations
+
+### [SQLAlchemy](https://www.sqlalchemy.org/)
+- For database interactions in our default db source implementations
+- We use **[alembic](https://alembic.sqlalchemy.org/en/latest/)** for database migrations
+
 ## Module specific dependencies
 - entsoe-py: used by the Tariff module as default source for entsoe data
 
 ## Future exploration
 Dependencies we might want to explore in the future
-## [Pydantic](https://pydantic.dev/)
-- data validation and settings management using python type annotations
-## [Pandera](https://pandera.readthedocs.io/en/stable/)
-- Typing for Datframe schemas
+### [Pandera](https://pandera.readthedocs.io/en/stable/)
+- Typing for Datframe schemas (Does not support narwhals yet, but might be interesting to explore in the future for our internal API)

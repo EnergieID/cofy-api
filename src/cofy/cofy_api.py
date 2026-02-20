@@ -17,10 +17,9 @@ DEFAULT_ARGS: dict[str, Any] = {
 
 
 class CofyApi(FastAPI):
-    _modules: dict[str, dict[str, Module]] = {}
-
     def __init__(self, **kwargs):
         super().__init__(**(DEFAULT_ARGS | kwargs))
+        self._modules: list[Module] = []
         self.include_router(DocsRouter(self.openapi))
 
     def openapi(self):
@@ -32,12 +31,13 @@ class CofyApi(FastAPI):
         )
 
     def register_module(self, module: Module):
-        if module.type not in self._modules:
-            self._modules[module.type] = {}
-        self._modules[module.type][module.name] = module
-
+        self._modules.append(module)
         self.include_router(module)
 
     @property
     def tags_metadata(self) -> list[dict[str, Any]]:
-        return [instance.tag for instances_of_type in self._modules.values() for instance in instances_of_type.values()]
+        return [module.tag for module in self._modules]
+
+    @property
+    def modules(self) -> tuple[Module, ...]:
+        return tuple(self._modules)
