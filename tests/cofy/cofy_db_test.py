@@ -34,9 +34,7 @@ class DummyDbSource(DatabaseBackedSource):
 
 
 def test_db_requires_db_url():
-    with pytest.raises(
-        ValueError, match="CofyDB requires a database URL to be configured."
-    ):
+    with pytest.raises(ValueError, match="CofyDB requires a database URL to be configured."):
         CofyDB()
 
 
@@ -107,9 +105,7 @@ class TestDBWithMigrations:
         self.db_file = tmp_path / "cofy_test.db"
         self.cofy_db = CofyDB(url=f"sqlite:///{self.db_file}")
 
-        with resources.as_file(
-            resources.files("tests.cofy").joinpath("dumy_migrations")
-        ) as migrations_path:
+        with resources.as_file(resources.files("tests.cofy").joinpath("dumy_migrations")) as migrations_path:
             self.module = DummySourcedModule(
                 name="test_module",
                 migration_locations=[str(migrations_path)],
@@ -122,9 +118,7 @@ class TestDBWithMigrations:
         self.cofy_db.run_migrations()
 
         with self.cofy_db.engine.connect() as connection:
-            statement = sa.text(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='foo';"
-            )
+            statement = sa.text("SELECT name FROM sqlite_master WHERE type='table' AND name='foo';")
             result = connection.execute(statement)
             assert result.fetchone() is not None
 
@@ -154,23 +148,17 @@ class TestDBWithMigrations:
         self.cofy_db.run_migrations()
 
         with self.cofy_db.engine.connect() as connection:
-            statement = sa.text(
-                "CREATE TABLE temp_table (id INTEGER PRIMARY KEY, value TEXT);"
-            )
+            statement = sa.text("CREATE TABLE temp_table (id INTEGER PRIMARY KEY, value TEXT);")
             connection.execute(statement)
             connection.commit()
-            statement = sa.text(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='temp_table';"
-            )
+            statement = sa.text("SELECT name FROM sqlite_master WHERE type='table' AND name='temp_table';")
             result = connection.execute(statement)
             assert result.fetchone() is not None
 
         self.cofy_db.reset()
 
         with self.cofy_db.engine.connect() as connection:
-            statement = sa.text(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='temp_table';"
-            )
+            statement = sa.text("SELECT name FROM sqlite_master WHERE type='table' AND name='temp_table';")
             result = connection.execute(statement)
             assert result.fetchone() is None
 
@@ -198,11 +186,7 @@ class TestGenerateMigration:
         self.cofy_db.run_migrations()
 
     def _generated_files(self) -> set[Path]:
-        return {
-            f
-            for f in self.migrations_dir.iterdir()
-            if f.suffix == ".py" and f.name not in ("foo.py", "bar.py")
-        }
+        return {f for f in self.migrations_dir.iterdir() if f.suffix == ".py" and f.name not in ("foo.py", "bar.py")}
 
     def test_generate_migration_creates_file(self):
         assert self._generated_files() == set()

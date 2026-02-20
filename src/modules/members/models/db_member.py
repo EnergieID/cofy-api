@@ -10,6 +10,4 @@ class DBMember(TimestampMixin, Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     email: Mapped[str] = mapped_column(String, nullable=False)
-    activation_code: Mapped[str] = mapped_column(
-        String, nullable=False, unique=True, index=True
-    )
+    activation_code: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)

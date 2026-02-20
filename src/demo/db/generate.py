@@ -5,9 +5,7 @@ from src.demo.main import DB_CONNECT_ARGS, DB_URL, cofy
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Generate a new Alembic migration for a module branch."
-    )
+    parser = argparse.ArgumentParser(description="Generate a new Alembic migration for a module branch.")
     parser.add_argument("message", help="Migration description")
     parser.add_argument(
         "--head",

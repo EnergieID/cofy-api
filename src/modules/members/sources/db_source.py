@@ -30,9 +30,7 @@ class MembersDbSource(MemberSource[Any], DatabaseBackedSource):
 
     def verify(self, activation_code: str) -> Any | None:
         with Session(self.db_engine) as session:
-            statement = select(self.model).where(
-                self.model.activation_code == activation_code
-            )
+            statement = select(self.model).where(self.model.activation_code == activation_code)
             return session.scalars(statement).first()
 
     @property

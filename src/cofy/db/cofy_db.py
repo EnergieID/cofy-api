@@ -52,25 +52,18 @@ class CofyDB:
     def target_metadata(self) -> list[Any]:
         metadata: list[Any] = []
         for source in self._sources:
-            if (
-                source.target_metadata is not None
-                and source.target_metadata not in metadata
-            ):
+            if source.target_metadata is not None and source.target_metadata not in metadata:
                 metadata.append(source.target_metadata)
         return metadata
 
     def _build_config(self) -> Config:
         config = Config()
-        config.set_main_option(
-            "script_location", str(resources.files("src.cofy.db").joinpath("alembic"))
-        )
+        config.set_main_option("script_location", str(resources.files("src.cofy.db").joinpath("alembic")))
         config.set_main_option("sqlalchemy.url", self._url)
         config.set_main_option("path_separator", "os")
 
         if self.migration_locations:
-            config.set_main_option(
-                "version_locations", " ".join(self.migration_locations)
-            )
+            config.set_main_option("version_locations", " ".join(self.migration_locations))
 
         config.attributes["target_metadata"] = self.target_metadata
         return config

@@ -42,15 +42,11 @@ def test_members_module_list_and_verify_routes():
     assert response.status_code == 200
     assert len(response.json()) == 1
 
-    response = client.post(
-        module.prefix + "/verify", json={"activation_code": "code-a"}
-    )
+    response = client.post(module.prefix + "/verify", json={"activation_code": "code-a"})
     assert response.status_code == 200
     assert response.json()["id"] == "1"
 
-    response = client.post(
-        module.prefix + "/verify", json={"activation_code": "invalid"}
-    )
+    response = client.post(module.prefix + "/verify", json={"activation_code": "invalid"})
     assert response.status_code == 404
 
 

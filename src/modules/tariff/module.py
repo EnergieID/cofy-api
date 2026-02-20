@@ -1,34 +1,69 @@
 import datetime as dt
+from typing import Annotated
 
-from src.modules.tariff.model import TariffEntry
-from src.modules.tariff.source import TariffSource
+from fastapi.params import Query
+from pydantic import Field
+
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
-from src.shared.module import Module
+from src.shared.timeseries.formats.csv import CSVFormat
+from src.shared.timeseries.formats.json import (
+    DefaultDataType,
+    DefaultMetadataType,
+    JSONFormat,
+)
+from src.shared.timeseries.module import TimeseriesModule
 
 
-class TariffModule(Module):
+class TariffMetadata(DefaultMetadataType):
+    unit: str
+
+
+def floor_datetime(dt_obj: dt.datetime, delta: dt.timedelta) -> dt.datetime:
+    """Floor a datetime object to the nearest lower multiple of delta."""
+    seconds = (dt_obj - dt.datetime.min.replace(tzinfo=dt_obj.tzinfo)).total_seconds()
+    floored_seconds = seconds - (seconds % delta.total_seconds())
+    return dt.datetime.min.replace(tzinfo=dt_obj.tzinfo) + dt.timedelta(seconds=floored_seconds)
+
+
+class TariffModule(TimeseriesModule):
     type: str = "tariff"
     type_description: str = "Module providing tariff data as time series."
-    source: TariffSource
 
     def __init__(self, settings: dict, **kwargs):
-        super().__init__(settings, **kwargs)
-        if "source" in settings:
-            self.source = settings["source"]
-        else:
-            self.source = EntsoeDayAheadTariffSource(
-                settings.get("country_code", "BE"),
+        settings["formats"] = settings.get(
+            "formats",
+            [
+                JSONFormat[DefaultDataType, TariffMetadata](DefaultDataType, TariffMetadata),
+                CSVFormat(),
+            ],
+        )
+        if "source" not in settings:
+            # use default source, with its own defaults for country_code and resolution
+
+            settings["source"] = EntsoeDayAheadTariffSource(
                 settings.get("api_key", ""),
+                settings.get("country_code", "BE"),
             )
 
-    def init_routes(self):
-        super().init_routes()
-        self.add_api_route("/", self.get_tariffs, methods=["GET"])
+            if "country_code" not in settings and (
+                "extra_args" not in settings or "country_code" not in settings["extra_args"]
+            ):
+                settings["extra_args"] = settings.get("extra_args", {})
+                settings["extra_args"]["country_code"] = Annotated[
+                    str,
+                    Field(Query(default="BE", description="Country code for ENTSOE")),
+                ]
+        super().__init__(settings, **kwargs)
 
-    async def get_tariffs(
-        self,
-        start: dt.datetime,
-        end: dt.datetime,
-    ) -> list[TariffEntry]:
-        frame = await self.source.fetch_tariffs(start, end)
-        return [TariffEntry(**row) for row in frame.entries.iter_rows(named=True)]
+    @property
+    def default_args(self):
+        return {
+            "start": lambda: floor_datetime(dt.datetime.now(dt.UTC), self.resolution),
+            "end": lambda: None,
+            "offset": 0,
+            "limit": 288,
+        }
+
+    @property
+    def resolution(self) -> dt.timedelta:
+        return self.settings.get("resolution", dt.timedelta(minutes=15))
