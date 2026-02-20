@@ -110,6 +110,7 @@ class TimeseriesModule(Module):
             methods=["GET"],
             responses=format.responses,
             response_class=format.response_class,
+            operation_id=(None if default else f"{get_timeseries.__name__}:{format.name}"),
         )
 
     @property
