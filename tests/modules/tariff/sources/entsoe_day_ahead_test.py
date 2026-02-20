@@ -11,9 +11,7 @@ from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSour
 from src.shared.timeseries.model import Timeseries
 
 EXAMPLE_CSV_NAME = "entsoe_day_ahead_example.csv"
-EXAMPLE_CSV_PATH = resources.files("tests.modules.tariff.sources").joinpath(
-    EXAMPLE_CSV_NAME
-)
+EXAMPLE_CSV_PATH = resources.files("tests.modules.tariff.sources").joinpath(EXAMPLE_CSV_NAME)
 
 
 def test_init_valid():
@@ -45,7 +43,7 @@ async def test_fetch_timeseries():
             parse_dates=True,
         )
         .squeeze()
-        .rename(0)
+        .rename(0)  # ty: ignore[unresolved-attribute, no-matching-overload]
     )
 
     start = dt.datetime(2026, 1, 21)

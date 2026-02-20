@@ -70,13 +70,9 @@ class TimeseriesModule(Module):
             if start is None:
                 raise RequestValidationError("Start datetime must be provided.")
             if limit is None and end is None:
-                raise RequestValidationError(
-                    "Either end datetime or limit must be provided."
-                )
+                raise RequestValidationError("Either end datetime or limit must be provided.")
             if limit is None and end is not None and start >= end:
-                raise RequestValidationError(
-                    "Start datetime must be before end datetime."
-                )
+                raise RequestValidationError("Start datetime must be before end datetime.")
             # If no timezone is provided, assume UTC
             if start.tzinfo is None:
                 start = start.replace(tzinfo=dt.UTC)

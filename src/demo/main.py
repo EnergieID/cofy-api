@@ -8,11 +8,7 @@ from src.modules.tariff.formats.kiwatt import KiwattFormat
 from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
-app = CofyApi(
-    dependencies=[
-        Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))
-    ]
-)
+app = CofyApi(dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))])
 
 entsoe = TariffModule(
     settings={

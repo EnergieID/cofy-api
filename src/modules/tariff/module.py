@@ -22,9 +22,7 @@ def floor_datetime(dt_obj: dt.datetime, delta: dt.timedelta) -> dt.datetime:
     """Floor a datetime object to the nearest lower multiple of delta."""
     seconds = (dt_obj - dt.datetime.min.replace(tzinfo=dt_obj.tzinfo)).total_seconds()
     floored_seconds = seconds - (seconds % delta.total_seconds())
-    return dt.datetime.min.replace(tzinfo=dt_obj.tzinfo) + dt.timedelta(
-        seconds=floored_seconds
-    )
+    return dt.datetime.min.replace(tzinfo=dt_obj.tzinfo) + dt.timedelta(seconds=floored_seconds)
 
 
 class TariffModule(TimeseriesModule):
@@ -35,19 +33,14 @@ class TariffModule(TimeseriesModule):
         settings["formats"] = settings.get(
             "formats",
             [
-                JSONFormat[DefaultDataType, TariffMetadata](
-                    DefaultDataType, TariffMetadata
-                ),
+                JSONFormat[DefaultDataType, TariffMetadata](DefaultDataType, TariffMetadata),
                 CSVFormat(),
             ],
         )
         if (
             "country_code" not in settings
             and "source" not in settings
-            and (
-                "extra_args" not in settings
-                or "country_code" not in settings["extra_args"]
-            )
+            and ("extra_args" not in settings or "country_code" not in settings["extra_args"])
         ):
             settings["extra_args"] = settings.get("extra_args", {})
             settings["extra_args"]["country_code"] = Annotated[

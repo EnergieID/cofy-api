@@ -7,9 +7,7 @@ from src.shared.timeseries.source import TimeseriesSource
 
 
 class DummySource(TimeseriesSource):
-    async def fetch_timeseries(
-        self, start: dt.datetime, end: dt.datetime, **kwargs
-    ) -> Timeseries:
+    async def fetch_timeseries(self, start: dt.datetime, end: dt.datetime, **kwargs) -> Timeseries:
         data = [
             {"timestamp": start + dt.timedelta(hours=i), "value": i * 10.0}
             for i in range(int((end - start).total_seconds() // 3600))

@@ -34,10 +34,6 @@ class EntsoeDayAheadTariffSource(TimeseriesSource):
             )
         except NoMatchingDataError:
             series = pd.Series(dtype=float)
-        df = (
-            series.to_frame()
-            .reset_index()
-            .rename(columns={"index": "timestamp", 0: "value"})
-        )
+        df = series.to_frame().reset_index().rename(columns={"index": "timestamp", 0: "value"})
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         return Timeseries(frame=df, metadata={"unit": "EUR/MWh"})

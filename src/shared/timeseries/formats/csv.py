@@ -14,11 +14,7 @@ class CSVFormat(TimeseriesFormat):
         return StreamingResponse(
             content=timeseries.to_csv(),
             media_type="text/csv",
-            headers={
-                "x-metadata": DefaultMetadataType(
-                    **timeseries.metadata
-                ).model_dump_json()
-            },
+            headers={"x-metadata": DefaultMetadataType(**timeseries.metadata).model_dump_json()},
         )
 
     @property

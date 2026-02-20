@@ -49,9 +49,7 @@ def test_formats_default():
 
 class TestTimeseriesModule:
     def setup_method(self):
-        self.module = TimeseriesModule(
-            {"source": DummyTimeseriesSource(), "default_args": {"limit": None}}
-        )
+        self.module = TimeseriesModule({"source": DummyTimeseriesSource(), "default_args": {"limit": None}})
         self.start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
         self.end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
 
@@ -83,9 +81,7 @@ class TestTimeseriesModule:
         for i, entry in enumerate(data):
             assert entry["value"] == i * 10.0
             # Normalize timestamp for comparison
-            self.assert_iso_equals_datetime(
-                entry["timestamp"], self.start + dt.timedelta(hours=i)
-            )
+            self.assert_iso_equals_datetime(entry["timestamp"], self.start + dt.timedelta(hours=i))
 
     def assert_iso_equals_datetime(self, ts1: str, ts2: dt.datetime):
         expected_time = ts2.replace(tzinfo=dt.UTC)
@@ -103,18 +99,10 @@ class TestTimeseriesModule:
             {
                 "source": DummyTimeseriesSource(),
                 "extra_args": {
-                    "foo": Annotated[
-                        str, Query(description="Extra argument for testing")
-                    ],
-                    "fas": Annotated[
-                        int, Query(default=42, description="Another extra argument")
-                    ],
+                    "foo": Annotated[str, Query(description="Extra argument for testing")],
+                    "fas": Annotated[int, Query(default=42, description="Another extra argument")],
                 },
-                "formats": [
-                    JSONFormat[DefaultDataType, CustomMetadataType](
-                        DefaultDataType, CustomMetadataType
-                    )
-                ],
+                "formats": [JSONFormat[DefaultDataType, CustomMetadataType](DefaultDataType, CustomMetadataType)],
             }
         )
         app.include_router(module)
@@ -147,9 +135,7 @@ class TestTimeseriesModule:
 
     def test_end_before_start_should_fail(self):
         app = FastAPI()
-        module = TimeseriesModule(
-            {"source": DummyTimeseriesSource(), "default_args": {"limit": None}}
-        )
+        module = TimeseriesModule({"source": DummyTimeseriesSource(), "default_args": {"limit": None}})
         app.include_router(module)
         client = TestClient(app)
 
@@ -202,9 +188,7 @@ class TestTimeseriesModule:
 
     def test_utc_used_if_no_timezone(self):
         app = FastAPI()
-        module = TimeseriesModule(
-            {"source": DummyTimeseriesSource(), "default_args": {"limit": None}}
-        )
+        module = TimeseriesModule({"source": DummyTimeseriesSource(), "default_args": {"limit": None}})
         app.include_router(module)
         client = TestClient(app)
 
@@ -227,9 +211,7 @@ class TestTimeseriesModule:
 
     def test_offset_and_limit(self):
         app = FastAPI()
-        module = TimeseriesModule(
-            {"source": DummyTimeseriesSource(), "default_args": {"limit": None}}
-        )
+        module = TimeseriesModule({"source": DummyTimeseriesSource(), "default_args": {"limit": None}})
         app.include_router(module)
         client = TestClient(app)
 
@@ -245,18 +227,12 @@ class TestTimeseriesModule:
         result = response.json()
         data = result.get("data")
         assert len(data) == 1
-        self.assert_iso_equals_datetime(
-            result["metadata"]["start"], self.start + dt.timedelta(hours=1)
-        )
-        self.assert_iso_equals_datetime(
-            result["metadata"]["end"], self.start + dt.timedelta(hours=2)
-        )
+        self.assert_iso_equals_datetime(result["metadata"]["start"], self.start + dt.timedelta(hours=1))
+        self.assert_iso_equals_datetime(result["metadata"]["end"], self.start + dt.timedelta(hours=2))
 
     def test_csv_format(self):
         app = FastAPI()
-        module = TimeseriesModule(
-            {"source": DummyTimeseriesSource(), "default_args": {"limit": None}}
-        )
+        module = TimeseriesModule({"source": DummyTimeseriesSource(), "default_args": {"limit": None}})
         app.include_router(module)
         client = TestClient(app)
 

@@ -36,9 +36,7 @@ class JSONFormat[
 
     # We need to pass the typing info at runtime, otherwise we don't have enough info to create the openapi schema
     # root cause is type erasure, see https://github.com/python/typing/issues/629#issuecomment-1831106590
-    def __init__(
-        self, DT: type[DataType] | None = None, MT: type[MetadataType] | None = None
-    ):
+    def __init__(self, DT: type[DataType] | None = None, MT: type[MetadataType] | None = None):
         super().__init__()
         self.DT = DT or DefaultDataType
         self.MT = MT or DefaultMetadataType

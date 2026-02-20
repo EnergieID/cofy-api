@@ -42,9 +42,7 @@ def test_floor_datetime():
 
 class TestTariffModule:
     def setup_method(self):
-        self.module = TariffModule(
-            {"source": DummySource(), "default_args": {"limit": None}}
-        )
+        self.module = TariffModule({"source": DummySource(), "default_args": {"limit": None}})
         self.start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
         self.end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
 
@@ -76,6 +74,4 @@ class TestTariffModule:
         assert len(data) == 3
         for i, entry in enumerate(data):
             assert entry["value"] == i * 10.0
-            assert dt.datetime.fromisoformat(
-                entry["timestamp"]
-            ) == self.start + dt.timedelta(hours=i)
+            assert dt.datetime.fromisoformat(entry["timestamp"]) == self.start + dt.timedelta(hours=i)
