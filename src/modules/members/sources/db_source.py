@@ -1,3 +1,4 @@
+import builtins
 from collections.abc import Sequence
 from importlib import resources
 from typing import Any
@@ -21,7 +22,7 @@ class MembersDbSource(MemberSource[Any], DatabaseBackedSource):
     def list(
         self,
         email: str | None = None,
-    ) -> list[Any]:
+    ) -> builtins.list[Any]:
         with Session(self.db_engine) as session:
             statement = select(self.model)
             if email is not None:

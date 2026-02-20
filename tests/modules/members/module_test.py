@@ -1,3 +1,5 @@
+import builtins
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -19,7 +21,7 @@ class DummyMemberSource:
             Member(id="2", email="b@example.com"),
         ]
 
-    def list(self, email=None) -> list[Member]:
+    def list(self, email=None) -> builtins.list[Member]:
         members = self.members
         if email is not None:
             members = [member for member in members if member.email == email]

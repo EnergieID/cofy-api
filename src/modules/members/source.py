@@ -1,3 +1,4 @@
+import builtins
 from abc import ABC, abstractmethod
 
 from src.modules.members.model import Member
@@ -8,7 +9,7 @@ class MemberSource[T](ABC):
     def list(
         self,
         email: str | None = None,
-    ) -> list[T]:
+    ) -> builtins.list[T]:
         """List all members."""
 
     @abstractmethod
