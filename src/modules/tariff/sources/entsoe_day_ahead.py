@@ -26,10 +26,6 @@ class EntsoeDayAheadTariffSource(TariffSource):
             start=pd.Timestamp(start),
             end=pd.Timestamp(end),
         )
-        df = (
-            series.to_frame()
-            .reset_index()
-            .rename(columns={"index": "timestamp", 0: "value"})
-        )
+        df = series.to_frame().reset_index().rename(columns={"index": "timestamp", 0: "value"})
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         return TariffFrame(unit="EUR/MWh", entries=df)

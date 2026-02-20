@@ -22,18 +22,11 @@ class Module(APIRouter, ABC):
     def init_routes(self):
         """Initialize the routes of the module."""
 
-    def add_api_route(
-        self, path: str, endpoint: Any, *args, operation_id: str | None = None, **kwargs
-    ):
+    def add_api_route(self, path: str, endpoint: Any, *args, operation_id: str | None = None, **kwargs):
         """Add an API route to the module."""
-        if operation_id is None:
-            operation_id = f"{self.id}:{endpoint.__name__}"
-        else:
-            operation_id = f"{self.id}:{operation_id}"
+        operation_id = f"{self.id}:{operation_id or endpoint.__name__}"
 
-        super().add_api_route(
-            path, endpoint, *args, operation_id=operation_id, **kwargs
-        )
+        super().add_api_route(path, endpoint, *args, operation_id=operation_id, **kwargs)
 
     @property
     def name(self) -> str:

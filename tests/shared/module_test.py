@@ -41,7 +41,5 @@ class TestModule:
         op_id = openapi["paths"]["/dummy/test_module/v1/hello"]["get"]["operationId"]
         assert op_id == "dummy:test_module:hello"
         # Find the operationId for /dummy/test_module/v1/custom
-        op_id_custom = openapi["paths"]["/dummy/test_module/v1/custom"]["get"][
-            "operationId"
-        ]
+        op_id_custom = openapi["paths"]["/dummy/test_module/v1/custom"]["get"]["operationId"]
         assert op_id_custom == "dummy:test_module:customOp"

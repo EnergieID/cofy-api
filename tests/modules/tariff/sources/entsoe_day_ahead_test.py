@@ -10,9 +10,7 @@ from src.modules.tariff.model import TariffFrame
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
 EXAMPLE_CSV_NAME = "entsoe_day_ahead_example.csv"
-EXAMPLE_CSV_PATH = resources.files("tests.modules.tariff.sources").joinpath(
-    EXAMPLE_CSV_NAME
-)
+EXAMPLE_CSV_PATH = resources.files("tests.modules.tariff.sources").joinpath(EXAMPLE_CSV_NAME)
 
 
 def test_init_valid():
