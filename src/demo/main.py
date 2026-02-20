@@ -56,9 +56,9 @@ fr_tariffs = TariffModule(
 )
 cofy.register_module(fr_tariffs)
 
-# members endpoint for EnergyBar members, using a CSV file as source
+# members endpoint for Demo members, using a CSV file as source
 cofy.register_module(
-    MembersModule(settings={"source": MembersDbSource(engine), "name": "energybar"})
+    MembersModule(settings={"source": MembersDbSource(engine), "name": "demo"})
 )
 
 app = cofy
