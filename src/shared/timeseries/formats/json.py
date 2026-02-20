@@ -18,18 +18,12 @@ class DefaultMetadataType(BaseModel):
     resolution: dt.timedelta | None = None
 
 
-class ResponseModel[
-    DataType: BaseModel = DefaultDataType,
-    MetadataType: BaseModel = DefaultMetadataType,
-](BaseModel):
+class ResponseModel[DataType: BaseModel, MetadataType: BaseModel](BaseModel):
     metadata: MetadataType
     data: list[DataType]
 
 
-class JSONFormat[
-    DataType: BaseModel = DefaultDataType,
-    MetadataType: BaseModel = DefaultMetadataType,
-](TimeseriesFormat):
+class JSONFormat[DataType: BaseModel, MetadataType: BaseModel](TimeseriesFormat):
     """Timeseries format for JSON."""
 
     name = "json"
