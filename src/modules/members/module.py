@@ -31,6 +31,7 @@ class MembersModule(Module):
             methods=["POST"],
             summary="Verify member activation code",
             response_model=self.source.response_model,
+            responses={404: {"description": "Member not found"}},
         )
 
     def verify(self, body: VerifyMemberRequest) -> Any:
