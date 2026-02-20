@@ -3,29 +3,37 @@ import datetime as dt
 
 import pandas as pd
 from entsoe import EntsoePandasClient
+from entsoe.exceptions import NoMatchingDataError
 
-from src.modules.tariff.model import TariffFrame
-from src.modules.tariff.source import TariffSource
+from src.shared.timeseries.model import Timeseries
+from src.shared.timeseries.source import TimeseriesSource
 
 
-class EntsoeDayAheadTariffSource(TariffSource):
-    def __init__(self, country_code: str, api_key: str):
+class EntsoeDayAheadTariffSource(TimeseriesSource):
+    def __init__(self, api_key: str, country_code: str | None = None):
         super().__init__()
-        if not country_code:
-            raise ValueError("country_code must be provided")
         if not api_key:
             raise ValueError("api_key must be provided")
 
         self.country_code = country_code
         self.client = EntsoePandasClient(api_key=api_key)
 
-    async def fetch_tariffs(self, start: dt.datetime, end: dt.datetime) -> TariffFrame:
-        series = await asyncio.to_thread(
-            self.client.query_day_ahead_prices,
-            country_code=self.country_code,
-            start=pd.Timestamp(start),
-            end=pd.Timestamp(end),
-        )
+    async def fetch_timeseries(
+        self,
+        start: dt.datetime,
+        end: dt.datetime,
+        country_code: str | None = None,
+        **kwargs,
+    ) -> Timeseries:
+        try:
+            series = await asyncio.to_thread(
+                self.client.query_day_ahead_prices,
+                country_code=country_code or self.country_code,
+                start=pd.Timestamp(start),
+                end=pd.Timestamp(end),
+            )
+        except NoMatchingDataError:
+            series = pd.Series(dtype=float)
         df = series.to_frame().reset_index().rename(columns={"index": "timestamp", 0: "value"})
         df["timestamp"] = pd.to_datetime(df["timestamp"])
-        return TariffFrame(unit="EUR/MWh", entries=df)
+        return Timeseries(frame=df, metadata={"unit": "EUR/MWh"})
