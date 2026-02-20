@@ -61,6 +61,10 @@ class TestKiwattFormat:
     def teardown_method(self):
         self.patcher.stop()
 
+    def test_return_type(self):
+        fmt = KiwattFormat()
+        assert fmt.ReturnType == ResponseModel
+
     def test_format_basic(self):
         start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=UTC)
         end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=UTC)

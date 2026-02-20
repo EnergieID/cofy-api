@@ -37,6 +37,7 @@ env = { PYTHONPATH = "." }
 [tool.coverage.report]
 skip_covered = true
 [tool.coverage.run]
+source = ["src"]
 omit = ["src/demo/*"]
 [tool.ruff]
 line-length = 120
