@@ -1,33 +1,8 @@
-from collections.abc import Sequence
-
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.cofy.cofy_api import CofyApi
-from src.modules.members.model import Member
 from tests.mocks.dummy_module import DummyModule
-
-
-class DummyDbMemberSource:
-    response_model = Member
-
-    def __init__(self, migration_location: str, metadata: object):
-        self._migration_locations = [migration_location, migration_location]
-        self._target_metadata = metadata
-
-    def list(self, email=None, **filters) -> list[Member]:
-        return []
-
-    def verify(self, activation_code: str) -> Member | None:
-        return None
-
-    @property
-    def migration_locations(self) -> Sequence[str]:
-        return self._migration_locations
-
-    @property
-    def target_metadata(self) -> object:
-        return self._target_metadata
 
 
 def test_cofy_initialization():
@@ -46,7 +21,7 @@ class TestCofyApiModuleRegistration:
 
     def test_register_module(self):
         self.cofy.register_module(self.module)
-        assert self.module in self.cofy._modules
+        assert self.module in self.cofy.modules
         response = self.client.get(self.module.prefix + "/hello")
         assert response.status_code == 200
         assert response.text == '"Hello from DummyModule test_module"'
@@ -77,8 +52,8 @@ class TestCofyApiModuleRegistration:
         module2 = DummyModule("another_module")
         self.cofy.register_module(self.module)
         self.cofy.register_module(module2)
-        assert self.module in self.cofy._modules
-        assert module2 in self.cofy._modules
+        assert self.module in self.cofy.modules
+        assert module2 in self.cofy.modules
         response1 = self.client.get(self.module.prefix + "/hello")
         response2 = self.client.get(module2.prefix + "/hello")
         assert response1.status_code == 200
@@ -97,13 +72,3 @@ class TestCofyApiModuleRegistration:
             None,
         )
         assert module_tag is not None
-
-
-def test_cofy_db_is_optional():
-    cofy = CofyApi()
-    try:
-        _ = cofy.db
-    except AssertionError as exc:
-        assert "CofyDB instance is not configured" in str(exc)
-    else:
-        raise AssertionError("Expected an assertion when db is not configured")

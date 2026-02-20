@@ -3,7 +3,6 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
-from src.cofy.db.cofy_db import CofyDB
 from src.cofy.docs_router import DocsRouter
 from src.shared.module import Module
 
@@ -18,10 +17,9 @@ DEFAULT_ARGS: dict[str, Any] = {
 
 
 class CofyApi(FastAPI):
-    def __init__(self, db: CofyDB | None = None, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**(DEFAULT_ARGS | kwargs))
         self._modules: list[Module] = []
-        self._db = db
         self.include_router(DocsRouter(self.openapi))
 
     def openapi(self):
@@ -35,16 +33,11 @@ class CofyApi(FastAPI):
     def register_module(self, module: Module):
         self._modules.append(module)
         self.include_router(module)
-        if self._db:
-            self._db.register_module(module)
 
     @property
     def tags_metadata(self) -> list[dict[str, Any]]:
         return [module.tag for module in self._modules]
 
     @property
-    def db(self) -> CofyDB:
-        assert self._db is not None, (
-            "CofyDB instance is not configured for this CofyApi."
-        )
-        return self._db
+    def modules(self) -> tuple[Module, ...]:
+        return tuple(self._modules)

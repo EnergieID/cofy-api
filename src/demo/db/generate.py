@@ -1,6 +1,7 @@
 import argparse
 
-from src.demo.main import cofy
+from src.cofy.db.cofy_db import CofyDB
+from src.demo.main import DB_CONNECT_ARGS, DB_URL, cofy
 
 
 def main() -> None:
@@ -25,10 +26,9 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    if cofy.db is None:
-        raise ValueError("Demo generate requires a configured CofyDB instance.")
-
-    cofy.db.generate_migration(
+    db = CofyDB(url=DB_URL, connect_args=DB_CONNECT_ARGS)
+    db.bind_api(cofy)
+    db.generate_migration(
         message=args.message,
         head=args.head,
         rev_id=args.rev_id,

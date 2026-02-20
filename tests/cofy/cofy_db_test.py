@@ -41,22 +41,19 @@ def test_db_requires_db_url():
 
 
 def test_db_engine_available_with_db_url():
-    cofy = CofyApi(db=CofyDB(url="sqlite:///:memory:"))
-    db = cofy.db
-    assert db is not None
+    db = CofyDB(url="sqlite:///:memory:")
     assert db.engine is not None
 
 
 def test_db_engine_is_cached():
-    cofy = CofyApi(db=CofyDB(url="sqlite:///:memory:"))
-    db = cofy.db
-    assert db is not None
+    db = CofyDB(url="sqlite:///:memory:")
     first_engine = db.engine
     assert first_engine is db.engine
 
 
 def test_migration_locations_and_target_metadata_from_sources():
-    cofy = CofyApi(db=CofyDB(url="sqlite:///:memory:"))
+    cofy = CofyApi()
+    db = CofyDB(url="sqlite:///:memory:")
     metadata_a = object()
     metadata_b = object()
 
@@ -75,9 +72,8 @@ def test_migration_locations_and_target_metadata_from_sources():
     cofy.register_module(db_module_a)
     cofy.register_module(db_module_b)
     cofy.register_module(non_db_module)
+    db.bind_api(cofy)
 
-    db = cofy.db
-    assert db is not None
     assert db.migration_locations == [
         str(Path("/tmp/migrations/a").resolve()),
         str(Path("/tmp/migrations/b").resolve()),
@@ -87,6 +83,22 @@ def test_migration_locations_and_target_metadata_from_sources():
         metadata_a,
         metadata_b,
     ]
+
+
+def test_register_modules_registers_only_db_sources():
+    db = CofyDB(url="sqlite:///:memory:")
+    metadata = object()
+    db_module = DummySourcedModule(
+        name="db_module",
+        migration_locations=["/tmp/migrations/db"],
+        metadata=metadata,
+    )
+    non_db_module = DummyModule("no_db")
+
+    db.register_modules([db_module, non_db_module])
+
+    assert db.migration_locations == [str(Path("/tmp/migrations/db").resolve())]
+    assert db.target_metadata == [metadata]
 
 
 class TestDBWithMigrations:

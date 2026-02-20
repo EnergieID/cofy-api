@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -13,6 +14,7 @@ from src.cofy.db.database_backed_source import DatabaseBackedSource
 if TYPE_CHECKING:
     from sqlalchemy.engine import Engine
 
+    from src.cofy.cofy_api import CofyApi
     from src.shared.module import Module
 
 
@@ -28,6 +30,13 @@ class CofyDB:
         source = getattr(module, "source", None)
         if isinstance(source, DatabaseBackedSource):
             self._sources.append(source)
+
+    def register_modules(self, modules: Iterable[Module]):
+        for module in modules:
+            self.register_module(module)
+
+    def bind_api(self, api: CofyApi):
+        self.register_modules(api.modules)
 
     @property
     def migration_locations(self) -> list[str]:
