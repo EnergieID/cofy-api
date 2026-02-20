@@ -47,6 +47,11 @@ def test_formats_default():
     assert any(isinstance(fmt, CSVFormat) for fmt in module.formats)
 
 
+def test_source_must_be_provided():
+    with pytest.raises(ValueError):
+        TimeseriesModule({})
+
+
 class TestTimeseriesModule:
     def setup_method(self):
         self.module = TimeseriesModule({"source": DummyTimeseriesSource(), "default_args": {"limit": None}})

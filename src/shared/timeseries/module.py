@@ -27,8 +27,9 @@ class TimeseriesModule(Module):
             ],
         )
         super().__init__(settings, **kwargs)
-        if "source" in settings:
-            self.source = settings["source"]
+        if "source" not in settings:
+            raise ValueError("A source must be provided in settings.")
+        self.source = settings["source"]
 
     def init_routes(self):
         super().init_routes()

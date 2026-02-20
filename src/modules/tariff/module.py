@@ -37,24 +37,23 @@ class TariffModule(TimeseriesModule):
                 CSVFormat(),
             ],
         )
-        if (
-            "country_code" not in settings
-            and "source" not in settings
-            and ("extra_args" not in settings or "country_code" not in settings["extra_args"])
-        ):
-            settings["extra_args"] = settings.get("extra_args", {})
-            settings["extra_args"]["country_code"] = Annotated[
-                str,
-                Field(Query(default="BE", description="Country code for ENTSOE")),
-            ]
-        super().__init__(settings, **kwargs)
-        if "source" in settings:
-            self.source = settings["source"]
-        else:
-            self.source = EntsoeDayAheadTariffSource(
+        if "source" not in settings:
+            # use default source, with its own defaults for country_code and resolution
+
+            settings["source"] = EntsoeDayAheadTariffSource(
                 settings.get("api_key", ""),
                 settings.get("country_code", "BE"),
             )
+
+            if "country_code" not in settings and (
+                "extra_args" not in settings or "country_code" not in settings["extra_args"]
+            ):
+                settings["extra_args"] = settings.get("extra_args", {})
+                settings["extra_args"]["country_code"] = Annotated[
+                    str,
+                    Field(Query(default="BE", description="Country code for ENTSOE")),
+                ]
+        super().__init__(settings, **kwargs)
 
     @property
     def default_args(self):
