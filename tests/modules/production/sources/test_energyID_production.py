@@ -9,9 +9,7 @@ import pytest
 from src.modules.production.sources.energyID_production import EnergyIDProduction
 
 EXAMPLE_JSON_NAME = "energyID_production_example.json"
-EXAMPLE_JSON_PATH = resources.files("tests.modules.production.sources").joinpath(
-    EXAMPLE_JSON_NAME
-)
+EXAMPLE_JSON_PATH = resources.files("tests.modules.production.sources").joinpath(EXAMPLE_JSON_NAME)
 # Load the example JSON response
 with open(str(EXAMPLE_JSON_PATH)) as f:
     EXAMPLE_JSON = json.load(f)

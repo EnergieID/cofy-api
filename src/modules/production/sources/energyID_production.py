@@ -18,9 +18,7 @@ class EnergyIDProduction(TimeseriesSource):
         assert record_id, "Record ID must be provided"
 
         self.headers = {"Authorization": f"apikey {api_key}"}
-        response = requests.get(
-            "https://api.energyid.eu/api/v1/members/me", headers=self.headers
-        )
+        response = requests.get("https://api.energyid.eu/api/v1/members/me", headers=self.headers)
         if response.status_code != 200:
             raise ValueError("Invalid API key provided for EnergyIDProduction source.")
         self.record_id = record_id
@@ -46,20 +44,14 @@ class EnergyIDProduction(TimeseriesSource):
             headers=self.headers,
         )
         if respone.status_code != 200:
-            raise ValueError(
-                f"Failed to fetch data from EnergyID API: {respone.status_code} - {respone.text}"
-            )
+            raise ValueError(f"Failed to fetch data from EnergyID API: {respone.status_code} - {respone.text}")
         json = respone.json()
         print(json)
 
-        assert "value" in json, (
-            "Response from EnergyID API does not contain 'value' field"
-        )
+        assert "value" in json, "Response from EnergyID API does not contain 'value' field"
         assert isinstance(json["value"], list), "Expected 'value' field to be a list"
         assert len(json["value"]) > 0, "No data points returned from EnergyID API"
-        assert "data" in json["value"][0], (
-            "Data points in 'value' list do not contain 'data' field"
-        )
+        assert "data" in json["value"][0], "Data points in 'value' list do not contain 'data' field"
 
         data = [
             {
