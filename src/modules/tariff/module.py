@@ -53,17 +53,17 @@ class TariffModule(TimeseriesModule):
                     str,
                     Field(Query(default="BE", description="Country code for ENTSOE")),
                 ]
+
+        if "supported_resolutions" not in settings:
+            settings["supported_resolutions"] = ["PT15M"]
         super().__init__(settings, **kwargs)
 
     @property
     def default_args(self):
         return {
-            "start": lambda: floor_datetime(dt.datetime.now(dt.UTC), self.resolution),
+            "start": lambda: floor_datetime(dt.datetime.now(dt.UTC), dt.timedelta(minutes=15)),
             "end": lambda: None,
             "offset": 0,
             "limit": 288,
+            "resolution": "PT15M",
         }
-
-    @property
-    def resolution(self) -> dt.timedelta:
-        return self.settings.get("resolution", dt.timedelta(minutes=15))

@@ -12,6 +12,7 @@ dependencies = [
     "alembic>=1.18.4",
     "entsoe-py>=0.7.10",
     "fastapi[standard]>=0.128.0",
+    "isodate>=0.7.2",
     "narwhals>=2.15.0",
     "pandas>=3.0.0",
     "polars>=1.37.1",
