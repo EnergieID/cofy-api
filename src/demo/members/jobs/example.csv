@@ -1,0 +1,11 @@
+EAN,KLANTNUMMER,EMAIL,KLANTTYPE,AANSLUITING,PRODUCT,DISTRIBUTIENET,RECHTOPSOCIAALTARIEF,STARTDATUM,EINDDATUM,ACTIVATIECODE
+5414,K123,foo@gmail.com,particulier,elektriciteit,EB super +,Fluvius Antwerpen,,21/01/2012 00:00:00,,K123
+5411,K123,foo@gmail.com,particulier,gas,EB fosiel,Fluvius Kempen,,21/01/2012 00:00:00,13/12/2017 00:00:00,K123
+5427,K2,info@bar.be,professioneel,elektriciteit,EB PRO,Fluvius West,,15/02/2025 00:00:00,,K2
+5430,KPRO1,pro@bigcorp.com,professioneel,elektriciteit,EB PRO,Fluvius Antwerpen,,01/01/2020 00:00:00,,KPRO1
+5431,KPRO1,pro@bigcorp.com,professioneel,gas,EB PRO GAS,Fluvius Antwerpen,,01/01/2020 00:00:00,,KPRO1
+5432,KPRO1,pro@bigcorp.com,professioneel,elektriciteit,EB PRO Green,Fluvius Antwerpen,,01/01/2021 00:00:00,31/12/2022 00:00:00,KPRO1
+5440,KSMALL1,alice@small.com,particulier,elektriciteit,EB basic,Fluvius Kempen,,10/03/2023 00:00:00,,KSMALL1
+5441,KSMALL2,bob@tiny.com,particulier,gas,EB basic gas,Fluvius Limburg,,05/07/2024 00:00:00,,KSMALL2
+5442,KSMALL3,charlie@micro.com,particulier,elektriciteit,EB micro,Fluvius West,,01/01/2025 00:00:00,,KSMALL3
+

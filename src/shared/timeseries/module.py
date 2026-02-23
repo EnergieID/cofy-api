@@ -29,8 +29,9 @@ class TimeseriesModule(Module):
             ],
         )
         super().__init__(settings, **kwargs)
-        if "source" in settings:
-            self.source = settings["source"]
+        if "source" not in settings:
+            raise ValueError("A source must be provided in settings.")
+        self.source = settings["source"]
 
     def init_routes(self):
         super().init_routes()
@@ -97,13 +98,9 @@ class TimeseriesModule(Module):
             if start is None:
                 raise RequestValidationError("Start datetime must be provided.")
             if limit is None and end is None:
-                raise RequestValidationError(
-                    "Either end datetime or limit must be provided."
-                )
+                raise RequestValidationError("Either end datetime or limit must be provided.")
             if limit is None and end is not None and start >= end:
-                raise RequestValidationError(
-                    "Start datetime must be before end datetime."
-                )
+                raise RequestValidationError("Start datetime must be before end datetime.")
             # If no timezone is provided, assume UTC
             if start.tzinfo is None:
                 start = start.replace(tzinfo=dt.UTC)
@@ -123,9 +120,7 @@ class TimeseriesModule(Module):
             extra_args = params.model_dump(exclude_unset=True)
 
             # fetch timeseries data
-            timeseries = await self.source.fetch_timeseries(
-                start=start, end=end, resolution=resolution, **extra_args
-            )
+            timeseries = await self.source.fetch_timeseries(start=start, end=end, resolution=resolution, **extra_args)
 
             # add metadata
             timeseries.metadata["start"] = start
@@ -142,6 +137,7 @@ class TimeseriesModule(Module):
             methods=["GET"],
             responses=format.responses,
             response_class=format.response_class,
+            operation_id=(None if default else f"{get_timeseries.__name__}:{format.name}"),
         )
 
     @property

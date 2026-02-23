@@ -1,0 +1,4 @@
+This Alembic runtime is bundled with the Cofy library.
+
+Host applications should set database URL and module-provided version locations
+programmatically through `CofyDB.run_migrations()`.

@@ -14,7 +14,7 @@ class DocsRouter(APIRouter):
             self.get_swagger_ui_html,
             include_in_schema=False,
         )
-        self.add_api_route("/openapi.json", self.get_openapi, tags=["documentation"])
+        self.add_api_route("/openapi.json", self.get_openapi, include_in_schema=False)
 
     async def get_swagger_ui_html(self, request: Request):
         response = get_swagger_ui_html(
@@ -27,6 +27,7 @@ class DocsRouter(APIRouter):
         )
 
         if hasattr(request.state, "auth_info"):
+            assert isinstance(response.body, bytes)
             content = response.body.decode()
             content = content.replace(
                 '"AUTHORIZE_API"',

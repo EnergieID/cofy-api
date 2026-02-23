@@ -45,9 +45,7 @@ class KiwattFormat(TimeseriesFormat):
             unit=timeseries.metadata["unit"],
             resolution=timeseries.metadata["resolution"],
             prices=[
-                PriceRecordModel(
-                    startUTC=to_utc_timestring(row["timestamp"]), value=row["value"]
-                )
+                PriceRecordModel(startUTC=to_utc_timestring(row["timestamp"]), value=row["value"])
                 for row in timeseries.to_arr()
             ],
         )

@@ -6,8 +6,7 @@ from tests.mocks.dummy_module import DummyModule
 
 
 def test_cofy_initialization():
-    settings = {"title": "Test API", "version": "1.2.3", "description": "Test desc"}
-    cofy = CofyApi(**settings)
+    cofy = CofyApi(title="Test API", version="1.2.3", description="Test desc")
     assert isinstance(cofy, FastAPI)
     assert cofy.title == "Test API"
     assert cofy.version == "1.2.3"
@@ -22,9 +21,7 @@ class TestCofyApiModuleRegistration:
 
     def test_register_module(self):
         self.cofy.register_module(self.module)
-        assert "dummy" in self.cofy._modules
-        assert "test_module" in self.cofy._modules["dummy"]
-        assert self.cofy._modules["dummy"]["test_module"] is self.module
+        assert self.module in self.cofy.modules
         response = self.client.get(self.module.prefix + "/hello")
         assert response.status_code == 200
         assert response.text == '"Hello from DummyModule test_module"'
@@ -32,22 +29,17 @@ class TestCofyApiModuleRegistration:
     def test_tags_metadata_includes_module_tags(self):
         self.cofy.register_module(self.module)
         tags_metadata = self.cofy.tags_metadata
-        type_tag = next(
-            (
-                tag
-                for tag in tags_metadata
-                if tag["name"] == self.module.type_tag["name"]
-            ),
-            None,
-        )
         module_tag = next(
             (tag for tag in tags_metadata if tag["name"] == self.module.tag["name"]),
             None,
         )
-        assert type_tag is not None
         assert module_tag is not None
-        assert "x-implementations" in type_tag
-        assert self.module.tag["name"] in type_tag["x-implementations"]
+        assert "x-module-type" in module_tag
+        assert module_tag["x-module-type"] == self.module.type
+        assert "x-version" in module_tag
+        assert module_tag["x-version"] == self.module.version
+        assert "x-display-name" in module_tag
+        assert module_tag["x-display-name"] == self.module.name
 
     def test_openapi_includes_module_routes(self):
         self.cofy.register_module(self.module)
@@ -60,9 +52,8 @@ class TestCofyApiModuleRegistration:
         module2 = DummyModule("another_module")
         self.cofy.register_module(self.module)
         self.cofy.register_module(module2)
-        assert "dummy" in self.cofy._modules
-        assert "test_module" in self.cofy._modules["dummy"]
-        assert "another_module" in self.cofy._modules["dummy"]
+        assert self.module in self.cofy.modules
+        assert module2 in self.cofy.modules
         response1 = self.client.get(self.module.prefix + "/hello")
         response2 = self.client.get(module2.prefix + "/hello")
         assert response1.status_code == 200
@@ -76,13 +67,8 @@ class TestCofyApiModuleRegistration:
         assert response.status_code == 200
         data = response.json()
         tags = data.get("tags", [])
-        type_tag = next(
-            (tag for tag in tags if tag["name"] == self.module.type_tag["name"]),
-            None,
-        )
         module_tag = next(
             (tag for tag in tags if tag["name"] == self.module.tag["name"]),
             None,
         )
-        assert type_tag is not None
         assert module_tag is not None

@@ -34,11 +34,14 @@ def test_formats_default():
     assert any(isinstance(fmt, CSVFormat) for fmt in module.formats)
 
 
+def test_source_must_be_provided():
+    with pytest.raises(ValueError):
+        TimeseriesModule({})
+
+
 class TestTimeseriesModule:
     def setup_method(self):
-        self.module = TimeseriesModule(
-            {"source": DummyTimeseriesSource(), "default_args": {"limit": None}}
-        )
+        self.module = TimeseriesModule({"source": DummyTimeseriesSource(), "default_args": {"limit": None}})
         self.start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
         self.end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
         self.app = FastAPI()
@@ -47,9 +50,7 @@ class TestTimeseriesModule:
 
     @pytest.mark.asyncio
     async def test_fetch_timeseries(self):
-        result = await self.module.source.fetch_timeseries(
-            self.start, self.end, dt.timedelta(hours=1)
-        )
+        result = await self.module.source.fetch_timeseries(self.start, self.end, dt.timedelta(hours=1))
         assert hasattr(result, "frame")
         df = result.frame
         assert len(df) == 3
@@ -71,9 +72,7 @@ class TestTimeseriesModule:
         for i, entry in enumerate(data):
             assert entry["value"] == i * 10.0
             # Normalize timestamp for comparison
-            self.assert_iso_equals_datetime(
-                entry["timestamp"], self.start + dt.timedelta(hours=i)
-            )
+            self.assert_iso_equals_datetime(entry["timestamp"], self.start + dt.timedelta(hours=i))
 
     def assert_iso_equals_datetime(self, ts1: str, ts2: dt.datetime):
         expected_time = ts2.replace(tzinfo=dt.UTC)
@@ -91,18 +90,10 @@ class TestTimeseriesModule:
             {
                 "source": DummyTimeseriesSource(),
                 "extra_args": {
-                    "foo": Annotated[
-                        str, Query(description="Extra argument for testing")
-                    ],
-                    "fas": Annotated[
-                        int, Query(default=42, description="Another extra argument")
-                    ],
+                    "foo": Annotated[str, Query(description="Extra argument for testing")],
+                    "fas": Annotated[int, Query(default=42, description="Another extra argument")],
                 },
-                "formats": [
-                    JSONFormat[DefaultDataType, CustomMetadataType](
-                        DefaultDataType, CustomMetadataType
-                    )
-                ],
+                "formats": [JSONFormat[DefaultDataType, CustomMetadataType](DefaultDataType, CustomMetadataType)],
             }
         )
         app.include_router(module)
@@ -253,12 +244,8 @@ class TestTimeseriesModule:
         result = response.json()
         data = result.get("data")
         assert len(data) == 1
-        self.assert_iso_equals_datetime(
-            result["metadata"]["start"], self.start + dt.timedelta(hours=1)
-        )
-        self.assert_iso_equals_datetime(
-            result["metadata"]["end"], self.start + dt.timedelta(hours=2)
-        )
+        self.assert_iso_equals_datetime(result["metadata"]["start"], self.start + dt.timedelta(hours=1))
+        self.assert_iso_equals_datetime(result["metadata"]["end"], self.start + dt.timedelta(hours=2))
 
     def test_csv_format(self):
         response = self.client.get(
@@ -289,9 +276,7 @@ class TestTimeseriesModule:
         assert len(data) == 6
         for i, entry in enumerate(data):
             assert entry["value"] == i * 10.0
-            self.assert_iso_equals_datetime(
-                entry["timestamp"], self.start + dt.timedelta(minutes=30 * i)
-            )
+            self.assert_iso_equals_datetime(entry["timestamp"], self.start + dt.timedelta(minutes=30 * i))
 
     def test_can_use_resolution_with_limit(self):
         response = self.client.get(
@@ -308,9 +293,7 @@ class TestTimeseriesModule:
         assert len(data) == 2
         for i, entry in enumerate(data):
             assert entry["value"] == i * 10.0
-            self.assert_iso_equals_datetime(
-                entry["timestamp"], self.start + dt.timedelta(minutes=30 * i)
-            )
+            self.assert_iso_equals_datetime(entry["timestamp"], self.start + dt.timedelta(minutes=30 * i))
 
     @pytest.mark.parametrize(
         "resolution, limit, start, end",
@@ -365,9 +348,7 @@ class TestTimeseriesModule:
             ),
         ],
     )
-    def test_resolution_limit_and_start_determine_end(
-        self, resolution, limit, start, end
-    ):
+    def test_resolution_limit_and_start_determine_end(self, resolution, limit, start, end):
         response = self.client.get(
             self.module.prefix,
             params={

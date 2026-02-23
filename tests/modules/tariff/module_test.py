@@ -42,18 +42,14 @@ def test_floor_datetime():
 
 class TestTariffModule:
     def setup_method(self):
-        self.module = TariffModule(
-            {"source": DummySource(), "default_args": {"limit": None}}
-        )
+        self.module = TariffModule({"source": DummySource(), "default_args": {"limit": None}})
         self.start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
         self.end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
 
     @pytest.mark.asyncio
     async def test_fetch_timeseries(self):
         # The DummySource returns a TariffFrame with a DataFrame
-        result = await self.module.source.fetch_timeseries(
-            self.start, self.end, resolution=dt.timedelta(hours=1)
-        )
+        result = await self.module.source.fetch_timeseries(self.start, self.end, resolution=dt.timedelta(hours=1))
         assert hasattr(result, "frame")
         df = result.frame
         assert len(df) == 3
@@ -78,6 +74,4 @@ class TestTariffModule:
         assert len(data) == 12
         for i, entry in enumerate(data):
             assert entry["value"] == i * 10.0
-            assert dt.datetime.fromisoformat(
-                entry["timestamp"]
-            ) == self.start + dt.timedelta(minutes=15 * i)
+            assert dt.datetime.fromisoformat(entry["timestamp"]) == self.start + dt.timedelta(minutes=15 * i)
