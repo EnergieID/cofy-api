@@ -91,6 +91,40 @@ def test_schedule_registers_function_and_cron_job(worker_module_with_doubles):
     assert cron_job.extra_kwargs == {"timezone": "UTC"}
 
 
+def test_registering_the_same_function_multiple_times_does_not_duplicate(worker_module_with_doubles):
+    worker = worker_module_with_doubles.CofyWorker()
+
+    def sample_job():
+        pass
+
+    task1 = worker.register(sample_job)
+    task2 = worker.register(sample_job)
+
+    assert task1 is task2
+    assert len(worker.settings["functions"]) == 1
+    assert worker.settings["functions"][0] is task1
+    assert worker.settings["functions"][0] is task2
+
+
+@pytest.mark.asyncio
+async def test_registering_the_same_function_twice_with_different_kwargs_keeps_original_kwargs(
+    worker_module_with_doubles,
+):
+    worker = worker_module_with_doubles.CofyWorker()
+
+    def sample_job(x: int = 0):
+        return x
+
+    task1 = worker.register(sample_job, x=1)
+    task2 = worker.register(sample_job, x=2)
+
+    assert task1 is task2
+    assert len(worker.settings["functions"]) == 1
+    assert worker.settings["functions"][0] is task1
+    assert worker.settings["functions"][0] is task2
+    assert await task1({}) == 1
+
+
 @pytest.mark.asyncio
 async def test_settings_startup_and_shutdown_hooks_run_in_registration_order(worker_module_with_doubles):
     worker = worker_module_with_doubles.CofyWorker()

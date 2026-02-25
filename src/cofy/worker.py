@@ -25,7 +25,7 @@ Example — community worker (e.g. src/demo/worker.py):
 
 Example — enqueue from a FastAPI endpoint:
 
-    from src.cofy.jobs.worker import create_queue
+    from src.cofy.worker import create_queue
 
     queue = create_queue("redis://localhost:6379")
 
@@ -38,11 +38,19 @@ import asyncio
 import functools
 import inspect
 from collections.abc import Callable, Coroutine
-from typing import Any
+from typing import Any, Protocol
 
 from saq import CronJob, Queue
 
 type JobFunction = Callable[..., Coroutine[Any, Any, Any]]
+
+
+class NamedCallable(Protocol):
+    """A callable that exposes a ``__name__`` attribute (i.e. a function)."""
+
+    __name__: str
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
 
 def create_queue(url: str = "redis://localhost:6379", **kwargs: Any) -> Queue:
@@ -101,24 +109,23 @@ class CofyWorker:
 
     def __init__(self, url: str = "redis://localhost:6379", **queue_kwargs: Any):
         self.queue = Queue.from_url(url, **queue_kwargs)
-        self._functions: list[JobFunction] = []
+        self._functions: dict[str, JobFunction] = {}
         self._cron_jobs: list[CronJob] = []
         self._startup_hooks: list[JobFunction] = []
         self._shutdown_hooks: list[JobFunction] = []
 
-    def register(self, func: Callable, **fixed_kwargs: Any) -> JobFunction:
+    def register(self, func: NamedCallable, **fixed_kwargs: Any) -> JobFunction:
         """Register a job function so it can be enqueued and processed by this worker.
 
         Registered functions become available for ``queue.enqueue("function_name", ...)``.
         """
-        task = to_task(func, **fixed_kwargs)
-        if task not in self._functions:
-            self._functions.append(task)
-        return task
+        if func.__name__ not in self._functions:
+            self._functions[func.__name__] = to_task(func, **fixed_kwargs)
+        return self._functions[func.__name__]
 
     def schedule(
         self,
-        func: Callable,
+        func: NamedCallable,
         cron: str,
         function_kwargs: dict | None = None,
         **kwargs: Any,
@@ -155,7 +162,7 @@ class CofyWorker:
         """
         result: dict[str, Any] = {
             "queue": self.queue,
-            "functions": self._functions,
+            "functions": list(self._functions.values()),
             "cron_jobs": self._cron_jobs,
         }
 

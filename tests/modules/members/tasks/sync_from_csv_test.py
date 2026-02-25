@@ -18,12 +18,11 @@ def engine():
     return db_engine
 
 
-@pytest.mark.asyncio
-async def test_sync_members_from_csv_inserts_new_members(engine, tmp_path):
+def test_sync_members_from_csv_inserts_new_members(engine, tmp_path):
     csv_file = tmp_path / "members.csv"
     csv_file.write_text("ID,EMAIL,CODE\n1,a@example.com,code-a\n2,b@example.com,code-b\n")
 
-    await sync_members_from_csv(
+    sync_members_from_csv(
         db_engine=engine,
         file_path=str(csv_file),
         id_field="ID",
@@ -43,8 +42,7 @@ async def test_sync_members_from_csv_inserts_new_members(engine, tmp_path):
     assert members[1].activation_code == "code-b"
 
 
-@pytest.mark.asyncio
-async def test_sync_members_from_csv_updates_existing_members(engine, tmp_path):
+def test_sync_members_from_csv_updates_existing_members(engine, tmp_path):
     with Session(engine) as session:
         session.add(DBMember(id="1", email="old@example.com", activation_code="old-code"))
         session.commit()
@@ -52,7 +50,7 @@ async def test_sync_members_from_csv_updates_existing_members(engine, tmp_path):
     csv_file = tmp_path / "members.csv"
     csv_file.write_text("ID,EMAIL,CODE\n1,new@example.com,new-code\n")
 
-    await sync_members_from_csv(
+    sync_members_from_csv(
         db_engine=engine,
         file_path=str(csv_file),
         id_field="ID",
@@ -68,12 +66,11 @@ async def test_sync_members_from_csv_updates_existing_members(engine, tmp_path):
     assert member.activation_code == "new-code"
 
 
-@pytest.mark.asyncio
-async def test_sync_members_from_csv_allows_missing_optional_fields(engine, tmp_path):
+def test_sync_members_from_csv_allows_missing_optional_fields(engine, tmp_path):
     csv_file = tmp_path / "members.csv"
     csv_file.write_text("ID\nonly-id\n")
 
-    await sync_members_from_csv(
+    sync_members_from_csv(
         db_engine=engine,
         file_path=str(csv_file),
         id_field="ID",
