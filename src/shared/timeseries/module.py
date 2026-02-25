@@ -20,18 +20,29 @@ class TimeseriesModule(Module):
     source: TimeseriesSource
     formats: list[TimeseriesFormat]
 
-    def __init__(self, settings: dict, **kwargs):
-        self.formats = settings.get(
-            "formats",
-            [
+    def __init__(
+        self,
+        *,
+        source: TimeseriesSource,
+        formats: list[TimeseriesFormat] | None = None,
+        extra_args: dict | None = None,
+        supported_resolutions: list[str] | None = None,
+        default_args: dict | None = None,
+        **kwargs,
+    ):
+        self.source = source
+        self.formats = (
+            formats
+            if formats is not None
+            else [
                 JSONFormat(),
                 CSVFormat(),
-            ],
+            ]
         )
-        super().__init__(settings, **kwargs)
-        if "source" not in settings:
-            raise ValueError("A source must be provided in settings.")
-        self.source = settings["source"]
+        self._extra_args = extra_args or {}
+        self._supported_resolutions = supported_resolutions or []
+        self._default_args_override = default_args or {}
+        super().__init__(**kwargs)
 
     def init_routes(self):
         super().init_routes()
@@ -41,10 +52,10 @@ class TimeseriesModule(Module):
 
     @property
     def DynamicParameters(self):
-        return create_model("DynamicParameters", **self.settings.get("extra_args", {}))
+        return create_model("DynamicParameters", **self._extra_args)
 
     def create_format_endpoint(self, format: TimeseriesFormat, default: bool = False):
-        supported_resolutions = self.settings.get("supported_resolutions", [])
+        supported_resolutions = self._supported_resolutions
 
         def resolution_query(
             resolution: Annotated[
@@ -152,4 +163,4 @@ class TimeseriesModule(Module):
 
     @property
     def merged_default_args(self):
-        return self.default_args | self.settings.get("default_args", {})
+        return self.default_args | self._default_args_override

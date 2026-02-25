@@ -11,11 +11,9 @@ class MembersModule(Module):
     type: str = "members"
     type_description: str = "Module for member-related functionalities"
 
-    def __init__(self, settings: dict, **kwargs):
-        if "source" not in settings:
-            raise ValueError("The 'source' setting is required for the MembersModule.")
-        self.source: MemberSource = settings["source"]
-        super().__init__(settings, **kwargs)
+    def __init__(self, *, source: MemberSource, **kwargs):
+        self.source: MemberSource = source
+        super().__init__(**kwargs)
 
     def init_routes(self):
         self.add_api_route(
