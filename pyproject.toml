@@ -15,7 +15,7 @@ dependencies = [
     "narwhals>=2.15.0",
     "pandas>=3.0.0",
     "polars>=1.37.1",
-    "saq>=0.26.1",
+    "saq[redis,web]>=0.26.1",
 ]
 [dependency-groups]
 dev = [
@@ -50,10 +50,6 @@ envfile = ".env.local"
 env = { PYTHONPATH = "." }
 [tool.poe.tasks.worker]
 cmd = "saq src.demo.worker.settings"
-env = { PYTHONPATH = "." }
-envfile = ".env.local"
-[tool.poe.tasks.worker-web]
-cmd = "saq src.demo.worker.settings --web"
 env = { PYTHONPATH = "." }
 envfile = ".env.local"
 [tool.poe.tasks.test]
