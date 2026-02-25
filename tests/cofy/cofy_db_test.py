@@ -316,3 +316,50 @@ class TestCli:
     def test_cli_seed_without_seed_function_raises(self):
         with patch("sys.argv", ["db", "seed"]), pytest.raises(ValueError, match="No seed function registered"):
             self.cofy_db.cli()
+
+
+class TestCliGenerate:
+    @pytest.fixture(autouse=True)
+    def setup_method(self, tmp_path):
+        src_dir = str(resources.files("tests.cofy").joinpath("dumy_migrations"))
+        self.migrations_dir = tmp_path / "dumy_migrations"
+        shutil.copytree(src_dir, self.migrations_dir)
+
+        self.db_file = tmp_path / "cli_gen_test.db"
+        self.cofy_db = CofyDB(url=f"sqlite:///{self.db_file}")
+
+        self.module = DummySourcedModule(
+            name="cli_gen_module",
+            migration_locations=[str(self.migrations_dir)],
+            metadata=Base.metadata,
+        )
+        self.cofy_db.register_module(self.module)
+        self.cofy_db.run_migrations()
+
+    def _generated_files(self) -> set[Path]:
+        return {f for f in self.migrations_dir.iterdir() if f.suffix == ".py" and f.name not in ("foo.py", "bar.py")}
+
+    def test_cli_generate_creates_migration_file(self):
+        assert self._generated_files() == set()
+
+        with patch("sys.argv", ["db", "generate", "add column", "--head", "dummy@head", "--rev-id", "baz"]):
+            self.cofy_db.cli()
+
+        new_files = self._generated_files()
+        assert len(new_files) == 1
+
+        new_file = new_files.pop()
+        assert "baz" in new_file.name
+        assert "add_column" in new_file.name
+
+    def test_cli_generate_with_no_autogenerate(self):
+        with patch(
+            "sys.argv",
+            ["db", "generate", "empty migration", "--head", "dummy@head", "--rev-id", "qux", "--no-autogenerate"],
+        ):
+            self.cofy_db.cli()
+
+        generated = self._generated_files().pop()
+        content = generated.read_text()
+        assert "revision: str = 'qux'" in content
+        assert "down_revision: str | Sequence[str] | None = 'bar'" in content
