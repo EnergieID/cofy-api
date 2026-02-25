@@ -51,7 +51,7 @@ This will run all pending migrations and load the example CSV data into the data
 poe demo
 ```
 
-### Run background worker:
+#### Run background worker:
 We use Cofy Worker to run background jobs that perform data ingestion and processing tasks asynchronously.
 
 The background worker requires a Redis instance to run. You can configure the Redis URL via the environment variables.

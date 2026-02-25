@@ -10,9 +10,9 @@ db = CofyDB(url=DB_URL, connect_args=DB_CONNECT_ARGS)
 db.bind_api(cofy)
 
 
-async def seed() -> None:
+def seed() -> None:
     db.run_migrations()
-    await sync_members_from_csv(
+    sync_members_from_csv(
         db_engine=db.engine,
         file_path=MEMBERS_CSV_PATH,
         id_field="KLANTNUMMER",
