@@ -1,4 +1,3 @@
-import asyncio
 from importlib import resources
 
 from src.cofy.db.cofy_db import CofyDB
@@ -8,11 +7,11 @@ from src.modules.members.tasks.sync_from_csv import sync_members_from_csv
 MEMBERS_CSV_PATH = str(resources.files("src.demo.data").joinpath("members_example.csv"))
 
 
-async def main() -> None:
+def main() -> None:
     db = CofyDB(url=DB_URL, connect_args=DB_CONNECT_ARGS)
     db.bind_api(cofy)
     db.run_migrations()
-    await sync_members_from_csv(
+    sync_members_from_csv(
         db_engine=db.engine,
         file_path=MEMBERS_CSV_PATH,
         id_field="KLANTNUMMER",
@@ -22,4 +21,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

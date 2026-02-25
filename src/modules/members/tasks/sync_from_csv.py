@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 from src.modules.members.models.db_member import DBMember
 
 
-async def sync_members_from_csv(
+def sync_members_from_csv(
     db_engine, file_path: str, id_field: str, email_field: str | None = None, activation_code_field: str | None = None
 ) -> None:
     """Load or update members from a CSV file into the database."""
