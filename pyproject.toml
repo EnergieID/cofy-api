@@ -33,19 +33,8 @@ check = "ty check"
 cmd = "fastapi dev src/demo/main.py"
 env = { PYTHONPATH = "." }
 envfile = ".env.local"
-[tool.poe.tasks.db-seed]
-cmd = "python -m src.demo.db.seed"
-envfile = ".env.local"
-env = { PYTHONPATH = "." }
-[tool.poe.tasks.db-reset]
-cmd = "python -m src.demo.db.reset"
-envfile = ".env.local"
-[tool.poe.tasks.db-migrate]
-cmd = "python -m src.demo.db.migrate"
-envfile = ".env.local"
-env = { PYTHONPATH = "." }
-[tool.poe.tasks.db-generate]
-cmd = "python -m src.demo.db.generate"
+[tool.poe.tasks.db]
+cmd = "python -m src.demo.db"
 envfile = ".env.local"
 env = { PYTHONPATH = "." }
 [tool.poe.tasks.worker]

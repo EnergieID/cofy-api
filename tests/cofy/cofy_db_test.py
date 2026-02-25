@@ -2,6 +2,7 @@ import shutil
 from collections.abc import Sequence
 from importlib import resources
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 import sqlalchemy as sa
@@ -229,3 +230,89 @@ class TestGenerateMigration:
         generated = self._generated_files().pop()
         content = generated.read_text()
         assert "revision: str = 'baz'" in content
+
+
+class TestSetSeed:
+    def test_set_seed_stores_function(self):
+        db = CofyDB(url="sqlite:///:memory:")
+
+        def my_seed():
+            pass
+
+        db.set_seed(my_seed)
+        assert db._seed_fn is my_seed
+
+    def test_run_seed_calls_sync_function(self):
+        db = CofyDB(url="sqlite:///:memory:")
+        seed_mock = MagicMock()
+        db.set_seed(seed_mock)
+
+        db._run_seed()
+
+        seed_mock.assert_called_once()
+
+    def test_run_seed_calls_async_function(self):
+        db = CofyDB(url="sqlite:///:memory:")
+        calls = []
+
+        async def async_seed():
+            calls.append(True)
+
+        db.set_seed(async_seed)
+        db._run_seed()
+
+        assert calls == [True]
+
+    def test_run_seed_raises_without_seed_function(self):
+        db = CofyDB(url="sqlite:///:memory:")
+        with pytest.raises(ValueError, match="No seed function registered"):
+            db._run_seed()
+
+
+class TestCli:
+    @pytest.fixture(autouse=True)
+    def setup_method(self, tmp_path):
+        self.db_file = tmp_path / "cli_test.db"
+        self.cofy_db = CofyDB(url=f"sqlite:///{self.db_file}")
+
+        with resources.as_file(resources.files("tests.cofy").joinpath("dumy_migrations")) as migrations_path:
+            self.module = DummySourcedModule(
+                name="cli_module",
+                migration_locations=[str(migrations_path)],
+                metadata=Base.metadata,
+            )
+            self.cofy_db.register_module(self.module)
+
+    def test_cli_migrate(self):
+        with patch("sys.argv", ["db", "migrate"]):
+            self.cofy_db.cli()
+
+        with self.cofy_db.engine.connect() as connection:
+            result = connection.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table' AND name='foo';"))
+            assert result.fetchone() is not None
+
+    def test_cli_reset(self):
+        self.cofy_db.run_migrations()
+        with self.cofy_db.engine.connect() as connection:
+            connection.execute(sa.text("INSERT INTO foo (name, bar) VALUES ('test', 'value');"))
+            connection.commit()
+
+        with patch("sys.argv", ["db", "reset"]):
+            self.cofy_db.cli()
+
+        with self.cofy_db.engine.connect() as connection:
+            result = connection.execute(sa.text("SELECT bar FROM foo WHERE name='test';"))
+            assert result.fetchone() is None
+
+    def test_cli_seed(self):
+        seed_mock = MagicMock()
+        self.cofy_db.set_seed(seed_mock)
+
+        with patch("sys.argv", ["db", "seed"]):
+            self.cofy_db.cli()
+
+        seed_mock.assert_called_once()
+
+    def test_cli_seed_without_seed_function_raises(self):
+        with patch("sys.argv", ["db", "seed"]), pytest.raises(ValueError, match="No seed function registered"):
+            self.cofy_db.cli()

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+import argparse
+import asyncio
+import inspect
+from collections.abc import Callable, Iterable
 from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -24,6 +27,7 @@ class CofyDB:
             raise ValueError("CofyDB requires a database URL to be configured.")
         self._sources: list[DatabaseBackedSource] = []
         self._url = url
+        self._seed_fn: Callable[[], Any] | None = None
         self.engine: Engine = create_engine(self._url, **engine_kwargs)
 
     def register_module(self, module: Module):
@@ -102,3 +106,67 @@ class CofyDB:
         meta.reflect(bind=self.engine)
         meta.drop_all(bind=self.engine)
         self.run_migrations()
+
+    def set_seed(self, fn: Callable[[], Any]) -> None:
+        """Register a custom seed function to be called by the `seed` CLI command.
+
+        The function can be sync or async.
+        """
+        self._seed_fn = fn
+
+    def _run_seed(self) -> None:
+        if self._seed_fn is None:
+            raise ValueError("No seed function registered. Use db.set_seed(fn) to register one.")
+        if inspect.iscoroutinefunction(self._seed_fn):
+            asyncio.run(self._seed_fn())
+        else:
+            self._seed_fn()
+
+    def cli(self) -> None:
+        """CLI entry point for database management commands.
+
+        Supports: migrate, generate, reset, seed
+        """
+        parser = argparse.ArgumentParser(description="CofyDB database management")
+        subparsers = parser.add_subparsers(dest="command", required=True)
+
+        subparsers.add_parser("migrate", help="Run all pending migrations")
+
+        gen_parser = subparsers.add_parser("generate", help="Generate a new Alembic migration")
+        gen_parser.add_argument("message", help="Migration description")
+        gen_parser.add_argument(
+            "--head",
+            required=True,
+            help="Branch head to extend, e.g. 'members_core@head'",
+        )
+        gen_parser.add_argument(
+            "--rev-id",
+            default=None,
+            help="Custom revision ID (optional, Alembic generates one if omitted)",
+        )
+        gen_parser.add_argument(
+            "--no-autogenerate",
+            action="store_true",
+            help="Create an empty migration instead of autogenerating from model changes",
+        )
+
+        subparsers.add_parser("reset", help="Reset the database (WARNING: deletes all data)")
+
+        subparsers.add_parser("seed", help="Seed the database with initial data")
+
+        args = parser.parse_args()
+
+        match args.command:
+            case "migrate":
+                self.run_migrations()
+            case "generate":
+                self.generate_migration(
+                    message=args.message,
+                    head=args.head,
+                    rev_id=args.rev_id,
+                    autogenerate=not args.no_autogenerate,
+                )
+            case "reset":
+                self.reset()
+            case "seed":
+                self._run_seed()
