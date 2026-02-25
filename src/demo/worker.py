@@ -17,6 +17,9 @@ worker = CofyWorker(url=REDIS_URL)
 async def startup(ctx: dict) -> None:
     ctx["db_engine"] = create_engine(DB_URL)
 
+@worker.on_shutdown
+async def shutdown(ctx: dict) -> None:
+    ctx["db_engine"].dispose()
 
 worker.schedule(
     sync_members_from_csv,
