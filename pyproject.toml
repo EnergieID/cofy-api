@@ -15,6 +15,7 @@ dependencies = [
     "narwhals>=2.15.0",
     "pandas>=3.0.0",
     "polars>=1.37.1",
+    "saq[redis,web]>=0.26.1",
 ]
 [dependency-groups]
 dev = [
@@ -47,6 +48,10 @@ env = { PYTHONPATH = "." }
 cmd = "python -m src.demo.db.generate"
 envfile = ".env.local"
 env = { PYTHONPATH = "." }
+[tool.poe.tasks.worker]
+cmd = "saq src.demo.worker.settings"
+env = { PYTHONPATH = "." }
+envfile = ".env.local"
 [tool.poe.tasks.test]
 cmd = "pytest --cov=src --cov-report=term-missing --import-mode=importlib"
 env = { PYTHONPATH = "." }
