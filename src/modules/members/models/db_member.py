@@ -9,5 +9,5 @@ class DBMember(TimestampMixin, Base):
     __tablename__ = "member"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
-    email: Mapped[str] = mapped_column(String, nullable=False)
-    activation_code: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
+    email: Mapped[str | None] = mapped_column(String, nullable=True)
+    activation_code: Mapped[str | None] = mapped_column(String, nullable=True, unique=True, index=True)

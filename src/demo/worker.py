@@ -14,8 +14,8 @@ from os import environ
 
 from sqlalchemy import create_engine
 
-from src.cofy.jobs.worker import CofyWorker
-from src.modules.members.jobs.sync_from_csv import sync_members_from_csv
+from src.cofy.worker import CofyWorker
+from src.modules.members.tasks.sync_from_csv import sync_members_from_csv
 
 # --- Configuration (from environment) ---
 REDIS_URL = environ.get("REDIS_URL", "redis://localhost:6379")
@@ -38,12 +38,18 @@ async def shutdown(ctx: dict) -> None:
     ctx["db_engine"].dispose()
 
 
-# --- Register job functions available in this community ---
-worker.register(sync_members_from_csv)
-
-# --- Cron schedules for this community ---
-# Sync members from CSV every night at 2 AM
-worker.schedule(sync_members_from_csv, cron="0 2 * * *")
+# --- Register and schedule jobs for this community ---
+# db_engine comes from ctx (set in startup); CSV field mapping is fixed for this community.
+worker.schedule(
+    sync_members_from_csv,
+    cron="0 2 * * *",
+    function_kwargs={
+        "file_path": CSV_PATH,
+        "id_field": "KLANTNUMMER",
+        "email_field": "EMAIL",
+        "activation_code_field": "ACTIVATIECODE",
+    },
+)
 
 
 # --- SAQ entry point ---

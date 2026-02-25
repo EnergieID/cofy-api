@@ -18,7 +18,7 @@ Example — community worker (e.g. src/demo/worker.py):
 
     from src.cofy.jobs.worker import CofyWorker
 
-    worker = CofyWorker(redis_url="redis://localhost:6379")
+    worker = CofyWorker(url="redis://localhost:6379")
     worker.register(my_job_function)
     worker.schedule(my_job_function, cron="0 2 * * *")
     settings = worker.settings  # SAQ entry point: saq src.demo.worker.settings
@@ -34,6 +34,9 @@ Example — enqueue from a FastAPI endpoint:
         await queue.enqueue("process_upload", file_id="...")
 """
 
+import asyncio
+import functools
+import inspect
 from collections.abc import Callable, Coroutine
 from typing import Any
 
@@ -51,14 +54,49 @@ def create_queue(url: str = "redis://localhost:6379", **kwargs: Any) -> Queue:
     return Queue.from_url(url, **kwargs)
 
 
+def to_task(function: Callable, **fixed_kwargs: Any) -> JobFunction:
+    """Wrap a plain function into a SAQ-compatible task.
+
+    The wrapped function does NOT need to know about SAQ's `ctx` dict.
+    It simply declares the arguments it needs::
+
+        async def sync_members(db_engine, file_path: str) -> dict: ...
+
+    Arguments are resolved in this priority order (last wins):
+        1. fixed_kwargs — bound at registration time via ``to_task(fn, file_path="/data/x.csv")``
+        2. ctx values — set by the worker's on_startup hooks (e.g. ``db_engine``)
+        3. enqueue kwargs — passed at ``queue.enqueue("sync_members", file_path="/other.csv")``
+
+    Only arguments that match the function's signature are passed through,
+    so SAQ internals in ctx (``queue``, ``job``) don't leak in.
+
+    Works with both sync and async functions. Sync functions are
+    automatically run in a thread via ``asyncio.to_thread``.
+    """
+    sig = inspect.signature(function)
+    params = sig.parameters
+    accepts_var_keyword = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
+    is_async = inspect.iscoroutinefunction(function)
+
+    @functools.wraps(function)
+    async def task(ctx: dict, **kwargs: Any) -> Any:
+        merged = {**fixed_kwargs, **ctx, **kwargs}
+
+        call_kwargs = merged if accepts_var_keyword else {k: v for k, v in merged.items() if k in params}
+
+        if is_async:
+            return await function(**call_kwargs)
+        return await asyncio.to_thread(function, **call_kwargs)
+
+    return task
+
+
 class CofyWorker:
     """Builds SAQ worker settings from registered job functions and cron schedules.
 
-    The worker collects job functions (from modules or community-specific code)
-    and cron schedules, then exposes them as a `settings` dict for the SAQ CLI.
+    The worker collects job functions and cron schedules, then exposes them as a `settings` dict for the SAQ CLI.
 
-    It also provides lifecycle hooks (on_startup / on_shutdown) for setting up
-    shared resources like database engines that jobs can access via `ctx`.
+    It also provides lifecycle hooks (on_startup / on_shutdown) for setting up shared resources like database engines
     """
 
     def __init__(self, url: str = "redis://localhost:6379", **queue_kwargs: Any):
@@ -68,27 +106,29 @@ class CofyWorker:
         self._startup_hooks: list[JobFunction] = []
         self._shutdown_hooks: list[JobFunction] = []
 
-    def register(self, func: JobFunction) -> JobFunction:
+    def register(self, func: Callable, **fixed_kwargs: Any) -> JobFunction:
         """Register a job function so it can be enqueued and processed by this worker.
 
-        Registered functions become available for `queue.enqueue("function_name", ...)`.
+        Registered functions become available for ``queue.enqueue("function_name", ...)``.
         """
-        if func not in self._functions:
-            self._functions.append(func)
-        return func
+        task = to_task(func, **fixed_kwargs)
+        if task not in self._functions:
+            self._functions.append(task)
+        return task
 
-    def schedule(self, func: JobFunction, cron: str, **kwargs: Any) -> None:
-        """Schedule a function to run on a cron expression.
-
-        The function is automatically registered if not already.
-
-        Args:
-            func: The async job function to schedule.
-            cron: Cron expression, e.g. "0 2 * * *" for daily at 2 AM.
-            **kwargs: Additional SAQ CronJob options (timeout, retries, etc.)
-        """
-        self.register(func)
-        self._cron_jobs.append(CronJob(func, cron=cron, **kwargs))
+    def schedule(
+        self,
+        func: Callable,
+        cron: str,
+        function_kwargs: dict | None = None,
+        **kwargs: Any,
+    ) -> JobFunction:
+        """Schedule a function to run on a cron expression."""
+        task = self.register(func)
+        self._cron_jobs.append(
+            CronJob(task, cron=cron, kwargs=function_kwargs or {}, **kwargs),
+        )
+        return task
 
     def on_startup(self, func: JobFunction) -> JobFunction:
         """Register a hook that runs when the worker starts.
