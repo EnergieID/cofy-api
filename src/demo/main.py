@@ -22,10 +22,8 @@ engine = create_engine(DB_URL, connect_args=DB_CONNECT_ARGS)
 cofy = CofyApi(dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))])
 
 entsoe = TariffModule(
-    settings={
-        "api_key": environ.get("ENTSOE_API_KEY", ""),
-        "name": "entsoe",
-    }
+    api_key=environ.get("ENTSOE_API_KEY", ""),
+    name="entsoe",
 )
 cofy.register_module(entsoe)
 
@@ -35,29 +33,25 @@ source = EntsoeDayAheadTariffSource(
     api_key=environ.get("ENTSOE_API_KEY", ""),
 )
 kiwatt = TariffModule(
-    settings={
-        "source": source,
-        "name": "kiwatt",
-        "formats": [
-            KiwattFormat(),
-        ],
-    }
+    source=source,
+    name="kiwatt",
+    formats=[
+        KiwattFormat(),
+    ],
 )
 cofy.register_module(kiwatt)
 
 wind = ProductionModule(
-    settings={
-        "source": EnergyIDProduction(
-            api_key=environ.get("ENERGY_ID_API_KEY", ""),
-            record_id=environ.get("ENERGY_ID_RECORD_ID", ""),
-        ),
-        "name": "wind",
-        "supported_resolutions": EnergyIDProduction.SUPPORTED_RESOLUTIONS,
-    }
+    source=EnergyIDProduction(
+        api_key=environ.get("ENERGY_ID_API_KEY", ""),
+        record_id=environ.get("ENERGY_ID_RECORD_ID", ""),
+    ),
+    name="wind",
+    supported_resolutions=EnergyIDProduction.SUPPORTED_RESOLUTIONS,
 )
 cofy.register_module(wind)
 
 # members endpoint for Demo members, using a CSV file as source
-cofy.register_module(MembersModule(settings={"source": MembersDbSource(engine), "name": "demo"}))
+cofy.register_module(MembersModule(source=MembersDbSource(engine), name="demo"))
 
 app = cofy

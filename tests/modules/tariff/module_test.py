@@ -10,24 +10,24 @@ from tests.modules.tariff.dummy_source import DummySource
 
 
 @pytest.mark.parametrize(
-    "settings, expected_source_type",
+    "kwargs, expected_source_type",
     [
         ({"source": DummySource()}, DummySource),
         ({"country_code": "DE", "api_key": "key"}, EntsoeDayAheadTariffSource),
     ],
 )
-def test_tariffmodule_source_selection(settings, expected_source_type):
-    module = TariffModule(settings)
+def test_tariffmodule_source_selection(kwargs, expected_source_type):
+    module = TariffModule(**kwargs)
     assert isinstance(module.source, expected_source_type)
 
 
 def test_if_no_country_code_specified_extra_args_is_set():
-    module = TariffModule({"api_key": "key"})
+    module = TariffModule(api_key="key")
     assert "country_code" in module.DynamicParameters.model_fields
 
 
 def test_tariffmodule_type_property():
-    module = TariffModule({"country_code": "DE", "api_key": "key"})
+    module = TariffModule(country_code="DE", api_key="key")
     assert module.type == "tariff"
 
 
@@ -42,7 +42,7 @@ def test_floor_datetime():
 
 class TestTariffModule:
     def setup_method(self):
-        self.module = TariffModule({"source": DummySource(), "default_args": {"limit": None}})
+        self.module = TariffModule(source=DummySource(), default_args={"limit": None})
         self.start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
         self.end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
 

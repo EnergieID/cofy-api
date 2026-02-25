@@ -6,9 +6,10 @@ from fastapi.testclient import TestClient
 
 from src.modules.members.model import Member
 from src.modules.members.module import MembersModule
+from src.modules.members.source import MemberSource
 
 
-class DummyMemberSource:
+class DummyMemberSource(MemberSource):
     response_model = Member
 
     def __init__(self):
@@ -36,7 +37,7 @@ class DummyMemberSource:
 
 def test_members_module_list_and_verify_routes():
     app = FastAPI()
-    module = MembersModule(settings={"source": DummyMemberSource(), "name": "dummy"})
+    module = MembersModule(source=DummyMemberSource(), name="dummy")
     app.include_router(module)
     client = TestClient(app)
 
@@ -54,7 +55,7 @@ def test_members_module_list_and_verify_routes():
 
 def test_removed_activation_get_endpoints_return_404():
     app = FastAPI()
-    module = MembersModule(settings={"source": DummyMemberSource(), "name": "dummy"})
+    module = MembersModule(source=DummyMemberSource(), name="dummy")
     app.include_router(module)
     client = TestClient(app)
 
@@ -66,5 +67,5 @@ def test_removed_activation_get_endpoints_return_404():
 
 
 def test_source_is_required_for_members_module():
-    with pytest.raises(ValueError):
-        MembersModule(settings={"name": "dummy"})
+    with pytest.raises(TypeError):
+        MembersModule(name="dummy")  # ty: ignore[missing-argument]

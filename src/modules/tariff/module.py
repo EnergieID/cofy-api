@@ -5,6 +5,7 @@ from fastapi.params import Query
 from pydantic import Field
 
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
+from src.shared.timeseries.format import TimeseriesFormat
 from src.shared.timeseries.formats.csv import CSVFormat
 from src.shared.timeseries.formats.json import (
     DefaultDataType,
@@ -12,6 +13,7 @@ from src.shared.timeseries.formats.json import (
     JSONFormat,
 )
 from src.shared.timeseries.module import TimeseriesModule
+from src.shared.timeseries.source import TimeseriesSource
 
 
 class TariffMetadata(DefaultMetadataType):
@@ -29,34 +31,45 @@ class TariffModule(TimeseriesModule):
     type: str = "tariff"
     type_description: str = "Module providing tariff data as time series."
 
-    def __init__(self, settings: dict, **kwargs):
-        settings["formats"] = settings.get(
-            "formats",
-            [
+    def __init__(
+        self,
+        *,
+        source: TimeseriesSource | None = None,
+        api_key: str = "",
+        country_code: str | None = None,
+        formats: list[TimeseriesFormat] | None = None,
+        supported_resolutions: list[str] | None = None,
+        extra_args: dict | None = None,
+        **kwargs,
+    ):
+        if formats is None:
+            formats = [
                 JSONFormat[DefaultDataType, TariffMetadata](DefaultDataType, TariffMetadata),
                 CSVFormat(),
-            ],
-        )
-        if "source" not in settings:
+            ]
+        if source is None:
             # use default source, with its own defaults for country_code and resolution
-
-            settings["source"] = EntsoeDayAheadTariffSource(
-                settings.get("api_key", ""),
-                settings.get("country_code", "BE"),
+            source = EntsoeDayAheadTariffSource(
+                api_key=api_key,
+                country_code=country_code or "BE",
             )
 
-            if "country_code" not in settings and (
-                "extra_args" not in settings or "country_code" not in settings["extra_args"]
-            ):
-                settings["extra_args"] = settings.get("extra_args", {})
-                settings["extra_args"]["country_code"] = Annotated[
+            if country_code is None and (extra_args is None or "country_code" not in extra_args):
+                extra_args = extra_args or {}
+                extra_args["country_code"] = Annotated[
                     str,
                     Field(Query(default="BE", description="Country code for ENTSOE")),
                 ]
 
-        if "supported_resolutions" not in settings:
-            settings["supported_resolutions"] = ["PT15M"]
-        super().__init__(settings, **kwargs)
+        if supported_resolutions is None:
+            supported_resolutions = ["PT15M"]
+        super().__init__(
+            source=source,
+            formats=formats,
+            supported_resolutions=supported_resolutions,
+            extra_args=extra_args,
+            **kwargs,
+        )
 
     @property
     def default_args(self):

@@ -13,35 +13,35 @@ from tests.shared.timeseries.dummy_source import DummyTimeseriesSource
 
 
 @pytest.mark.parametrize(
-    "settings, expected_source_type",
+    "kwargs, expected_source_type",
     [
         ({"source": DummyTimeseriesSource()}, DummyTimeseriesSource),
     ],
 )
-def test_timeseriesmodule_source_selection(settings, expected_source_type):
-    module = TimeseriesModule(settings)
+def test_timeseriesmodule_source_selection(kwargs, expected_source_type):
+    module = TimeseriesModule(**kwargs)
     assert isinstance(module.source, expected_source_type)
 
 
 def test_timeseriesmodule_type_property():
-    module = TimeseriesModule({"source": DummyTimeseriesSource()})
+    module = TimeseriesModule(source=DummyTimeseriesSource())
     assert module.type == "timeseries"
 
 
 def test_formats_default():
-    module = TimeseriesModule({"source": DummyTimeseriesSource()})
+    module = TimeseriesModule(source=DummyTimeseriesSource())
     assert any(isinstance(fmt, JSONFormat) for fmt in module.formats)
     assert any(isinstance(fmt, CSVFormat) for fmt in module.formats)
 
 
 def test_source_must_be_provided():
-    with pytest.raises(ValueError):
-        TimeseriesModule({})
+    with pytest.raises(TypeError):
+        TimeseriesModule()  # ty: ignore[missing-argument]
 
 
 class TestTimeseriesModule:
     def setup_method(self):
-        self.module = TimeseriesModule({"source": DummyTimeseriesSource(), "default_args": {"limit": None}})
+        self.module = TimeseriesModule(source=DummyTimeseriesSource(), default_args={"limit": None})
         self.start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
         self.end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
         self.app = FastAPI()
@@ -87,14 +87,12 @@ class TestTimeseriesModule:
             fas: int
 
         module = TimeseriesModule(
-            {
-                "source": DummyTimeseriesSource(),
-                "extra_args": {
-                    "foo": Annotated[str, Query(description="Extra argument for testing")],
-                    "fas": Annotated[int, Query(default=42, description="Another extra argument")],
-                },
-                "formats": [JSONFormat[DefaultDataType, CustomMetadataType](DefaultDataType, CustomMetadataType)],
-            }
+            source=DummyTimeseriesSource(),
+            extra_args={
+                "foo": Annotated[str, Query(description="Extra argument for testing")],
+                "fas": Annotated[int, Query(default=42, description="Another extra argument")],
+            },
+            formats=[JSONFormat[DefaultDataType, CustomMetadataType](DefaultDataType, CustomMetadataType)],
         )
         app.include_router(module)
         client = TestClient(app)
@@ -110,10 +108,8 @@ class TestTimeseriesModule:
     def test_no_end_or_limit_should_fail(self):
         app = FastAPI()
         module = TimeseriesModule(
-            {
-                "source": DummyTimeseriesSource(),
-                "default_args": {"limit": None, "end": lambda: None},
-            }
+            source=DummyTimeseriesSource(),
+            default_args={"limit": None, "end": lambda: None},
         )
         app.include_router(module)
         client = TestClient(app)
@@ -137,10 +133,8 @@ class TestTimeseriesModule:
     def test_no_start_should_fail(self):
         app = FastAPI()
         module = TimeseriesModule(
-            {
-                "source": DummyTimeseriesSource(),
-                "default_args": {"limit": None, "start": lambda: None},
-            }
+            source=DummyTimeseriesSource(),
+            default_args={"limit": None, "start": lambda: None},
         )
         app.include_router(module)
         client = TestClient(app)
@@ -154,10 +148,8 @@ class TestTimeseriesModule:
     def test_no_resolution_should_fail(self):
         app = FastAPI()
         module = TimeseriesModule(
-            {
-                "source": DummyTimeseriesSource(),
-                "default_args": {"limit": None, "resolution": None},
-            }
+            source=DummyTimeseriesSource(),
+            default_args={"limit": None, "resolution": None},
         )
         app.include_router(module)
         client = TestClient(app)
@@ -174,10 +166,8 @@ class TestTimeseriesModule:
     def test_resolution_should_be_in_supported_resolutions(self):
         app = FastAPI()
         module = TimeseriesModule(
-            {
-                "source": DummyTimeseriesSource(),
-                "supported_resolutions": ["PT15M", "PT1H"],
-            }
+            source=DummyTimeseriesSource(),
+            supported_resolutions=["PT15M", "PT1H"],
         )
         app.include_router(module)
         client = TestClient(app)
@@ -195,14 +185,12 @@ class TestTimeseriesModule:
     def test_should_use_defaults_if_not_provided(self):
         app = FastAPI()
         module = TimeseriesModule(
-            {
-                "source": DummyTimeseriesSource(),
-                "default_args": {
-                    "start": lambda: self.start,
-                    "end": lambda: self.end,
-                    "limit": None,
-                },
-            }
+            source=DummyTimeseriesSource(),
+            default_args={
+                "start": lambda: self.start,
+                "end": lambda: self.end,
+                "limit": None,
+            },
         )
         app.include_router(module)
         client = TestClient(app)
