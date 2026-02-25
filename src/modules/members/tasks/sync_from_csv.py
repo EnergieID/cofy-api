@@ -1,21 +1,3 @@
-"""
-Reusable SAQ job: sync members from a CSV file into the database.
-
-Expects `db_engine` (SQLAlchemy Engine) to be available in the SAQ context,
-typically set up via the worker's on_startup hook.
-
-Usage — register in a community worker:
-
-    from src.modules.members.jobs.sync_from_csv import sync_members_from_csv
-
-    worker.register(sync_members_from_csv)
-    worker.schedule(sync_members_from_csv, cron="0 2 * * *")
-
-Usage — enqueue on demand from an API endpoint:
-
-    await queue.enqueue("sync_members_from_csv", file_path="/data/members.csv")
-"""
-
 import csv
 
 from sqlalchemy.orm import Session
