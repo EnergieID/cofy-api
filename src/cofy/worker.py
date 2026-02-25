@@ -160,19 +160,19 @@ class CofyWorker:
         }
 
         if self._startup_hooks:
-            hooks = list(self._startup_hooks)
+            startup_hooks = list(self._startup_hooks)
 
             async def startup(ctx: dict) -> None:
-                for hook in hooks:
+                for hook in startup_hooks:
                     await hook(ctx)
 
             result["startup"] = startup
 
         if self._shutdown_hooks:
-            hooks = list(self._shutdown_hooks)
+            shutdown_hooks = list(self._shutdown_hooks)
 
             async def shutdown(ctx: dict) -> None:
-                for hook in hooks:
+                for hook in shutdown_hooks:
                     await hook(ctx)
 
             result["shutdown"] = shutdown
