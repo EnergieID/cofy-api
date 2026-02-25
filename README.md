@@ -40,7 +40,7 @@ The demo application uses a SQLite database. A different database can be configu
 To create the database and seed it with example data:
 
 ```sh
-poe db-seed
+poe db seed
 ```
 
 This will run all pending migrations and load the example CSV data into the database.
@@ -89,17 +89,17 @@ Cofy uses [Alembic](https://alembic.sqlalchemy.org/) for database migrations. Ea
 
 | Command | Description |
 |---|---|
-| `poe db-seed` | Run all migrations and seed the database with example data |
-| `poe db-migrate` | Run all pending migrations |
-| `poe db-reset` | Drop all tables and re-run migrations (⚠️ destroys all data) |
-| `poe db-generate` | Generate a new migration file for a specific module branch |
+| `poe db seed` | Run all migrations and seed the database with example data |
+| `poe db migrate` | Run all pending migrations |
+| `poe db reset` | Drop all tables and re-run migrations (⚠️ destroys all data) |
+| `poe db generate` | Generate a new migration file for a specific module branch |
 
 ### Generating a migration
 
 When you change a module's SQLAlchemy model, generate a migration for that module's branch:
 
 ```sh
-poe db-generate "add phone number to member" --head members_core@head --rev-id members_core_0002
+poe db generate "add phone number to member" --head members_core@head --rev-id members_core_0002
 ```
 
 | Argument | Required | Description |
@@ -131,7 +131,7 @@ src/modules/foo/migrations/versions/
 └── foo_core_0002_add_index.py                  # extends foo_core@head
 ```
 
-When `poe db-migrate` runs, Alembic upgrades all branches to their latest head — both `members_core` and `foo_core` are applied independently.
+When `poe db migrate` runs, Alembic upgrades all branches to their latest head — both `members_core` and `foo_core` are applied independently.
 
 ### Extending a module's schema
 

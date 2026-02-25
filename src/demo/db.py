@@ -6,10 +6,11 @@ from src.modules.members.tasks.sync_from_csv import sync_members_from_csv
 
 MEMBERS_CSV_PATH = str(resources.files("src.demo.data").joinpath("members_example.csv"))
 
+db = CofyDB(url=DB_URL, connect_args=DB_CONNECT_ARGS)
+db.bind_api(cofy)
 
-def main() -> None:
-    db = CofyDB(url=DB_URL, connect_args=DB_CONNECT_ARGS)
-    db.bind_api(cofy)
+
+def seed() -> None:
     db.run_migrations()
     sync_members_from_csv(
         db_engine=db.engine,
@@ -20,5 +21,7 @@ def main() -> None:
     )
 
 
+db.set_seed(seed)
+
 if __name__ == "__main__":
-    main()
+    db.cli()
