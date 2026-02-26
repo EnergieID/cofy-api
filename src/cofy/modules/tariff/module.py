@@ -5,13 +5,7 @@ from fastapi.params import Query
 from pydantic import Field
 
 from cofy.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
-from cofy.modules.timeseries.formats.csv import CSVFormat
-from cofy.modules.timeseries.formats.json import (
-    DefaultDataType,
-    DefaultMetadataType,
-    JSONFormat,
-)
-from cofy.modules.timeseries.module import TimeseriesModule
+from cofy.modules.timeseries import CSVFormat, DefaultDataType, DefaultMetadataType, JSONFormat, TimeseriesModule
 
 
 class TariffMetadata(DefaultMetadataType):

@@ -1,6 +1,6 @@
 from fastapi.responses import StreamingResponse
 
-from cofy.modules.timeseries.formats.csv import CSVFormat
+from cofy.modules.timeseries import CSVFormat
 
 
 def test_return_type():

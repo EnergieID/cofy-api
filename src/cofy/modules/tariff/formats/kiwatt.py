@@ -2,8 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 from pydantic import BaseModel
 
-from cofy.modules.timeseries.format import TimeseriesFormat
-from cofy.modules.timeseries.model import Timeseries
+from cofy.modules.timeseries import Timeseries, TimeseriesFormat
 
 
 def to_utc_timestring(dt: datetime | str) -> str:

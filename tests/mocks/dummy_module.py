@@ -1,4 +1,4 @@
-from cofy.module import Module
+from cofy import Module
 
 
 class DummyModule(Module):

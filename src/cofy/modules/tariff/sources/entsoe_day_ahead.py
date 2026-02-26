@@ -5,8 +5,7 @@ import pandas as pd
 from entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
 
-from cofy.modules.timeseries.model import Timeseries
-from cofy.modules.timeseries.source import TimeseriesSource
+from cofy.modules.timeseries import Timeseries, TimeseriesSource
 
 
 class EntsoeDayAheadTariffSource(TimeseriesSource):

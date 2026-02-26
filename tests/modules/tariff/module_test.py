@@ -4,8 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cofy.modules.tariff.module import TariffModule
-from cofy.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
+from cofy.modules.tariff import EntsoeDayAheadTariffSource, TariffModule
 from tests.modules.tariff.dummy_source import DummySource
 
 

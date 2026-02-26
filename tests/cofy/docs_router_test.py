@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from cofy.docs_router import DocsRouter
+from cofy import DocsRouter
 
 
 class TestDocsRouter:

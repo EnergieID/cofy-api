@@ -6,10 +6,8 @@ from pathlib import Path
 import pytest
 import sqlalchemy as sa
 
-from cofy.cofy_api import CofyApi
-from cofy.db.base import Base
-from cofy.db.cofy_db import CofyDB
-from cofy.db.database_backed_source import DatabaseBackedSource
+from cofy import CofyApi
+from cofy.db import Base, CofyDB, DatabaseBackedSource
 from tests.mocks.dummy_module import DummyModule
 
 

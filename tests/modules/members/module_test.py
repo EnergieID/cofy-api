@@ -4,8 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cofy.modules.members.model import Member
-from cofy.modules.members.module import MembersModule
+from cofy.modules.members import Member, MembersModule
 
 
 class DummyMemberSource:

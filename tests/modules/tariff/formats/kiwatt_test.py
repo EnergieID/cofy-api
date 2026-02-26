@@ -4,13 +4,13 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from cofy.modules.tariff.formats.kiwatt import (
+from cofy.modules.tariff import (
     KiwattFormat,
     PriceRecordModel,
     ResponseModel,
     to_utc_timestring,
 )
-from cofy.modules.timeseries.model import Timeseries
+from cofy.modules.timeseries import Timeseries
 
 
 def _make_timeseries(start: dt.datetime, end: dt.datetime, resolution: timedelta = timedelta(hours=1)) -> Timeseries:

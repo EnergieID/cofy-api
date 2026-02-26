@@ -1,6 +1,6 @@
 import argparse
 
-from cofy.db.cofy_db import CofyDB
+from cofy import CofyDB
 from demo.main import DB_CONNECT_ARGS, DB_URL, cofy
 
 

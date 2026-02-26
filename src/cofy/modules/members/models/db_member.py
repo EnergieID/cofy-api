@@ -1,8 +1,7 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from cofy.db.base import Base
-from cofy.db.timestamp_mixin import TimestampMixin
+from cofy.db import Base, TimestampMixin
 
 
 class DBMember(TimestampMixin, Base):

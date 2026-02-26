@@ -1,7 +1,7 @@
 from importlib import resources
 
-from cofy.db.cofy_db import CofyDB
-from cofy.modules.members.tasks.sync_from_csv import sync_members_from_csv
+from cofy import CofyDB
+from cofy.modules.members import sync_members_from_csv
 from demo.main import DB_CONNECT_ARGS, DB_URL, cofy
 
 MEMBERS_CSV_PATH = str(resources.files("demo.data").joinpath("members_example.csv"))

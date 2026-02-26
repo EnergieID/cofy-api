@@ -3,8 +3,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from cofy.modules.members.models.db_member import DBMember
-from cofy.modules.members.tasks.sync_from_csv import sync_members_from_csv
+from cofy.modules.members import DBMember, sync_members_from_csv
 
 
 @pytest.fixture

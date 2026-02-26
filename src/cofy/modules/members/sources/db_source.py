@@ -6,7 +6,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from cofy.db.database_backed_source import DatabaseBackedSource
+from cofy.db import DatabaseBackedSource
 from cofy.modules.members.models.db_member import DBMember
 from cofy.modules.members.source import MemberSource
 
