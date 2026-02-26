@@ -2,8 +2,8 @@ import datetime as dt
 
 from pydantic import BaseModel
 
-from cofy.modules.timeseries.format import TimeseriesFormat
-from cofy.modules.timeseries.model import Timeseries
+from ..format import TimeseriesFormat
+from ..model import Timeseries
 
 
 class DefaultDataType(BaseModel):

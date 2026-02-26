@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from fastapi import Response
 from fastapi.responses import JSONResponse
 
-from cofy.modules.timeseries.model import Timeseries
+from .model import Timeseries
 
 
 class TimeseriesFormat(ABC):

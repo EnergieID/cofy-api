@@ -1,7 +1,7 @@
 import builtins
 from abc import ABC, abstractmethod
 
-from cofy.modules.members.model import Member
+from .model import Member
 
 
 class MemberSource[T](ABC):

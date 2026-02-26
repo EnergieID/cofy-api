@@ -1,7 +1,7 @@
 import datetime as dt
 from abc import ABC, abstractmethod
 
-from cofy.modules.timeseries.model import Timeseries
+from .model import Timeseries
 
 
 class TimeseriesSource(ABC):

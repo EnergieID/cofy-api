@@ -1,8 +1,8 @@
 from fastapi.responses import StreamingResponse
 
-from cofy.modules.timeseries.format import TimeseriesFormat
-from cofy.modules.timeseries.formats.json import DefaultMetadataType
-from cofy.modules.timeseries.model import Timeseries
+from ..format import TimeseriesFormat
+from ..model import Timeseries
+from .json import DefaultMetadataType
 
 
 class CSVFormat(TimeseriesFormat):

@@ -6,10 +6,11 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import create_model
 
 from cofy import Module
-from cofy.modules.timeseries.format import TimeseriesFormat
-from cofy.modules.timeseries.formats.csv import CSVFormat
-from cofy.modules.timeseries.formats.json import JSONFormat
-from cofy.modules.timeseries.source import TimeseriesSource
+
+from .format import TimeseriesFormat
+from .formats.csv import CSVFormat
+from .formats.json import JSONFormat
+from .source import TimeseriesSource
 
 
 class TimeseriesModule(Module):

@@ -1,6 +1,6 @@
-from cofy.modules.tariff.formats.kiwatt import KiwattFormat, PriceRecordModel, ResponseModel, to_utc_timestring
-from cofy.modules.tariff.module import TariffModule
-from cofy.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
+from .formats.kiwatt import KiwattFormat, PriceRecordModel, ResponseModel, to_utc_timestring
+from .module import TariffModule
+from .sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
 __all__ = [
     "EntsoeDayAheadTariffSource",

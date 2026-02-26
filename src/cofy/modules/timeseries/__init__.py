@@ -1,9 +1,9 @@
-from cofy.modules.timeseries.format import TimeseriesFormat
-from cofy.modules.timeseries.formats.csv import CSVFormat
-from cofy.modules.timeseries.formats.json import DefaultDataType, DefaultMetadataType, JSONFormat
-from cofy.modules.timeseries.model import Timeseries
-from cofy.modules.timeseries.module import TimeseriesModule
-from cofy.modules.timeseries.source import TimeseriesSource
+from .format import TimeseriesFormat
+from .formats.csv import CSVFormat
+from .formats.json import DefaultDataType, DefaultMetadataType, JSONFormat
+from .model import Timeseries
+from .module import TimeseriesModule
+from .source import TimeseriesSource
 
 __all__ = [
     "CSVFormat",

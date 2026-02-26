@@ -2,7 +2,7 @@ import csv
 
 from sqlalchemy.orm import Session
 
-from cofy.modules.members.models.db_member import DBMember
+from ..models.db_member import DBMember
 
 
 def sync_members_from_csv(

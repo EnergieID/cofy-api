@@ -3,8 +3,9 @@ from typing import Any
 from fastapi import HTTPException
 
 from cofy import Module
-from cofy.modules.members.model import VerifyMemberRequest
-from cofy.modules.members.source import MemberSource
+
+from .model import VerifyMemberRequest
+from .source import MemberSource
 
 
 class MembersModule(Module):

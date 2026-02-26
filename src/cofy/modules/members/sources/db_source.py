@@ -7,8 +7,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from cofy.db import DatabaseBackedSource
-from cofy.modules.members.models.db_member import DBMember
-from cofy.modules.members.source import MemberSource
+
+from ..models.db_member import DBMember
+from ..source import MemberSource
 
 
 class MembersDbSource(MemberSource[Any], DatabaseBackedSource):
