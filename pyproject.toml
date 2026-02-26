@@ -60,7 +60,7 @@ cmd = "pytest --cov=cofy --cov-report=term-missing --import-mode=importlib"
 skip_covered = true
 [tool.coverage.run]
 source = ["cofy"]
-omit = ["cofy/modules/*/migrations/*", "cofy/db/alembic/*"]
+omit = ["src/cofy/modules/*/migrations/*", "src/cofy/db/alembic/*"]
 [tool.ruff]
 line-length = 120
 [tool.ruff.lint]
