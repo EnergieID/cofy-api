@@ -14,8 +14,7 @@ from cofy.db.database_backed_source import DatabaseBackedSource
 if TYPE_CHECKING:
     from sqlalchemy.engine import Engine
 
-    from cofy.cofy_api import CofyApi
-    from cofy.module import Module
+    from cofy import CofyApi, Module
 
 
 class CofyDB:
