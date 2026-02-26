@@ -36,8 +36,15 @@ pre-commit install
 Our demo application uses some API keys for external services. You can provide these `.env.local` file in the root of the repository, following the structure of `.env.example`.
 
 #### Set up the database:
-The demo application uses a SQLite database. A different database can be configured via the environment variables.
-To create the database and seed it with example data:
+The demo application uses a PostgreSQL database. Configure the connection URL via the `DB_URL` environment variable.
+
+Make sure PostgreSQL is running (e.g. via Docker):
+
+```sh
+docker run -p 5432:5432 -e POSTGRES_DB=cofy -e POSTGRES_HOST_AUTH_METHOD=trust postgres:16-alpine
+```
+
+To create the database tables and seed with example data:
 
 ```sh
 poe db seed
@@ -54,14 +61,9 @@ poe demo
 #### Run background worker:
 We use Cofy Worker to run background jobs that perform data ingestion and processing tasks asynchronously.
 
-The background worker requires a Redis instance to run. You can configure the Redis URL via the environment variables.
-The simplest way to run Redis locally is via Docker:
+The background worker uses the same PostgreSQL database as the API (configured via `DB_URL`).
 
-```sh
-docker run -p 6379:6379 redis
-```
-
-Then start the worker:
+Start the worker:
 
 ```sh
 poe worker

@@ -12,9 +12,9 @@ from src.modules.tariff.module import TariffModule
 from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
 # Database configuration
-DB_URL = environ.get("DB_URL", "sqlite:///./demo.db")
-DB_CONNECT_ARGS = {"check_same_thread": False} if DB_URL.startswith("sqlite") else {}
-engine = create_engine(DB_URL, connect_args=DB_CONNECT_ARGS)
+DB_URL = environ.get("DB_URL")
+assert DB_URL, "DB_URL environment variable must be set to connect to the database"
+engine = create_engine(DB_URL)
 
 # Initialize the Cofy API
 cofy = CofyApi(dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))])

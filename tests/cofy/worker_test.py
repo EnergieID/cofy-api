@@ -29,10 +29,10 @@ def worker_module_with_doubles(monkeypatch):
 
 
 def test_create_queue_forwards_url_and_kwargs(worker_module_with_doubles):
-    queue = worker_module_with_doubles.create_queue("redis://example:6379", name="jobs")
+    queue = worker_module_with_doubles.create_queue("postgresql://example/cofy", name="jobs")
 
     assert isinstance(queue, DummyQueue)
-    assert queue.url == "redis://example:6379"
+    assert queue.url == "postgresql://example/cofy"
     assert queue.kwargs == {"name": "jobs"}
 
 
@@ -66,7 +66,7 @@ async def test_to_task_supports_async_functions_with_var_kwargs():
 
 
 def test_schedule_registers_function_and_cron_job(worker_module_with_doubles):
-    worker = worker_module_with_doubles.CofyWorker(url="redis://example:6379", db=3)
+    worker = worker_module_with_doubles.CofyWorker(url="postgresql://example/cofy", db=3)
 
     async def sample_job(x: int = 0):
         return x

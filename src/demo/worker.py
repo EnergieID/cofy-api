@@ -6,11 +6,13 @@ from sqlalchemy import create_engine
 from src.cofy.worker import CofyWorker
 from src.modules.members.tasks.sync_from_csv import sync_members_from_csv
 
-REDIS_URL = environ.get("REDIS_URL", "redis://localhost:6379")
-DB_URL = environ.get("DB_URL", "sqlite:///./demo.db")
+DB_URL = environ.get("DB_URL", "")
+assert DB_URL, "DB_URL environment variable must be set to connect to the database"
+# SAQ needs a plain postgresql:// URL (without the SQLAlchemy +psycopg driver spec)
+QUEUE_URL = DB_URL.replace("+psycopg", "", 1)
 CSV_PATH = str(resources.files("src.demo.data").joinpath("members_example.csv"))
 
-worker = CofyWorker(url=REDIS_URL)
+worker = CofyWorker(url=QUEUE_URL)
 
 
 @worker.on_startup
