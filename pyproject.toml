@@ -30,6 +30,8 @@ dev = [
     "ruff>=0.14.13",
     "ty>=0.0.12",
 ]
+[tool.poe.env]
+PYTHONPYCACHEPREFIX = ".pycache"
 [tool.poe.tasks]
 lint = "ruff check --fix"
 format = "ruff format"
