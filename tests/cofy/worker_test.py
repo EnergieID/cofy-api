@@ -1,6 +1,6 @@
 import pytest
 
-from src.cofy import worker as worker_module
+from cofy import worker as worker_module
 
 
 class DummyQueue:

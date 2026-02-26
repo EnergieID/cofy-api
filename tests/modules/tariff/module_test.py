@@ -4,8 +4,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.modules.tariff.module import TariffModule
-from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
+from cofy.modules.tariff.module import TariffModule
+from cofy.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 from tests.modules.tariff.dummy_source import DummySource
 
 
@@ -32,7 +32,7 @@ def test_tariffmodule_type_property():
 
 
 def test_floor_datetime():
-    from src.modules.tariff.module import floor_datetime
+    from cofy.modules.tariff.module import floor_datetime
 
     dt_obj = dt.datetime(2026, 1, 1, 10, 37, 45, tzinfo=dt.UTC)
     delta = dt.timedelta(hours=1)

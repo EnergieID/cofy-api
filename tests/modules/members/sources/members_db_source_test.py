@@ -2,9 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from src.modules.members.model import Member
-from src.modules.members.models.db_member import DBMember
-from src.modules.members.sources.db_source import MembersDbSource
+from cofy.modules.members.model import Member
+from cofy.modules.members.models.db_member import DBMember
+from cofy.modules.members.sources.db_source import MembersDbSource
 
 
 class TestMembers:

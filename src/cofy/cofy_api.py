@@ -3,8 +3,8 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
-from src.cofy.docs_router import DocsRouter
-from src.shared.module import Module
+from cofy.docs_router import DocsRouter
+from cofy.module import Module
 
 DEFAULT_ARGS: dict[str, Any] = {
     "title": "Cofy API",
