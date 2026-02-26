@@ -29,10 +29,10 @@ def worker_module_with_doubles(monkeypatch):
 
 
 def test_create_queue_forwards_url_and_kwargs(worker_module_with_doubles):
-    queue = worker_module_with_doubles.create_queue("redis://example:6379", name="jobs")
+    queue = worker_module_with_doubles.create_queue("postgresql://example/cofy", name="jobs")
 
     assert isinstance(queue, DummyQueue)
-    assert queue.url == "redis://example:6379"
+    assert queue.url == "postgresql://example/cofy"
     assert queue.kwargs == {"name": "jobs"}
 
 
@@ -66,7 +66,7 @@ async def test_to_task_supports_async_functions_with_var_kwargs():
 
 
 def test_schedule_registers_function_and_cron_job(worker_module_with_doubles):
-    worker = worker_module_with_doubles.CofyWorker(url="redis://example:6379", db=3)
+    worker = worker_module_with_doubles.CofyWorker(url="postgresql://example/cofy", db=3)
 
     async def sample_job(x: int = 0):
         return x
@@ -92,7 +92,7 @@ def test_schedule_registers_function_and_cron_job(worker_module_with_doubles):
 
 
 def test_registering_the_same_function_multiple_times_does_not_duplicate(worker_module_with_doubles):
-    worker = worker_module_with_doubles.CofyWorker()
+    worker = worker_module_with_doubles.CofyWorker("postgresql://example/cofy")
 
     def sample_job():
         pass
@@ -110,7 +110,7 @@ def test_registering_the_same_function_multiple_times_does_not_duplicate(worker_
 async def test_registering_the_same_function_twice_with_different_kwargs_keeps_original_kwargs(
     worker_module_with_doubles,
 ):
-    worker = worker_module_with_doubles.CofyWorker()
+    worker = worker_module_with_doubles.CofyWorker("postgresql://example/cofy")
 
     def sample_job(x: int = 0):
         return x
@@ -127,7 +127,7 @@ async def test_registering_the_same_function_twice_with_different_kwargs_keeps_o
 
 @pytest.mark.asyncio
 async def test_settings_startup_and_shutdown_hooks_run_in_registration_order(worker_module_with_doubles):
-    worker = worker_module_with_doubles.CofyWorker()
+    worker = worker_module_with_doubles.CofyWorker("postgresql://example/cofy")
     events = []
 
     @worker.on_startup
@@ -153,7 +153,7 @@ async def test_settings_startup_and_shutdown_hooks_run_in_registration_order(wor
 
 
 def test_settings_without_lifecycle_hooks_only_contains_core_keys(worker_module_with_doubles):
-    worker = worker_module_with_doubles.CofyWorker()
+    worker = worker_module_with_doubles.CofyWorker("postgresql://example/cofy")
 
     settings = worker.settings
 

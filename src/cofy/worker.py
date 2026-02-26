@@ -7,18 +7,18 @@ decides which ones to activate and how to schedule them.
 
 Architecture:
     ┌─────────────┐     ┌─────────┐     ┌──────────────┐
-    │ FastAPI API │────▶│  Redis  │◀────│  SAQ Worker  │
-    │  (enqueue)  │     │  Queue  │     │  (process)   │
+    │ FastAPI API │────▶│  Queue  │◀────│  SAQ Worker  │
+    │  (enqueue)  │     │ backend │     │  (process)   │
     └─────────────┘     └─────────┘     └──────────────┘
 
-Both the API and the worker connect to the same Redis queue.
+Both the API and the worker connect to the same queue backend (e.g. Redis, Postgres) to enqueue and process jobs.
 The API enqueues jobs; the worker processes them.
 
 Example — community worker (e.g. src/demo/worker.py):
 
     from src.cofy.jobs.worker import CofyWorker
 
-    worker = CofyWorker(url="redis://localhost:6379")
+    worker = CofyWorker(url=DB_URL)
     worker.register(my_job_function)
     worker.schedule(my_job_function, cron="0 2 * * *")
     settings = worker.settings  # SAQ entry point: saq src.demo.worker.settings
@@ -27,7 +27,7 @@ Example — enqueue from a FastAPI endpoint:
 
     from src.cofy.worker import create_queue
 
-    queue = create_queue("redis://localhost:6379")
+    queue = create_queue(DB_URL)
 
     @app.post("/upload")
     async def upload(file: UploadFile):
@@ -53,11 +53,11 @@ class NamedCallable(Protocol):
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
 
-def create_queue(url: str = "redis://localhost:6379", **kwargs: Any) -> Queue:
+def create_queue(url: str, **kwargs: Any) -> Queue:
     """Create a SAQ queue for enqueuing jobs (e.g. from the API process).
 
     Use this in the API process when you only need to enqueue jobs,
-    not process them. Points to the same Redis as the worker.
+    not process them. Use the same URL as the worker to connect to the same queue backend (Redis, Postgres, etc.)
     """
     return Queue.from_url(url, **kwargs)
 
@@ -107,7 +107,7 @@ class CofyWorker:
     It also provides lifecycle hooks (on_startup / on_shutdown) for setting up shared resources like database engines
     """
 
-    def __init__(self, url: str = "redis://localhost:6379", **queue_kwargs: Any):
+    def __init__(self, url: str, **queue_kwargs: Any):
         self.queue = Queue.from_url(url, **queue_kwargs)
         self._functions: dict[str, JobFunction] = {}
         self._cron_jobs: list[CronJob] = []

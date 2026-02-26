@@ -15,8 +15,9 @@ dependencies = [
 [project.optional-dependencies]
 # Functional extras
 api = ["fastapi[standard]>=0.128.0"]
-worker = ["saq[redis,web]>=0.26.1"]
+worker = ["saq[postgres,web] @ git+https://github.com/tobymao/saq.git"]
 db = [
+    "psycopg[binary]>=3.3.3",
     "alembic>=1.18.4", 
     "sqlalchemy>=2.0.0"
 ]
