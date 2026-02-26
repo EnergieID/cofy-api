@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.cofy.cofy_api import CofyApi
+from cofy import CofyApi
 from tests.mocks.dummy_module import DummyModule
 
 

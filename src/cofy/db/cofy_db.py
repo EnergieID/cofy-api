@@ -9,13 +9,12 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import MetaData, create_engine
 
-from src.cofy.db.database_backed_source import DatabaseBackedSource
+from cofy.db.database_backed_source import DatabaseBackedSource
 
 if TYPE_CHECKING:
     from sqlalchemy.engine import Engine
 
-    from src.cofy.cofy_api import CofyApi
-    from src.shared.module import Module
+    from cofy import CofyApi, Module
 
 
 class CofyDB:
@@ -58,7 +57,7 @@ class CofyDB:
 
     def _build_config(self) -> Config:
         config = Config()
-        config.set_main_option("script_location", str(resources.files("src.cofy.db").joinpath("alembic")))
+        config.set_main_option("script_location", str(resources.files("cofy.db").joinpath("alembic")))
         config.set_main_option("sqlalchemy.url", self._url)
         config.set_main_option("path_separator", "os")
 

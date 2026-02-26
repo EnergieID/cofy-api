@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 from entsoe.exceptions import NoMatchingDataError
 
-from src.modules.tariff.sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
-from src.shared.timeseries.model import Timeseries
+from cofy.modules.tariff import EntsoeDayAheadTariffSource
+from cofy.modules.timeseries import Timeseries
 
 EXAMPLE_CSV_NAME = "entsoe_day_ahead_example.csv"
 EXAMPLE_CSV_PATH = resources.files("tests.modules.tariff.sources").joinpath(EXAMPLE_CSV_NAME)

@@ -17,6 +17,12 @@ dependencies = [
     "polars>=1.37.1",
     "saq[redis,web]>=0.26.1",
 ]
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
 [dependency-groups]
 dev = [
     "pytest-asyncio>=1.3.0",
@@ -25,41 +31,37 @@ dev = [
     "ruff>=0.14.13",
     "ty>=0.0.12",
 ]
+[tool.poe.env]
+PYTHONPYCACHEPREFIX = ".pycache"
 [tool.poe.tasks]
 lint = "ruff check --fix"
 format = "ruff format"
 check = "ty check"
 [tool.poe.tasks.demo]
-cmd = "fastapi dev src/demo/main.py"
-env = { PYTHONPATH = "." }
+cmd = "fastapi dev demo/main.py"
 envfile = ".env.local"
 [tool.poe.tasks.db-seed]
-cmd = "python -m src.demo.db.seed"
+cmd = "python -m demo.db.seed"
 envfile = ".env.local"
-env = { PYTHONPATH = "." }
 [tool.poe.tasks.db-reset]
-cmd = "python -m src.demo.db.reset"
+cmd = "python -m demo.db.reset"
 envfile = ".env.local"
 [tool.poe.tasks.db-migrate]
-cmd = "python -m src.demo.db.migrate"
+cmd = "python -m demo.db.migrate"
 envfile = ".env.local"
-env = { PYTHONPATH = "." }
 [tool.poe.tasks.db-generate]
-cmd = "python -m src.demo.db.generate"
+cmd = "python -m demo.db.generate"
 envfile = ".env.local"
-env = { PYTHONPATH = "." }
 [tool.poe.tasks.worker]
-cmd = "saq src.demo.worker.settings"
-env = { PYTHONPATH = "." }
+cmd = "saq demo.worker.settings"
 envfile = ".env.local"
 [tool.poe.tasks.test]
-cmd = "pytest --cov=src --cov-report=term-missing --import-mode=importlib"
-env = { PYTHONPATH = "." }
+cmd = "pytest --cov=cofy --cov-report=term-missing --import-mode=importlib"
 [tool.coverage.report]
 skip_covered = true
 [tool.coverage.run]
-source = ["src"]
-omit = ["src/demo/*", "src/modules/*/migrations/*", "src/cofy/db/alembic/*"]
+source = ["cofy"]
+omit = ["src/cofy/modules/*/migrations/*", "src/cofy/db/alembic/*"]
 [tool.ruff]
 line-length = 120
 [tool.ruff.lint]

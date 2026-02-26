@@ -6,7 +6,7 @@ from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from src.cofy.token_auth import TokenInfo, token_verifier
+from cofy.api import TokenInfo, token_verifier
 
 # Example tokens for testing
 tokens = {

@@ -6,11 +6,14 @@ from fastapi import FastAPI, Query
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
-from src.shared.timeseries.formats.csv import CSVFormat
-from src.shared.timeseries.formats.json import DefaultDataType, JSONFormat
-from src.shared.timeseries.model import Timeseries
-from src.shared.timeseries.module import TimeseriesModule
-from src.shared.timeseries.source import TimeseriesSource
+from cofy.modules.timeseries import (
+    CSVFormat,
+    DefaultDataType,
+    JSONFormat,
+    Timeseries,
+    TimeseriesModule,
+    TimeseriesSource,
+)
 
 
 class DummyTimeseriesSource(TimeseriesSource):

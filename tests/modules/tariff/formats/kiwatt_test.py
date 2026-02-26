@@ -4,13 +4,13 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.modules.tariff.formats.kiwatt import (
+from cofy.modules.tariff import (
     KiwattFormat,
     PriceRecordModel,
     ResponseModel,
     to_utc_timestring,
 )
-from src.shared.timeseries.model import Timeseries
+from cofy.modules.timeseries import Timeseries
 
 
 def _make_timeseries(start: dt.datetime, end: dt.datetime, resolution: timedelta = timedelta(hours=1)) -> Timeseries:
@@ -52,7 +52,7 @@ class TestToUtcTimestring:
 
 class TestKiwattFormat:
     def setup_method(self):
-        self.patcher = patch("src.modules.tariff.formats.kiwatt.datetime")
+        self.patcher = patch("cofy.modules.tariff.formats.kiwatt.datetime")
         self.mock_datetime = self.patcher.start()
         self.mock_datetime.now.return_value = dt.datetime(2026, 1, 1, 11, 15, 0, tzinfo=UTC)
         self.mock_datetime.fromisoformat = dt.datetime.fromisoformat

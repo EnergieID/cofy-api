@@ -2,8 +2,7 @@ import datetime as dt
 
 import pandas as pd
 
-from src.shared.timeseries.model import Timeseries
-from src.shared.timeseries.source import TimeseriesSource
+from cofy.modules.timeseries import Timeseries, TimeseriesSource
 
 
 class DummySource(TimeseriesSource):
