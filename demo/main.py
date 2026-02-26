@@ -3,7 +3,8 @@ from os import environ
 from fastapi import Depends
 from sqlalchemy import create_engine
 
-from cofy import CofyApi, token_verifier
+from cofy import CofyApi
+from cofy.api import token_verifier
 from cofy.modules.members import MembersDbSource, MembersModule
 from cofy.modules.tariff import EntsoeDayAheadTariffSource, KiwattFormat, TariffModule
 

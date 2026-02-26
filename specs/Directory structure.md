@@ -2,15 +2,19 @@
 ```sh
 src/
     cofy/                           # Core framework (installable package)
-        __init__.py                 # Re-exports: CofyApi, CofyDB, CofyWorker, DocsRouter, Module, TokenInfo, token_verifier
+        __init__.py                 # Public API: CofyApi, CofyDB, CofyWorker, Module
         cofy_api.py                 # Main app class, handles settings and module registration
         module.py                   # Base Module class (abstract APIRouter)
         docs_router.py              # OpenAPI / docs endpoints
         token_auth.py               # Token-based authentication
         worker.py                   # Background worker implementation
+        api/
+            __init__.py             # Re-exports: DocsRouter, TokenInfo, token_verifier
         db/                         # Database utilities
-        modules/
+            __init__.py             # Re-exports: Base, DatabaseBackedSource, TimestampMixin
+        modules/                    # Grouping folder for domain modules (namespace package)
             <module_name>/
+                __init__.py         # Public API for this module (re-exports)
                 module.py           # Main module class: settings, route registration
                 model.py            # Pydantic model(s) for the external API
                 source.py           # Source interface and/or default implementation
