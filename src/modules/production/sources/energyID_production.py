@@ -4,9 +4,24 @@ import datetime as dt
 import polars as pl
 import requests
 from isodate import strftime
+from pydantic import BaseModel
 
 from src.shared.timeseries.model import ISODuration, Timeseries
 from src.shared.timeseries.source import TimeseriesSource
+
+
+class EnergyIDDataPoint(BaseModel):
+    timestamp: str
+    total: float
+
+
+class EnergyIDValueEntry(BaseModel):
+    data: list[EnergyIDDataPoint]
+    unit: str = "unknown"
+
+
+class EnergyIDResponse(BaseModel):
+    value: list[EnergyIDValueEntry]
 
 
 class EnergyIDProduction(TimeseriesSource):
@@ -14,8 +29,10 @@ class EnergyIDProduction(TimeseriesSource):
 
     def __init__(self, api_key: str, record_id: str) -> None:
         super().__init__()
-        assert api_key, "API key must be provided"
-        assert record_id, "Record ID must be provided"
+        if not api_key:
+            raise ValueError("API key must be provided")
+        if not record_id:
+            raise ValueError("Record ID must be provided")
 
         self.headers = {"Authorization": f"apikey {api_key}"}
         response = requests.get("https://api.energyid.eu/api/v1/members/me", headers=self.headers)
@@ -34,9 +51,11 @@ class EnergyIDProduction(TimeseriesSource):
         end_date = end.date().isoformat()
         resolution_iso = strftime(resolution, format="P%P")
 
-        assert resolution_iso in self.SUPPORTED_RESOLUTIONS, (
-            f"Resolution {resolution_iso} is not supported. Supported resolutions are: {', '.join(self.SUPPORTED_RESOLUTIONS)}"
-        )
+        if resolution_iso not in self.SUPPORTED_RESOLUTIONS:
+            raise ValueError(
+                f"Resolution {resolution_iso} is not supported. "
+                f"Supported resolutions are: {', '.join(self.SUPPORTED_RESOLUTIONS)}"
+            )
 
         respone = await asyncio.to_thread(
             requests.get,
@@ -45,21 +64,18 @@ class EnergyIDProduction(TimeseriesSource):
         )
         if respone.status_code != 200:
             raise ValueError(f"Failed to fetch data from EnergyID API: {respone.status_code} - {respone.text}")
-        json = respone.json()
 
-        assert "value" in json, "Response from EnergyID API does not contain 'value' field"
-        assert isinstance(json["value"], list), "Expected 'value' field to be a list"
-        assert len(json["value"]) > 0, "No data points returned from EnergyID API"
-        assert "data" in json["value"][0], "Data points in 'value' list do not contain 'data' field"
+        parsed = EnergyIDResponse.model_validate(respone.json())
+        entry = parsed.value[0]
 
         data = [
             {
-                "timestamp": dt.datetime.fromisoformat(point["timestamp"]),
-                "value": point["total"],
+                "timestamp": dt.datetime.fromisoformat(point.timestamp),
+                "value": point.total,
             }
-            for point in json["value"][0]["data"]
+            for point in entry.data
         ]
         return Timeseries(
             frame=pl.DataFrame(data),
-            metadata={"unit": json["value"][0].get("unit", "unknown")},
+            metadata={"unit": entry.unit},
         )

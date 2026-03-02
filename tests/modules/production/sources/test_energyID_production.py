@@ -106,5 +106,5 @@ async def test_fetch_timeseries_invalid_resolution(mock_requests_get):
     start = dt.datetime(2026, 2, 9, 0, 0)
     end = dt.datetime(2026, 2, 10, 0, 0)
     bad_resolution = dt.timedelta(hours=2)
-    with pytest.raises(AssertionError, match="Resolution PT2H is not supported"):
+    with pytest.raises(ValueError, match="Resolution PT2H is not supported"):
         await source.fetch_timeseries(start, end, bad_resolution)
