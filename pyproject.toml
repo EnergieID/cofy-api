@@ -6,6 +6,7 @@ authors = [
 ]
 version = "0.0.0"
 description = "An open-source modular framework for ingesting, standardising, storing, and computing energy-related data."
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
