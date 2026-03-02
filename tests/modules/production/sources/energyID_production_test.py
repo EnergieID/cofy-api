@@ -15,6 +15,16 @@ with open(str(EXAMPLE_JSON_PATH)) as f:
     EXAMPLE_JSON = json.load(f)
 
 
+def test_api_key_is_required():
+    with pytest.raises(ValueError):
+        EnergyIDProduction(api_key="", record_id="dummy_record")
+
+
+def test_record_id_is_required():
+    with pytest.raises(ValueError):
+        EnergyIDProduction(api_key="dummy_key", record_id="")
+
+
 @pytest.fixture
 def mock_requests_get():
     """Fixture to mock requests.get for both API key check and data fetch."""

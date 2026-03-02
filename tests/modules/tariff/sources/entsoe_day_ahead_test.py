@@ -33,6 +33,17 @@ def test_init_invalid(api_key, country_code, error_msg):
 
 
 @pytest.mark.asyncio
+async def test_resolution_should_be_15_minutes():
+    src = EntsoeDayAheadTariffSource("key", "DE")
+    with pytest.raises(ValueError):
+        await src.fetch_timeseries(
+            start=dt.datetime(2026, 1, 21),
+            end=dt.datetime(2026, 1, 22),
+            resolution=dt.timedelta(minutes=30),
+        )
+
+
+@pytest.mark.asyncio
 async def test_fetch_timeseries():
     src = EntsoeDayAheadTariffSource("key", "BE")
     src.client = MagicMock()
