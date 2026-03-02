@@ -362,3 +362,14 @@ class TestTimeseriesModule:
         data = result.get("data")
         assert len(data) == limit
         self.assert_iso_equals_datetime(result["metadata"]["end"], end)
+
+    def test_an_invalid_resolution_with_limit_should_fail(self):
+        response = self.client.get(
+            self.module.prefix,
+            params={
+                "start": self.start.isoformat(),
+                "resolution": "FOO",
+                "limit": 2,
+            },
+        )
+        assert response.status_code == 422

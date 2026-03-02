@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import Depends, Query
 from fastapi.exceptions import RequestValidationError
-from isodate import parse_duration
+from isodate import ISO8601Error, parse_duration
 from pydantic import create_model
 
 from src.shared.module import Module
@@ -64,7 +64,12 @@ class TimeseriesModule(Module):
                     f"Resolution {resolution} is not supported. Supported resolutions are: {', '.join(supported_resolutions)}"
                 )
 
-            return parse_duration(resolution) if resolution is not None else None
+            try:
+                return parse_duration(resolution) if resolution is not None else None
+            except ISO8601Error as e:
+                raise RequestValidationError(
+                    f"Invalid resolution format: {resolution}. Must be a valid ISO8601 duration string."
+                ) from e
 
         # ty doesn't allow defining these inside the function definitions
         resolution_default = Depends(resolution_query)
