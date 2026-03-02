@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class Member(BaseModel):
     id: str
-    email: str
+    email: str | None = None
 
 
 class VerifyMemberRequest(BaseModel):

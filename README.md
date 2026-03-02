@@ -51,6 +51,22 @@ This will run all pending migrations and load the example CSV data into the data
 poe demo
 ```
 
+#### Run background worker:
+We use Cofy Worker to run background jobs that perform data ingestion and processing tasks asynchronously.
+
+The background worker requires a Redis instance to run. You can configure the Redis URL via the environment variables.
+The simplest way to run Redis locally is via Docker:
+
+```sh
+docker run -p 6379:6379 redis
+```
+
+Then start the worker:
+
+```sh
+poe worker
+```
+
 #### Code style checks:
 ```sh
 poe lint    # Check code style
