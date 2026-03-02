@@ -46,7 +46,6 @@ class EnergyIDProduction(TimeseriesSource):
         if respone.status_code != 200:
             raise ValueError(f"Failed to fetch data from EnergyID API: {respone.status_code} - {respone.text}")
         json = respone.json()
-        print(json)
 
         assert "value" in json, "Response from EnergyID API does not contain 'value' field"
         assert isinstance(json["value"], list), "Expected 'value' field to be a list"
