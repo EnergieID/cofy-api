@@ -20,17 +20,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Update version in pyproject.toml
-        run: sed -i 's/^version = ".*"/version = "${{ inputs.version }}"/' pyproject.toml
-
-      - name: Commit version bump and tag
+      - name: Create and push tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml
-          git commit -m "release: v${{ inputs.version }}"
           git tag "v${{ inputs.version }}"
-          git push origin HEAD --tags
+          git push origin "v${{ inputs.version }}"
+
+      - name: Set version for build
+        run: sed -i 's/^version = ".*"/version = "${{ inputs.version }}"/' pyproject.toml
 
       - uses: astral-sh/setup-uv@v3
 
