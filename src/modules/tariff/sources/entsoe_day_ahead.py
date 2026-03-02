@@ -26,9 +26,8 @@ class EntsoeDayAheadTariffSource(TimeseriesSource):
         country_code: str | None = None,
         **kwargs,
     ) -> Timeseries:
-        assert resolution == dt.timedelta(minutes=15), (
-            "Only 15-minute resolution is supported for EntsoeDayAheadTariffSource"
-        )
+        if resolution != dt.timedelta(minutes=15):
+            raise ValueError("Only 15-minute resolution is supported for EntsoeDayAheadTariffSource")
 
         try:
             series = await asyncio.to_thread(
