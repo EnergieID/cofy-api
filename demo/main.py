@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from cofy import CofyApi
 from cofy.api import token_verifier
 from cofy.modules.members import MembersDbSource, MembersModule
+from cofy.modules.production import EnergyIDProduction, ProductionModule
 from cofy.modules.tariff import EntsoeDayAheadTariffSource, KiwattFormat, TariffModule
 
 # Database configuration
@@ -39,6 +40,18 @@ kiwatt = TariffModule(
     }
 )
 cofy.register_module(kiwatt)
+
+wind = ProductionModule(
+    settings={
+        "source": EnergyIDProduction(
+            api_key=environ.get("ENERGY_ID_API_KEY", ""),
+            record_id=environ.get("ENERGY_ID_RECORD_ID", ""),
+        ),
+        "name": "wind",
+        "supported_resolutions": EnergyIDProduction.SUPPORTED_RESOLUTIONS,
+    }
+)
+cofy.register_module(wind)
 
 # members endpoint for Demo members, using a CSV file as source
 cofy.register_module(MembersModule(settings={"source": MembersDbSource(engine), "name": "demo"}))

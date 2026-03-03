@@ -4,7 +4,7 @@ authors = [
     { name="EnergyID", email = "info@energieid.be" },
     { name="Jorg" }
 ]
-version = "0.1.0"
+version = "0.0.0"
 description = "An open-source modular framework for ingesting, standardising, storing, and computing energy-related data."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,6 +12,7 @@ dependencies = [
     "alembic>=1.18.4",
     "entsoe-py>=0.7.10",
     "fastapi[standard]>=0.128.0",
+    "isodate>=0.7.2",
     "narwhals>=2.15.0",
     "pandas>=3.0.0",
     "polars>=1.37.1",

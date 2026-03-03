@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import Depends, Query
 from fastapi.exceptions import RequestValidationError
+from isodate import ISO8601Error, parse_duration
 from pydantic import create_model
 
 from cofy import Module
@@ -10,6 +11,7 @@ from cofy import Module
 from .format import TimeseriesFormat
 from .formats.csv import CSVFormat
 from .formats.json import JSONFormat
+from .model import ISODuration
 from .source import TimeseriesSource
 
 
@@ -43,6 +45,35 @@ class TimeseriesModule(Module):
         return create_model("DynamicParameters", **self.settings.get("extra_args", {}))
 
     def create_format_endpoint(self, format: TimeseriesFormat, default: bool = False):
+        supported_resolutions = self.settings.get("supported_resolutions", [])
+
+        def resolution_query(
+            resolution: Annotated[
+                str | None,
+                Query(
+                    description="Resolution of the timeseries in ISO8601 duration format (e.g. PT1H for 1 hour).",
+                    enum=supported_resolutions,
+                    include_in_schema=len(supported_resolutions) != 1,
+                ),
+            ] = self.merged_default_args["resolution"],
+        ) -> ISODuration | None:
+            if resolution is None:
+                raise RequestValidationError("Resolution must be provided.")
+
+            if supported_resolutions and resolution not in supported_resolutions:
+                raise RequestValidationError(
+                    f"Resolution {resolution} is not supported. Supported resolutions are: {', '.join(supported_resolutions)}"
+                )
+
+            try:
+                return parse_duration(resolution) if resolution is not None else None
+            except ISO8601Error as e:
+                raise RequestValidationError(
+                    f"Invalid resolution format: {resolution}. Must be a valid ISO8601 duration string."
+                ) from e
+
+        # ty doesn't allow defining these inside the function definitions
+        resolution_default = Depends(resolution_query)
         params_default = Depends()
 
         async def get_timeseries(
@@ -66,6 +97,7 @@ class TimeseriesModule(Module):
             limit: Annotated[
                 int | None, Query(description="Limit number of resolution steps")
             ] = self.merged_default_args["limit"],
+            resolution: ISODuration = resolution_default,
             params: self.DynamicParameters = params_default,
         ):
             # validate inputs
@@ -82,11 +114,11 @@ class TimeseriesModule(Module):
                 end = end.replace(tzinfo=dt.UTC)
             # calculate adjusted start and end based on offset and limit
             if offset is not None:
-                start += offset * self.resolution
+                start += offset * resolution
                 if end is not None:
-                    end += offset * self.resolution
+                    end += offset * resolution
             if limit is not None:
-                end = start + limit * self.resolution
+                end = start + limit * resolution
 
             assert end is not None  # for type checker, we know end is not None here
 
@@ -94,12 +126,12 @@ class TimeseriesModule(Module):
             extra_args = params.model_dump(exclude_unset=True)
 
             # fetch timeseries data
-            timeseries = await self.source.fetch_timeseries(start, end, **extra_args)
+            timeseries = await self.source.fetch_timeseries(start=start, end=end, resolution=resolution, **extra_args)
 
             # add metadata
             timeseries.metadata["start"] = start
             timeseries.metadata["end"] = end
-            timeseries.metadata["resolution"] = self.resolution
+            timeseries.metadata["resolution"] = resolution
             timeseries.metadata["format"] = format.name
 
             # return in requested format
@@ -121,12 +153,9 @@ class TimeseriesModule(Module):
             "end": lambda: dt.datetime.now(dt.UTC),
             "offset": 0,
             "limit": None,
+            "resolution": "PT1H",
         }
 
     @property
     def merged_default_args(self):
         return self.default_args | self.settings.get("default_args", {})
-
-    @property
-    def resolution(self) -> dt.timedelta:
-        return self.settings.get("resolution", dt.timedelta(hours=1))

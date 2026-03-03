@@ -5,7 +5,7 @@ import pandas as pd
 from entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
 
-from cofy.modules.timeseries import Timeseries, TimeseriesSource
+from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
 
 
 class EntsoeDayAheadTariffSource(TimeseriesSource):
@@ -21,9 +21,13 @@ class EntsoeDayAheadTariffSource(TimeseriesSource):
         self,
         start: dt.datetime,
         end: dt.datetime,
+        resolution: ISODuration = dt.timedelta(minutes=15),
         country_code: str | None = None,
         **kwargs,
     ) -> Timeseries:
+        if resolution != dt.timedelta(minutes=15):
+            raise ValueError("Only 15-minute resolution is supported for EntsoeDayAheadTariffSource")
+
         try:
             series = await asyncio.to_thread(
                 self.client.query_day_ahead_prices,

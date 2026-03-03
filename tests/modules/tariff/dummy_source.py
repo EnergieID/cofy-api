@@ -1,14 +1,10 @@
-import datetime as dt
-
-import pandas as pd
-
-from cofy.modules.timeseries import Timeseries, TimeseriesSource
+from cofy.modules.timeseries import Timeseries
+from tests.shared.timeseries.dummy_source import DummyTimeseriesSource
 
 
-class DummySource(TimeseriesSource):
-    async def fetch_timeseries(self, start: dt.datetime, end: dt.datetime, **kwargs) -> Timeseries:
-        data = [
-            {"timestamp": start + dt.timedelta(hours=i), "value": i * 10.0}
-            for i in range(int((end - start).total_seconds() // 3600))
-        ]
-        return Timeseries(metadata={"unit": "EUR/MWh"}, frame=pd.DataFrame(data))
+class DummySource(DummyTimeseriesSource):
+    async def fetch_timeseries(self, *args, **kwargs) -> Timeseries:
+        ts = await super().fetch_timeseries(*args, **kwargs)
+        # Add some dummy metadata
+        ts.metadata["unit"] = "EUR/MWh"
+        return ts
