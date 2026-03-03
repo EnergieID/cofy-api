@@ -22,16 +22,23 @@ db = [
 ]
 
 # Module extras
-timeseries = ["narwhals>=2.15.0"]
+timeseries = [
+    "isodate>=0.7.2",
+    "narwhals>=2.15.0"
+]
 tariff = [
     "cofy-api[timeseries]",
     "entsoe-py>=0.7.10",
     "pandas>=3.0.0"
 ]
+production = [
+    "cofy-api[timeseries]",
+    "polars>=1.38.1",
+]
 members = ["cofy-api[db]"]
 
 # Convenience extras
-all = ["cofy-api[api,worker,db,timeseries,tariff,members]"]
+all = ["cofy-api[api,worker,db,timeseries,tariff,members,production]"]
 
 [build-system]
 requires = ["setuptools>=75.0", "wheel"]
