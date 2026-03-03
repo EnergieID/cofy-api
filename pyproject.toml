@@ -9,12 +9,12 @@ description = "An open-source modular framework for ingesting, standardising, st
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi[standard]>=0.128.0",
     "pydantic>=2.0.0",
 ]
 
 [project.optional-dependencies]
 # Functional extras
-api = ["fastapi[standard]>=0.128.0"]
 worker = ["saq[redis,web]>=0.26.1"]
 db = [
     "alembic>=1.18.4", 
@@ -38,7 +38,7 @@ production = [
 members = ["cofy-api[db]"]
 
 # Convenience extras
-all = ["cofy-api[api,worker,db,timeseries,tariff,members,production]"]
+all = ["cofy-api[worker,db,timeseries,tariff,members,production]"]
 
 [build-system]
 requires = ["setuptools>=75.0", "wheel"]
