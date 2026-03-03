@@ -4,7 +4,7 @@ authors = [
     { name="EnergyID", email = "info@energieid.be" },
     { name="Jorg" }
 ]
-version = "0.1.0"
+version = "0.0.0"
 description = "An open-source modular framework for ingesting, standardising, storing, and computing energy-related data."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -23,17 +23,33 @@ db = [
 ]
 
 # Module extras
-timeseries = ["narwhals>=2.15.0"]
+timeseries = [
+    "isodate>=0.7.2",
+    "narwhals>=2.15.0"
+]
 tariff = [
     "cofy-api[timeseries]",
     "entsoe-py>=0.7.10",
     "pandas>=3.0.0"
 ]
+production = [
+    "cofy-api[timeseries]",
+    "polars>=1.38.1",
+]
 members = ["cofy-api[db]"]
 
 # Convenience extras
-all = ["cofy-api[api,worker,db,timeseries,tariff,members]"]
+all = ["cofy-api[api,worker,db,timeseries,tariff,members,production]"]
 
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
+
+[tool.setuptools.package-data]
+"cofy.db" = ["alembic/*", "alembic/**/*"]
 [dependency-groups]
 dev = [
     "cofy-api[all]",
@@ -43,30 +59,28 @@ dev = [
     "ruff>=0.14.13",
     "ty>=0.0.12",
 ]
+[tool.poe.env]
+PYTHONPYCACHEPREFIX = ".pycache"
 [tool.poe.tasks]
 lint = "ruff check --fix"
 format = "ruff format"
 check = "ty check"
 [tool.poe.tasks.demo]
-cmd = "fastapi dev src/demo/main.py"
-env = { PYTHONPATH = "." }
+cmd = "fastapi dev demo/main.py"
 envfile = ".env.local"
 [tool.poe.tasks.db]
-cmd = "python -m src.demo.db"
+cmd = "python -m demo.db"
 envfile = ".env.local"
-env = { PYTHONPATH = "." }
 [tool.poe.tasks.worker]
-cmd = "saq src.demo.worker.settings"
-env = { PYTHONPATH = "." }
+cmd = "saq demo.worker.settings"
 envfile = ".env.local"
 [tool.poe.tasks.test]
-cmd = "pytest --cov=src --cov-report=term-missing --import-mode=importlib"
-env = { PYTHONPATH = "." }
+cmd = "pytest --cov=cofy --cov-report=term-missing --import-mode=importlib"
 [tool.coverage.report]
 skip_covered = true
 [tool.coverage.run]
-source = ["src"]
-omit = ["src/demo/*", "src/modules/*/migrations/*", "src/cofy/db/alembic/*"]
+source = ["cofy"]
+omit = ["src/cofy/modules/*/migrations/*", "src/cofy/db/alembic/*"]
 [tool.ruff]
 line-length = 120
 [tool.ruff.lint]
