@@ -51,6 +51,22 @@ This will run all pending migrations and load the example CSV data into the data
 poe demo
 ```
 
+#### Run background worker:
+We use Cofy Worker to run background jobs that perform data ingestion and processing tasks asynchronously.
+
+The background worker requires a Redis instance to run. You can configure the Redis URL via the environment variables.
+The simplest way to run Redis locally is via Docker:
+
+```sh
+docker run -p 6379:6379 redis
+```
+
+Then start the worker:
+
+```sh
+poe worker
+```
+
 #### Code style checks:
 ```sh
 poe lint    # Check code style
@@ -102,7 +118,7 @@ Each module declares its own Alembic branch label in its initial migration. This
 For example, the members module uses branch `members_core`:
 
 ```
-src/modules/members/migrations/versions/
+src/cofy/modules/members/migrations/versions/
 ├── members_core_0001_members_core_initial.py   # branch_labels = ("members_core",)
 └── members_core_0002_add_phone_number.py       # extends members_core@head
 ```
@@ -110,7 +126,7 @@ src/modules/members/migrations/versions/
 A separate module `foo` would have its own branch `foo_core` with revisions in its own directory:
 
 ```
-src/modules/foo/migrations/versions/
+src/cofy/modules/foo/migrations/versions/
 ├── foo_core_0001_initial.py                    # branch_labels = ("foo_core",)
 └── foo_core_0002_add_index.py                  # extends foo_core@head
 ```
