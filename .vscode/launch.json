@@ -4,18 +4,21 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {"name":"Python Debugger: Current File","type":"debugpy","request":"launch","program":"${file}","console":"integratedTerminal"},
+        {"name":"Python Debugger: Current File","type":"debugpy","request":"launch","program":"${file}","console":"integratedTerminal","env":{"PYTHONPYCACHEPREFIX":"${workspaceFolder}/.pycache"}},
         {
             "name": "Python Debugger: FastAPI",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "src.demo.main:app",
+                "demo.main:app",
                 "--reload"
             ],
             "jinja": true,
-            "envFile": "${workspaceFolder}/.env.local"
+            "envFile": "${workspaceFolder}/.env.local",
+            "env": {
+                "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache"
+            }
         }
     ]
 }

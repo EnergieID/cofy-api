@@ -1,4 +1,4 @@
-from src.shared.module import Module
+from cofy import Module
 
 
 class DummyModule(Module):
