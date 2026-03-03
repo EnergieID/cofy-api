@@ -7,5 +7,17 @@
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
         "tests", "--import-mode=importlib"
+    ],
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "name": "Cofy",
+            "database": "cofy",
+            "connectString": "postgresql://postgres@localhost/cofy",
+            "password": ""
+        }
     ]
 }

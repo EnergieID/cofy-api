@@ -15,8 +15,9 @@ dependencies = [
 
 [project.optional-dependencies]
 # Functional extras
-worker = ["saq[redis,web]>=0.26.1"]
+worker = ["saq[postgres,web] @ git+https://github.com/tobymao/saq.git@860afaafd2b3e9872f4b439ae030fb24e5d4689e"]
 db = [
+    "psycopg>=3.3.3",
     "alembic>=1.18.4", 
     "sqlalchemy>=2.0.0"
 ]
