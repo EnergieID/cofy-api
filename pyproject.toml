@@ -45,17 +45,8 @@ check = "ty check"
 [tool.poe.tasks.demo]
 cmd = "fastapi dev demo/main.py"
 envfile = ".env.local"
-[tool.poe.tasks.db-seed]
-cmd = "python -m demo.db.seed"
-envfile = ".env.local"
-[tool.poe.tasks.db-reset]
-cmd = "python -m demo.db.reset"
-envfile = ".env.local"
-[tool.poe.tasks.db-migrate]
-cmd = "python -m demo.db.migrate"
-envfile = ".env.local"
-[tool.poe.tasks.db-generate]
-cmd = "python -m demo.db.generate"
+[tool.poe.tasks.db]
+cmd = "python -m demo.db"
 envfile = ".env.local"
 [tool.poe.tasks.worker]
 cmd = "saq demo.worker.settings"
