@@ -157,12 +157,12 @@ saq worker.settings
 
 The [demo/](demo/) directory contains a complete working application that ties everything together — API with auth, database, multiple modules, and a background worker.
 
-### Development
+## Development
 We use [astral](https://docs.astral.sh/) python tooling for our development environment.
 We use [poethepoet](https://poethepoet.natn.io) to define some essential tasks.
 The demo run task is also available as vscode execution task, making it easy to run and debug the demo application from within vscode.
 
-#### Install/update dependencies:
+### Install/update dependencies:
 First install [uv](https://docs.astral.sh/uv/) if you don't have it yet.
 
 Then install/update dependencies:
@@ -181,10 +181,10 @@ Activate [pre-commit](https://pre-commit.com/) hooks that enforce code style on 
 pre-commit install
 ```
 
-#### Configure environment variables:
+### Configure environment variables:
 Our demo application uses some API keys for external services. You can provide these `.env.local` file in the root of the repository, following the structure of `.env.example`.
 
-#### Set up the database:
+### Set up the database:
 The demo application uses a SQLite database. A different database can be configured via the environment variables.
 To create the database and seed it with example data:
 
@@ -194,13 +194,13 @@ poe db seed
 
 This will run all pending migrations and load the example CSV data into the database.
 
-#### Run development demo application:
+### Run development demo application:
 
 ```sh
 poe demo
 ```
 
-#### Run background worker:
+### Run background worker:
 We use Cofy Worker to run background jobs that perform data ingestion and processing tasks asynchronously.
 
 The background worker requires a Redis instance to run. You can configure the Redis URL via the environment variables.
@@ -216,19 +216,19 @@ Then start the worker:
 poe worker
 ```
 
-#### Code style checks:
+### Code style checks:
 ```sh
 poe lint    # Check code style
 poe format  # Format code
 poe check   # Run type checks
 ```
 
-#### Run tests:
+### Run tests:
 ```sh
 poe test
 ```
-#### Build & publish
-TODO
+### Build & publish
+We use a github action to create a new tag, github release and publish to pypi. Trigger the action manually from the actions tab, and provide the new version number as input.
 
 ## Database & Migrations
 
