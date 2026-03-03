@@ -14,18 +14,18 @@ Architecture:
 Both the API and the worker connect to the same Redis queue.
 The API enqueues jobs; the worker processes them.
 
-Example — community worker (e.g. src/demo/worker.py):
+Example — community worker (e.g. demo/worker.py):
 
-    from src.cofy.jobs.worker import CofyWorker
+    from cofy.worker import CofyWorker
 
     worker = CofyWorker(url="redis://localhost:6379")
     worker.register(my_job_function)
     worker.schedule(my_job_function, cron="0 2 * * *")
-    settings = worker.settings  # SAQ entry point: saq src.demo.worker.settings
+    settings = worker.settings  # SAQ entry point: saq demo.worker.settings
 
 Example — enqueue from a FastAPI endpoint:
 
-    from src.cofy.worker import create_queue
+    from cofy.worker import create_queue
 
     queue = create_queue("redis://localhost:6379")
 
@@ -158,7 +158,7 @@ class CofyWorker:
         Export this as a module-level `settings` variable for the SAQ CLI:
 
             settings = worker.settings
-            # Run with: saq src.demo.worker.settings
+            # Run with: saq demo.worker.settings
         """
         result: dict[str, Any] = {
             "queue": self.queue,
