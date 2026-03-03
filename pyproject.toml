@@ -58,8 +58,6 @@ dev = [
     "pytest>=9.0.2",
     "ruff>=0.14.13",
     "ty>=0.0.12",
-    # psycopg binary is a lot faster, but is not supported by windows arm64, so we only include it for other platforms
-    "psycopg-binary>=3.3.3; platform_system != 'Windows' or platform_machine != 'ARM64'"
 ]
 [tool.poe.env]
 PYTHONPYCACHEPREFIX = ".pycache"
