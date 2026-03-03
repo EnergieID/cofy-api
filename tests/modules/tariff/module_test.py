@@ -49,7 +49,7 @@ class TestTariffModule:
     @pytest.mark.asyncio
     async def test_fetch_timeseries(self):
         # The DummySource returns a TariffFrame with a DataFrame
-        result = await self.module.source.fetch_timeseries(self.start, self.end)
+        result = await self.module.source.fetch_timeseries(self.start, self.end, resolution=dt.timedelta(hours=1))
         assert hasattr(result, "frame")
         df = result.frame
         assert len(df) == 3
@@ -71,7 +71,7 @@ class TestTariffModule:
         assert isinstance(result, dict)
         assert "data" in result
         data = result.get("data")
-        assert len(data) == 3
+        assert len(data) == 12
         for i, entry in enumerate(data):
             assert entry["value"] == i * 10.0
-            assert dt.datetime.fromisoformat(entry["timestamp"]) == self.start + dt.timedelta(hours=i)
+            assert dt.datetime.fromisoformat(entry["timestamp"]) == self.start + dt.timedelta(minutes=15 * i)
