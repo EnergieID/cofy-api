@@ -59,7 +59,7 @@ Clients authenticate via header (`Authorization: Bearer my-secret-token`) or que
 
 #### Database
 
-Modules that need persistence (like `members`) require a database. Use `CofyDB` to manage the connection and migrations:
+Modules that need persistence (like `members`) require a database. Any SQLAlchemy-supported database works — just change the URL.
 
 ```python
 from cofy import CofyApi, CofyDB
@@ -71,15 +71,47 @@ engine = create_engine("sqlite:///./app.db")
 app = CofyApi()
 app.register_module(MembersModule(source=MembersDbSource(engine), name="members"))
 
-db = CofyDB(url="sqlite:///./app.db")
-db.bind_api(app)
-db.run_migrations()
 ```
 
-Any SQLAlchemy-supported database works — just change the URL:
+##### Migrations
+To setup your database schema, and update it as your models evolve, we offer `CofyDB` — a thin wrapper around Alembic. See [Database & Migrations](#database--migrations) for details.
+
+Create a `db.py`:
 
 ```python
-CofyDB(url="postgresql+psycopg://user:pass@localhost:5432/cofy")
+from cofy import CofyDB
+from .main import app
+
+db = CofyDB(url="sqlite:///./app.db")
+db.bind_api(app)
+
+if __name__ == "__main__":
+    db.cli()
+```
+
+Run it:
+
+```sh
+python db.py migrate # Run all pending migrations
+python db.py reset   # Drop all tables and re-run migrations (⚠️ destroys all data)
+``` 
+
+##### Seeding data
+If you have seed data (e.g. example CSVs), you can create a seed function and run it via the CLI:
+
+```python
+def seed(engine):
+    # load example data into the database
+    with engine.connect() as conn:
+        conn.execute("INSERT INTO members (id, email) VALUES (1, 'alice@example.com')")
+
+db.set_seed(seed)
+```
+
+Then run:
+
+```sh
+python db.py seed
 ```
 
 #### Background worker
@@ -203,20 +235,21 @@ TODO
 Cofy uses [Alembic](https://alembic.sqlalchemy.org/) for database migrations. Each module that needs database storage owns its own migration branch, keeping schemas independent and composable.
 
 ### Commands
+`CofyDB` provides a simple CLI for managing your database and migrations:
 
 | Command | Description |
 |---|---|
-| `poe db seed` | Run all migrations and seed the database with example data |
-| `poe db migrate` | Run all pending migrations |
-| `poe db reset` | Drop all tables and re-run migrations (⚠️ destroys all data) |
-| `poe db generate` | Generate a new migration file for a specific module branch |
+| `seed` | Run all migrations and seed the database with example data |
+| `migrate` | Run all pending migrations |
+| `reset` | Drop all tables and re-run migrations (⚠️ destroys all data) |
+| `generate` | Generate a new migration file for a specific module branch |
 
 ### Generating a migration
 
 When you change a module's SQLAlchemy model, generate a migration for that module's branch:
 
 ```sh
-poe db generate "add phone number to member" --head members_core@head --rev-id members_core_0002
+python db.py generate "add phone number to member" --head members_core@head --rev-id members_core_0002
 ```
 
 | Argument | Required | Description |
