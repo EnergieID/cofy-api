@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Any
 
 from fastapi import APIRouter
@@ -7,15 +8,25 @@ from fastapi import APIRouter
 class Module(APIRouter, ABC):
     type: str = "module"
     type_description: str = "Generic module"
-    settings: dict
 
-    def __init__(self, settings: dict, **kwargs):
-        self.settings = settings
-        default_router_kwargs = {
-            "prefix": f"/{self.type}/{self.name}/{self.version}",
-            "tags": [self.id],
-        }
-        super().__init__(**(default_router_kwargs | kwargs))  # ty: ignore[invalid-argument-type]
+    def __init__(
+        self,
+        *,
+        name: str = "default",
+        description: str | None = None,
+        display_name: str | None = None,
+        prefix: str | None = None,
+        tags: list[str | Enum] | None = None,
+        **kwargs,
+    ):
+        self._name = name
+        self._description = description
+        self._display_name = display_name
+        super().__init__(
+            prefix=prefix if prefix is not None else f"/{self.type}/{self.name}/{self.version}",
+            tags=tags if tags is not None else [self.id],
+            **kwargs,
+        )
         self.init_routes()
 
     @abstractmethod
@@ -33,7 +44,7 @@ class Module(APIRouter, ABC):
         """The name of the module instance, e.g. "entsoe_tariff", "openweather", etc.
         Use it to differentiate between multiple instances/implementations of the same module type.
         """
-        return self.settings.get("name", "default")
+        return self._name
 
     @property
     def id(self) -> str:
@@ -50,8 +61,8 @@ class Module(APIRouter, ABC):
         """The tag info of the implementation."""
         return {
             "name": self.id,
-            "description": self.settings.get("description", self.type_description),
+            "description": self._description if self._description is not None else self.type_description,
             "x-module-type": self.type,
             "x-version": self.version,
-            "x-display-name": self.settings.get("display_name", self.name),
+            "x-display-name": self._display_name if self._display_name is not None else self.name,
         }
