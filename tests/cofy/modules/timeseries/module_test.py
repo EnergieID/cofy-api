@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from cofy.modules.timeseries import CSVFormat, DefaultDataType, JSONFormat, TimeseriesModule
-from tests.shared.timeseries.dummy_source import DummyTimeseriesSource
+from tests.cofy.modules.timeseries.dummy_source import DummyTimeseriesSource
 
 
 @pytest.mark.parametrize(

@@ -103,7 +103,7 @@ class TestDBWithMigrations:
         self.db_file = tmp_path / "cofy_test.db"
         self.cofy_db = CofyDB(url=f"sqlite:///{self.db_file}")
 
-        with resources.as_file(resources.files("tests.cofy").joinpath("dumy_migrations")) as migrations_path:
+        with resources.as_file(resources.files("tests.cofy.db").joinpath("dumy_migrations")) as migrations_path:
             self.module = DummySourcedModule(
                 name="test_module",
                 migration_locations=[str(migrations_path)],
@@ -166,7 +166,7 @@ class TestGenerateMigration:
     def setup_method(self, tmp_path):
         # Copy the existing dumy_migrations to a temp directory so generated
         # files don't pollute the source tree
-        src_dir = str(resources.files("tests.cofy").joinpath("dumy_migrations"))
+        src_dir = str(resources.files("tests.cofy.db").joinpath("dumy_migrations"))
         self.migrations_dir = tmp_path / "dumy_migrations"
         shutil.copytree(src_dir, self.migrations_dir)
 

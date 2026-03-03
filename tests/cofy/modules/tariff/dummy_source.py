@@ -1,5 +1,5 @@
 from cofy.modules.timeseries import Timeseries
-from tests.shared.timeseries.dummy_source import DummyTimeseriesSource
+from tests.cofy.modules.timeseries.dummy_source import DummyTimeseriesSource
 
 
 class DummySource(DummyTimeseriesSource):

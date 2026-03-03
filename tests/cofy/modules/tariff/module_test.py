@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from cofy.modules.tariff import EntsoeDayAheadTariffSource, TariffModule
-from tests.modules.tariff.dummy_source import DummySource
+from tests.cofy.modules.tariff.dummy_source import DummySource
 
 
 @pytest.mark.parametrize(
