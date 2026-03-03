@@ -349,7 +349,7 @@ requires-dist = [
     { name = "polars", marker = "extra == 'production'", specifier = ">=1.38.1" },
     { name = "psycopg", marker = "extra == 'db'", specifier = ">=3.3.3" },
     { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "saq", extras = ["postgres", "web"], marker = "extra == 'worker'", git = "https://github.com/tobymao/saq.git" },
+    { name = "saq", extras = ["postgres", "web"], marker = "extra == 'worker'", git = "https://github.com/tobymao/saq.git?rev=860afaafd2b3e9872f4b439ae030fb24e5d4689e" },
     { name = "sqlalchemy", marker = "extra == 'db'", specifier = ">=2.0.0" },
 ]
 provides-extras = ["worker", "db", "timeseries", "tariff", "production", "members", "all"]
@@ -1738,7 +1738,7 @@ wheels = [
 [[package]]
 name = "saq"
 version = "0.26.1"
-source = { git = "https://github.com/tobymao/saq.git#860afaafd2b3e9872f4b439ae030fb24e5d4689e" }
+source = { git = "https://github.com/tobymao/saq.git?rev=860afaafd2b3e9872f4b439ae030fb24e5d4689e#860afaafd2b3e9872f4b439ae030fb24e5d4689e" }
 dependencies = [
     { name = "croniter" },
 ]
