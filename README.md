@@ -74,7 +74,7 @@ app.register_module(MembersModule(source=MembersDbSource(engine), name="members"
 ```
 
 ##### Migrations
-To setup your database schema, and update it as your models evolve, we offer `CofyDB` — a thin wrapper around Alembic. See [Database & Migrations](#database--migrations) for details.
+To setup your database schema, and update it as your models evolve, we offer `CofyDB` — a thin wrapper around [Alembic](https://alembic.sqlalchemy.org/en/latest/). See [Database & Migrations](#database--migrations) for details.
 
 Create a `db.py`:
 
@@ -235,11 +235,11 @@ TODO
 Cofy uses [Alembic](https://alembic.sqlalchemy.org/) for database migrations. Each module that needs database storage owns its own migration branch, keeping schemas independent and composable.
 
 ### Commands
-`CofyDB` provides a simple CLI for managing your database and migrations:
+`CofyDB` provides a simple CLI for managing your database and migrations. It supports the following commands:
 
 | Command | Description |
 |---|---|
-| `seed` | Run all migrations and seed the database with example data |
+| `seed` | Seed the database with example data |
 | `migrate` | Run all pending migrations |
 | `reset` | Drop all tables and re-run migrations (⚠️ destroys all data) |
 | `generate` | Generate a new migration file for a specific module branch |
