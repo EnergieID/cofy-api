@@ -2,14 +2,22 @@ from importlib import resources
 from os import environ
 
 from sqlalchemy import create_engine
+from sqlalchemy.engine import make_url
 
 from cofy import CofyWorker
 from cofy.modules.members import sync_members_from_csv
 
 DB_URL = environ.get("DB_URL", "")
 assert DB_URL, "DB_URL environment variable must be set to connect to the database"
-# SAQ needs a plain postgresql:// URL (without the SQLAlchemy +psycopg driver spec)
-QUEUE_URL = DB_URL.replace("+psycopg", "", 1)
+
+
+def _to_saq_queue_url(db_url: str) -> str:
+    url = make_url(db_url)
+    # SAQ expects a plain backend URL (e.g. postgresql://) without SQLAlchemy driver hints.
+    return url.set(drivername=url.get_backend_name()).render_as_string(hide_password=False)
+
+
+QUEUE_URL = _to_saq_queue_url(DB_URL)
 CSV_PATH = str(resources.files("demo.data").joinpath("members_example.csv"))
 
 worker = CofyWorker(url=QUEUE_URL)
