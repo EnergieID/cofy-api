@@ -1,11 +1,11 @@
-from importlib.metadata import PackageNotFoundError, version
+from importlib.metadata import version
 
 
 def get_installed_version() -> str:
-    try:
-        return version("cofy-api")
-    except PackageNotFoundError:
-        return "0.0.0"
+    v = version("cofy-api")
+    if v.startswith("0.0.0"):
+        v = "Dev"
+    return v
 
 
 __version__ = get_installed_version()
