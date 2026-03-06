@@ -11,6 +11,7 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]>=0.128.0",
     "pydantic>=2.0.0",
+    "starlette>=0.41.0",
 ]
 
 [project.optional-dependencies]
@@ -34,6 +35,7 @@ tariff = [
 production = [
     "cofy-api[timeseries]",
     "polars>=1.38.1",
+    "requests>=2.32.0",
 ]
 members = ["cofy-api[db]"]
 
