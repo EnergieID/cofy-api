@@ -3,8 +3,8 @@ from os import environ
 
 from sqlalchemy import create_engine
 
-from cofy import CofyWorker
 from cofy.modules.members import sync_members_from_csv
+from cofy.worker import CofyWorker
 
 REDIS_URL = environ.get("REDIS_URL", "redis://localhost:6379")
 DB_URL = environ.get("DB_URL", "sqlite:///./demo.db")

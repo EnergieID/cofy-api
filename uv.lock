@@ -279,18 +279,54 @@ name = "cofy-api"
 version = "0.0.0"
 source = { editable = "." }
 dependencies = [
+    { name = "fastapi", extra = ["standard"] },
+    { name = "pydantic" },
+    { name = "starlette" },
+]
+
+[package.optional-dependencies]
+all = [
     { name = "alembic" },
     { name = "entsoe-py" },
-    { name = "fastapi", extra = ["standard"] },
     { name = "isodate" },
     { name = "narwhals" },
     { name = "pandas" },
     { name = "polars" },
+    { name = "requests" },
+    { name = "saq", extra = ["redis", "web"] },
+    { name = "sqlalchemy" },
+]
+db = [
+    { name = "alembic" },
+    { name = "sqlalchemy" },
+]
+members = [
+    { name = "alembic" },
+    { name = "sqlalchemy" },
+]
+production = [
+    { name = "isodate" },
+    { name = "narwhals" },
+    { name = "polars" },
+    { name = "requests" },
+]
+tariff = [
+    { name = "entsoe-py" },
+    { name = "isodate" },
+    { name = "narwhals" },
+    { name = "pandas" },
+]
+timeseries = [
+    { name = "isodate" },
+    { name = "narwhals" },
+]
+worker = [
     { name = "saq", extra = ["redis", "web"] },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "cofy-api", extra = ["all"] },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -300,18 +336,28 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alembic", specifier = ">=1.18.4" },
-    { name = "entsoe-py", specifier = ">=0.7.10" },
+    { name = "alembic", marker = "extra == 'db'", specifier = ">=1.18.4" },
+    { name = "cofy-api", extras = ["db"], marker = "extra == 'members'" },
+    { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'production'" },
+    { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'tariff'" },
+    { name = "cofy-api", extras = ["worker", "db", "timeseries", "tariff", "members", "production"], marker = "extra == 'all'" },
+    { name = "entsoe-py", marker = "extra == 'tariff'", specifier = ">=0.7.10" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.128.0" },
-    { name = "isodate", specifier = ">=0.7.2" },
-    { name = "narwhals", specifier = ">=2.15.0" },
-    { name = "pandas", specifier = ">=3.0.0" },
-    { name = "polars", specifier = ">=1.37.1" },
-    { name = "saq", extras = ["redis", "web"], specifier = ">=0.26.1" },
+    { name = "isodate", marker = "extra == 'timeseries'", specifier = ">=0.7.2" },
+    { name = "narwhals", marker = "extra == 'timeseries'", specifier = ">=2.15.0" },
+    { name = "pandas", marker = "extra == 'tariff'", specifier = ">=3.0.0" },
+    { name = "polars", marker = "extra == 'production'", specifier = ">=1.38.1" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "requests", marker = "extra == 'production'", specifier = ">=2.32.0" },
+    { name = "saq", extras = ["redis", "web"], marker = "extra == 'worker'", specifier = ">=0.26.1" },
+    { name = "sqlalchemy", marker = "extra == 'db'", specifier = ">=2.0.0" },
+    { name = "starlette", specifier = ">=0.41.0" },
 ]
+provides-extras = ["worker", "db", "timeseries", "tariff", "production", "members", "all"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "cofy-api", extras = ["all"] },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
