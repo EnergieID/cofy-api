@@ -3,12 +3,13 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
+from ..version import get_installed_version
 from .docs_router import DocsRouter
 from .module import Module
 
 DEFAULT_ARGS: dict[str, Any] = {
     "title": "Cofy API",
-    "version": "0.1.0",
+    "version": get_installed_version(),
     "description": "Modular cloud API for energy data",
     "docs_url": None,
     "redoc_url": None,
