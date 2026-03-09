@@ -28,7 +28,7 @@ jobs:
         with:
           version: '0.9.21'
       - name: Generate requirements.txt
-        run: uv pip compile pyproject.toml -o requirements.txt
+        run: uv pip compile pyproject.toml --all-extras -o requirements.txt
 
       - name: Add project package to requirements
         run: |
