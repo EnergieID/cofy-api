@@ -2,6 +2,7 @@ from importlib import resources
 from os import environ
 
 from energy_cost.index import EntsoeDayAheadIndex, Index
+from energy_cost.tariff import MeterType
 from fastapi import Depends
 from sqlalchemy import create_engine
 
@@ -45,7 +46,7 @@ cofy.register_module(kiwatt)
 Index.register("Belpex15min", EntsoeDayAheadIndex("BE", api_key=environ.get("ENTSOE_API_KEY", "")))
 TARIFF_CONFIG_PATH = str(resources.files("demo.data").joinpath("energy_cost_tariff.yaml"))
 energy_cost = TariffModule(
-    source=EnergyCostTariffSource(yaml_config=TARIFF_CONFIG_PATH),
+    source=EnergyCostTariffSource(yaml_config=TARIFF_CONFIG_PATH, meter_type=MeterType.SINGLE_RATE),
     name="energy_cost",
 )
 cofy.register_module(energy_cost)
