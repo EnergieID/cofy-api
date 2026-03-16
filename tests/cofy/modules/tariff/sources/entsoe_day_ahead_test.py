@@ -20,6 +20,16 @@ def test_init_valid():
     assert hasattr(src, "client")
 
 
+def test_supported_resolutions():
+    src = EntsoeDayAheadTariffSource("key", "DE")
+    assert src.supported_resolutions == ["PT15M"]
+
+
+def test_extra_args_empty_when_country_code_set():
+    src = EntsoeDayAheadTariffSource("key", "DE")
+    assert src.extra_args == {}
+
+
 @pytest.mark.parametrize(
     "api_key, country_code, error_msg",
     [
