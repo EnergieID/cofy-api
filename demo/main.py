@@ -20,7 +20,9 @@ engine = create_engine(DB_URL, connect_args=DB_CONNECT_ARGS)
 cofy = CofyApi(dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))])
 
 entsoe = TariffModule(
-    api_key=environ.get("ENTSOE_API_KEY", ""),
+    source=EntsoeDayAheadTariffSource(
+        api_key=environ.get("ENTSOE_API_KEY", ""),
+    ),
     name="entsoe",
 )
 cofy.register_module(entsoe)
@@ -55,7 +57,6 @@ wind = ProductionModule(
         record_id=environ.get("ENERGY_ID_RECORD_ID", ""),
     ),
     name="wind",
-    supported_resolutions=EnergyIDProduction.SUPPORTED_RESOLUTIONS,
 )
 cofy.register_module(wind)
 

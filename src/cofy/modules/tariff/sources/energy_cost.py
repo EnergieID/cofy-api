@@ -1,8 +1,10 @@
 import asyncio
 import datetime as dt
+from typing import Annotated
 
 import pandas as pd
 from energy_cost.tariff import MeterType, PowerDirection, Tariff
+from fastapi import Query
 from isodate import Duration
 
 from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
@@ -37,3 +39,24 @@ class EnergyCostTariffSource(TimeseriesSource):
         df = series.rename(columns={"total": "value"})
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         return Timeseries(frame=df, metadata={"unit": "EUR/MWh"})
+
+    @property
+    def supported_resolutions(self) -> list[str]:
+        return ["PT5M", "PT15M", "PT1H", "P1D", "P7D"]
+
+    @property
+    def extra_args(self) -> dict:
+        return {
+            "meter_type": Annotated[
+                MeterType,
+                Query(
+                    default=MeterType.SINGLE_RATE,
+                ),
+            ],
+            "direction": Annotated[
+                PowerDirection,
+                Query(
+                    default=PowerDirection.CONSUMPTION,
+                ),
+            ],
+        }

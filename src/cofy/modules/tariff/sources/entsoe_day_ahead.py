@@ -1,9 +1,12 @@
 import asyncio
 import datetime as dt
+from typing import Annotated
 
 import pandas as pd
 from entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
+from fastapi.params import Query
+from pydantic import Field
 
 from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
 
@@ -40,3 +43,19 @@ class EntsoeDayAheadTariffSource(TimeseriesSource):
         df = series.to_frame().reset_index().rename(columns={"index": "timestamp", 0: "value"})
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         return Timeseries(frame=df, metadata={"unit": "EUR/MWh"})
+
+    @property
+    def supported_resolutions(self) -> list[str]:
+        return ["PT15M"]
+
+    @property
+    def extra_args(self) -> dict:
+        if self.country_code is not None:
+            return {}
+
+        return {
+            "country_code": Annotated[
+                str,
+                Field(Query(default="BE", description="Country code for ENTSOE")),
+            ]
+        }
