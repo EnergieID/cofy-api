@@ -1,5 +1,7 @@
+from importlib import resources
 from os import environ
 
+from energy_cost.index import EntsoeDayAheadIndex, Index
 from fastapi import Depends
 from sqlalchemy import create_engine
 
@@ -7,7 +9,7 @@ from cofy import CofyApi
 from cofy.api import token_verifier
 from cofy.modules.members import MembersDbSource, MembersModule
 from cofy.modules.production import EnergyIDProduction, ProductionModule
-from cofy.modules.tariff import EntsoeDayAheadTariffSource, KiwattFormat, TariffModule
+from cofy.modules.tariff import EnergyCostTariffSource, EntsoeDayAheadTariffSource, KiwattFormat, TariffModule
 
 # Database configuration
 DB_URL = environ.get("DB_URL", "sqlite:///./demo.db")
@@ -37,6 +39,16 @@ kiwatt = TariffModule(
 )
 cofy.register_module(kiwatt)
 
+## Tariff app with EnergyCost as source
+Index.register("Belpex15min", EntsoeDayAheadIndex("BE", api_key=environ.get("ENTSOE_API_KEY", "")))
+TARIFF_CONFIG_PATH = str(resources.files("demo.data").joinpath("energy_cost_tariff.yaml"))
+energy_cost = TariffModule(
+    source=EnergyCostTariffSource(yaml_config=TARIFF_CONFIG_PATH),
+    name="energy_cost",
+)
+cofy.register_module(energy_cost)
+
+## Production app with EnergyID as source
 wind = ProductionModule(
     source=EnergyIDProduction(
         api_key=environ.get("ENERGY_ID_API_KEY", ""),
