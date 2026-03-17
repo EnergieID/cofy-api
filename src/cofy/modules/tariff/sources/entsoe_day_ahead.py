@@ -31,13 +31,20 @@ class EntsoeDayAheadTariffSource(TimeseriesSource):
         if resolution != dt.timedelta(minutes=15):
             raise ValueError("Only 15-minute resolution is supported for EntsoeDayAheadTariffSource")
 
+        country_code = country_code or self.country_code
+        if country_code is None:
+            raise ValueError("country_code must be provided")
+
         try:
             series = await asyncio.to_thread(
                 self.client.query_day_ahead_prices,
-                country_code=country_code or self.country_code,
+                country_code=country_code,
                 start=pd.Timestamp(start),
                 end=pd.Timestamp(end),
             )
+            # older dates may return hourly data, so we need to resample to 15-minute intervals
+            series = series.resample("15min").ffill()
+
         except NoMatchingDataError:
             series = pd.Series(dtype=float)
         df = series.to_frame().reset_index().rename(columns={"index": "timestamp", 0: "value"})
