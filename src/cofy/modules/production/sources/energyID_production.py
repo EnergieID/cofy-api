@@ -24,7 +24,7 @@ class EnergyIDResponse(BaseModel):
 
 
 class EnergyIDProduction(TimeseriesSource):
-    SUPPORTED_RESOLUTIONS = ["PT5M", "PT15M", "PT1H", "P1D", "P7D", "P1M", "P1Y"]
+    SUPPORTED_RESOLUTIONS: list[str] = ["PT5M", "PT15M", "PT1H", "P1D", "P7D", "P1M", "P1Y"]
 
     def __init__(self, api_key: str, record_id: str) -> None:
         super().__init__()
@@ -78,3 +78,7 @@ class EnergyIDProduction(TimeseriesSource):
             frame=pl.DataFrame(data),
             metadata={"unit": entry.unit},
         )
+
+    @property
+    def supported_resolutions(self) -> list[str]:
+        return self.SUPPORTED_RESOLUTIONS

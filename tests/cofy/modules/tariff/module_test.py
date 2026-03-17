@@ -8,25 +8,13 @@ from cofy.modules.tariff import EntsoeDayAheadTariffSource, TariffModule
 from tests.cofy.modules.tariff.dummy_source import DummySource
 
 
-@pytest.mark.parametrize(
-    "kwargs, expected_source_type",
-    [
-        ({"source": DummySource()}, DummySource),
-        ({"country_code": "DE", "api_key": "key"}, EntsoeDayAheadTariffSource),
-    ],
-)
-def test_tariffmodule_source_selection(kwargs, expected_source_type):
-    module = TariffModule(**kwargs)
-    assert isinstance(module.source, expected_source_type)
-
-
 def test_if_no_country_code_specified_extra_args_is_set():
-    module = TariffModule(api_key="key")
+    module = TariffModule(source=EntsoeDayAheadTariffSource(api_key="key"))
     assert "country_code" in module.DynamicParameters.model_fields
 
 
 def test_tariffmodule_type_property():
-    module = TariffModule(country_code="DE", api_key="key")
+    module = TariffModule(source=EntsoeDayAheadTariffSource(api_key="key"))
     assert module.type == "tariff"
 
 

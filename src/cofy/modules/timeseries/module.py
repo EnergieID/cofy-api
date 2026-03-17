@@ -40,8 +40,8 @@ class TimeseriesModule(Module):
                 CSVFormat(),
             ]
         )
-        self._extra_args = extra_args or {}
-        self._supported_resolutions = supported_resolutions or []
+        self._extra_args = extra_args or source.extra_args
+        self._supported_resolutions = supported_resolutions or source.supported_resolutions
         self._default_args_override = default_args or {}
         super().__init__(**kwargs)
 
