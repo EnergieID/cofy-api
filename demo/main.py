@@ -45,11 +45,12 @@ cofy.register_module(kiwatt)
 ## Tariff app with EnergyCost as source
 Index.register("Belpex15min", EntsoeDayAheadIndex("BE", api_key=environ.get("ENTSOE_API_KEY", "")))
 TARIFF_CONFIG_PATH = str(resources.files("demo.data").joinpath("energy_cost_tariff.yaml"))
-energy_cost = TariffModule(
+dynamic_tariff = TariffModule(
     source=EnergyCostTariffSource(yaml_config=TARIFF_CONFIG_PATH, meter_type=MeterType.SINGLE_RATE),
-    name="energy_cost",
+    name="dynamic",
+    description="Our dynamic tariff tracking the Belpex.",
 )
-cofy.register_module(energy_cost)
+cofy.register_module(dynamic_tariff)
 
 ## Production app with EnergyID as source
 wind = ProductionModule(
