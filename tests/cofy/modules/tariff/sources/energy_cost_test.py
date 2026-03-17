@@ -36,7 +36,9 @@ async def test_fetch_timeseries(mock_tariff):
         }
     )
 
-    result = await src.fetch_timeseries(start, end, resolution=resolution)
+    result = await src.fetch_timeseries(
+        start, end, resolution=resolution, meter_type=MeterType.SINGLE_RATE, direction=PowerDirection.CONSUMPTION
+    )
 
     assert result.metadata["unit"] == "EUR/MWh"
     assert len(result.frame) == 2
@@ -57,6 +59,25 @@ async def test_fetch_timeseries_raises_for_duration(mock_tariff):
             dt.datetime(2026, 1, 1, tzinfo=dt.UTC),
             dt.datetime(2026, 2, 1, tzinfo=dt.UTC),
             resolution=Duration(months=1),
+        )
+
+
+@pytest.mark.asyncio
+async def test_fetch_timeseries_raises_for_missing_meter_type_and_direction(mock_tariff):
+    src = EnergyCostTariffSource("some_yaml_config")
+    with pytest.raises(ValueError, match="meter_type must be provided."):
+        await src.fetch_timeseries(
+            dt.datetime(2026, 1, 1, tzinfo=dt.UTC),
+            dt.datetime(2026, 1, 2, tzinfo=dt.UTC),
+            resolution=dt.timedelta(hours=1),
+            direction=PowerDirection.CONSUMPTION,
+        )
+    with pytest.raises(ValueError, match="direction must be provided."):
+        await src.fetch_timeseries(
+            dt.datetime(2026, 1, 1, tzinfo=dt.UTC),
+            dt.datetime(2026, 1, 2, tzinfo=dt.UTC),
+            resolution=dt.timedelta(hours=1),
+            meter_type=MeterType.SINGLE_RATE,
         )
 
 
