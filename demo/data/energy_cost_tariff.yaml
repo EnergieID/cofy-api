@@ -1,0 +1,18 @@
+# see https://github.com/EnergieID/energy-cost for more details on the tariff configuration format
+supplier: foo
+product: dynamic tariff
+defaults:
+  injection:
+  - start: 2025-01-01T00:00:00+01
+    formula:
+      constant_cost: -14.56
+      variable_costs:
+      - index: Belpex15min
+        scalar: 0.9876
+  consumption:
+  - start: 2025-01-01T00:00:00+01
+    formula:
+      constant_cost: 12.34
+      variable_costs:
+      - index: Belpex15min
+        scalar: 1.23

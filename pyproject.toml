@@ -6,6 +6,7 @@ authors = [
 ]
 version = "0.0.0"
 description = "An open-source modular framework for ingesting, standardising, storing, and computing energy-related data."
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -29,6 +30,7 @@ timeseries = [
 ]
 tariff = [
     "cofy-api[timeseries]",
+    "energy-cost>=0.1.0",
     "entsoe-py>=0.7.10",
     "pandas>=3.0.0"
 ]

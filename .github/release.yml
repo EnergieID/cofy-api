@@ -6,12 +6,15 @@ changelog:
     - title: "🐞 Bug Fixes"
       labels:
         - bug
-    - title: "✨ Changes"
+    - title: "🪄 Minor Improvements"
       labels:
-        - "*"
+        - "enhancement"
     - title: "🔧 Maintenance"
       labels:
         - chore
     - title: "📦 Dependencies"
       labels:
         - dependencies
+    - title: "✨ Other changes"
+      labels:
+        - "*"
