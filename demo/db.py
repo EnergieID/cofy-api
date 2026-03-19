@@ -1,6 +1,6 @@
 from importlib import resources
 
-from cofy import CofyDB
+from cofy.db import CofyDB
 from cofy.modules.members import sync_members_from_csv
 from demo.main import DB_CONNECT_ARGS, DB_URL, cofy
 
