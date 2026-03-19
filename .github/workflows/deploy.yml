@@ -22,11 +22,6 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: ACR authentication
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ vars.REGISTRY }}
-
       - name: Build and Push
         run: |
           VERSION=$(date +%Y%m%d%H%M%S)
