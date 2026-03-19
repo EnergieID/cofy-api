@@ -1,3 +1,4 @@
+import builtins
 import csv
 
 from ..model import Member
@@ -25,7 +26,7 @@ class MembersCSVSource(MemberSource[Member]):
     def list(
         self,
         email: str | None = None,
-    ) -> list[Member]:
+    ) -> builtins.list[Member]:
         if email is not None:
             return [m for m in self.members if m.email == email]
         return self.members
