@@ -23,12 +23,12 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Login to ACR
-        run: az acr login --name ${{ env.REGISTRY_NAME }}
+        run: az acr login --name ${{ vars.REGISTRY_NAME }}
 
       - name: Build and Push
         run: |
           VERSION=$(date +%Y%m%d%H%M%S)
-          IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          IMAGE=${{ vars.REGISTRY }}/${{ vars.IMAGE_NAME }}
           
           docker build \
             --build-arg VERSION=${VERSION} \
