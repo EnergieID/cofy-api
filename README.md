@@ -57,104 +57,9 @@ app = CofyApi(
 
 Clients authenticate via header (`Authorization: Bearer my-secret-token`) or query parameter (`?token=my-secret-token`).
 
-#### Database
-
-Modules that need persistence (like `members`) require a database. Any SQLAlchemy-supported database works — just change the URL.
-
-```python
-from cofy import CofyApi
-from cofy.modules.members import MembersDbSource, MembersModule
-from sqlalchemy import create_engine
-
-engine = create_engine("sqlite:///./app.db")
-
-app = CofyApi()
-app.register_module(MembersModule(source=MembersDbSource(engine), name="members"))
-```
-
-##### Migrations
-To setup your database schema, and update it as your models evolve, we offer `CofyDB` — a thin wrapper around [Alembic](https://alembic.sqlalchemy.org/en/latest/). See [Database & Migrations](#database--migrations) for details. To use it you need to install the `db` extra. (`pip install "cofy-api[db]"`)
-
-Create a `db.py`:
-
-```python
-from cofy.db import CofyDB
-from .main import app
-
-db = CofyDB(url="sqlite:///./app.db")
-db.bind_api(app)
-
-if __name__ == "__main__":
-    db.cli()
-```
-
-Run it:
-
-```sh
-python db.py migrate # Run all pending migrations
-python db.py reset   # Drop all tables and re-run migrations (⚠️ destroys all data)
-``` 
-
-##### Seeding data
-If you have seed data (e.g. example CSVs), you can create a seed function and run it via the CLI:
-
-```python
-def seed(engine):
-    # load example data into the database
-    with engine.connect() as conn:
-        conn.execute("INSERT INTO members (id, email) VALUES (1, 'alice@example.com')")
-
-db.set_seed(seed)
-```
-
-Then run:
-
-```sh
-python db.py seed
-```
-
-#### Background worker
-
-The worker runs async jobs (data ingestion, scheduled syncs) via Redis and [SAQ](https://github.com/tobymao/saq). To use it you need to install the `worker` extra (`pip install "cofy-api[worker]"`). Create a `worker.py`:
-
-```python
-from cofy.worker import CofyWorker
-from cofy.modules.members import sync_members_from_csv
-from sqlalchemy import create_engine
-
-worker = CofyWorker(url="redis://localhost:6379")
-
-@worker.on_startup
-async def startup(ctx: dict) -> None:
-    ctx["db_engine"] = create_engine("sqlite:///./app.db")
-
-@worker.on_shutdown
-async def shutdown(ctx: dict) -> None:
-    ctx["db_engine"].dispose()
-
-worker.schedule(
-    sync_members_from_csv,
-    cron="0 2 * * *",
-    function_kwargs={
-        "file_path": "/data/members.csv",
-        "id_field": "ID",
-        "email_field": "EMAIL",
-        "activation_code_field": "CODE",
-    },
-)
-
-settings = worker.settings  # SAQ entry point
-```
-
-Run it:
-
-```sh
-saq worker.settings
-```
-
 #### Full example
 
-The [demo/](demo/) directory contains a complete working application that ties everything together — API with auth, database, multiple modules, and a background worker.
+The [demo/](demo/) directory contains a complete working application that ties everything together.
 
 ## Development
 We use [astral](https://docs.astral.sh/) python tooling for our development environment.
@@ -180,41 +85,12 @@ Activate [pre-commit](https://pre-commit.com/) hooks that enforce code style on 
 pre-commit install
 ```
 
-### Configure environment variables:
-Our demo application uses some API keys for external services. You can provide these `.env.local` file in the root of the repository, following the structure of `.env.example`.
-
-### Set up the database:
-The demo application uses a PostgreSQL database. Configure the connection URL via the `DB_URL` environment variable.
-
-Make sure PostgreSQL is running (e.g. via Docker):
-
-```sh
-docker run -p 5432:5432 -e POSTGRES_DB=cofy -e POSTGRES_HOST_AUTH_METHOD=trust postgres:16-alpine
-```
-
-To create the database tables and seed with example data:
-
-```sh
-poe db seed
-```
-
-This will run all pending migrations and load the example CSV data into the database.
-
 ### Run development demo application:
+
+Our demo application uses some API keys for external services. You can provide these `.env.local` file in the root of the repository, following the structure of `.env.example`.
 
 ```sh
 poe demo
-```
-
-### Run background worker:
-We use Cofy Worker to run background jobs that perform data ingestion and processing tasks asynchronously.
-
-The background worker uses the same PostgreSQL database as the API (configured via `DB_URL`).
-
-Start the worker:
-
-```sh
-poe worker
 ```
 
 ### Code style checks:
@@ -230,69 +106,3 @@ poe test
 ```
 ### Build & publish
 We use a github action to create a new tag, github release and publish to pypi. Trigger the action manually from the actions tab, and provide the new version number as input.
-
-## Database & Migrations
-
-Cofy uses [Alembic](https://alembic.sqlalchemy.org/) for database migrations. Each module that needs database storage owns its own migration branch, keeping schemas independent and composable.
-
-### Commands
-`CofyDB` provides a simple CLI for managing your database and migrations. It supports the following commands:
-
-| Command | Description |
-|---|---|
-| `seed` | Seed the database with example data |
-| `migrate` | Run all pending migrations |
-| `reset` | Drop all tables and re-run migrations (⚠️ destroys all data) |
-| `generate` | Generate a new migration file for a specific module branch |
-
-### Generating a migration
-
-When you change a module's SQLAlchemy model, generate a migration for that module's branch:
-
-```sh
-python db.py generate "add phone number to member" --head members_core@head --rev-id members_core_0002
-```
-
-| Argument | Required | Description |
-|---|---|---|
-| `message` (positional) | ✅ | Short description of the change |
-| `--head` | ✅ | Branch to extend, e.g. `members_core@head` |
-| `--rev-id` | ❌ | Custom revision ID (Alembic generates one if omitted) |
-| `--no-autogenerate` | ❌ | Create an empty migration instead of diffing model changes |
-
-The generated file will be placed in the module's own `migrations/versions/` directory automatically.
-
-### How branches work
-
-Each module declares its own Alembic branch label in its initial migration. This allows multiple modules to coexist in the same database without interfering with each other.
-
-For example, the members module uses branch `members_core`:
-
-```
-src/cofy/modules/members/migrations/versions/
-├── members_core_0001_members_core_initial.py   # branch_labels = ("members_core",)
-└── members_core_0002_add_phone_number.py       # extends members_core@head
-```
-
-A separate module `foo` would have its own branch `foo_core` with revisions in its own directory:
-
-```
-src/cofy/modules/foo/migrations/versions/
-├── foo_core_0001_initial.py                    # branch_labels = ("foo_core",)
-└── foo_core_0002_add_index.py                  # extends foo_core@head
-```
-
-When `poe db migrate` runs, Alembic upgrades all branches to their latest head — both `members_core` and `foo_core` are applied independently.
-
-### Extending a module's schema
-
-If you build a custom implementation that extends an existing module's schema, you can create a new branch that depends on a specific revision:
-
-```python
-revision = "members_custom_0001"
-down_revision = None
-branch_labels = ("members_custom",)
-depends_on = "members_core_0001"  # ensures the base schema exists first
-```
-
-This guarantees the base tables are created before your extension runs, while keeping both migration chains independent.

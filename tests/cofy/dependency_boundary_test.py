@@ -31,8 +31,6 @@ IMPORT_OVERRIDES: dict[str, set[str]] = {
 
 # Extra name → source path prefix(es) it "owns" (relative to src/cofy/).
 EXTRA_ZONES: dict[str, set[str]] = {
-    "worker": {"worker.py"},
-    "db": {"db/"},
     "timeseries": {"modules/timeseries/"},
     "tariff": {"modules/tariff/"},
     "production": {"modules/production/"},
