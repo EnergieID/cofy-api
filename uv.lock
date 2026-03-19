@@ -312,6 +312,7 @@ production = [
     { name = "requests" },
 ]
 tariff = [
+    { name = "energy-cost" },
     { name = "entsoe-py" },
     { name = "isodate" },
     { name = "narwhals" },
@@ -337,18 +338,13 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-<<<<<<< HEAD
     { name = "alembic", marker = "extra == 'db'", specifier = ">=1.18.4" },
     { name = "cofy-api", extras = ["db"], marker = "extra == 'members'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'production'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'tariff'" },
     { name = "cofy-api", extras = ["worker", "db", "timeseries", "tariff", "members", "production"], marker = "extra == 'all'" },
+    { name = "energy-cost", marker = "extra == 'tariff'", specifier = ">=0.1.0" },
     { name = "entsoe-py", marker = "extra == 'tariff'", specifier = ">=0.7.10" },
-=======
-    { name = "alembic", specifier = ">=1.18.4" },
-    { name = "energy-cost", specifier = ">=0.1.0" },
-    { name = "entsoe-py", specifier = ">=0.7.10" },
->>>>>>> main
     { name = "fastapi", extras = ["standard"], specifier = ">=0.128.0" },
     { name = "isodate", marker = "extra == 'timeseries'", specifier = ">=0.7.2" },
     { name = "narwhals", marker = "extra == 'timeseries'", specifier = ">=2.15.0" },
