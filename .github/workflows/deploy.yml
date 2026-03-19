@@ -22,12 +22,12 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Login to ACR
+        run: az acr login --name crenergyiddev
       - name: Build and Push
         run: |
           VERSION=$(date +%Y%m%d%H%M%S)
           IMAGE=${{ vars.REGISTRY }}/${{ vars.IMAGE_NAME }}
-
-          docker login ${{ vars.REGISTRY }} -u $(az acr credential show -n “$ACR_NAME” --query username -o tsv) -p $(az acr credential show -n “$ACR_NAME” --query ‘passwords[0].value’ -o tsv)
           
           docker build \
             --build-arg VERSION=${VERSION} \
