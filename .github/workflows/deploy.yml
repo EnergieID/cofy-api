@@ -22,7 +22,12 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
+      - name: ACR authentication
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ vars.REGISTRY }}
+          username: $(az acr credential show -n “$ACR_NAME” --query username -o tsv)
+          password: $(az acr credential show -n “$ACR_NAME” --query ‘passwords[0].value’ -o tsv)”    
       - name: Build and Push
         run: |
           VERSION=$(date +%Y%m%d%H%M%S)
