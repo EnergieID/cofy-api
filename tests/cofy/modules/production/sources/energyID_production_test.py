@@ -25,6 +25,11 @@ def test_record_id_is_required():
         EnergyIDProduction(api_key="dummy_key", record_id="")
 
 
+def test_supported_resolutions(mock_requests_get):
+    source = EnergyIDProduction("dummy_key", "dummy_record")
+    assert source.supported_resolutions == EnergyIDProduction.SUPPORTED_RESOLUTIONS
+
+
 @pytest.fixture
 def mock_requests_get():
     """Fixture to mock requests.get for both API key check and data fetch."""

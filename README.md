@@ -62,7 +62,7 @@ Clients authenticate via header (`Authorization: Bearer my-secret-token`) or que
 Modules that need persistence (like `members`) require a database. Any SQLAlchemy-supported database works — just change the URL.
 
 ```python
-from cofy import CofyApi, CofyDB
+from cofy import CofyApi
 from cofy.modules.members import MembersDbSource, MembersModule
 from sqlalchemy import create_engine
 
@@ -70,16 +70,15 @@ engine = create_engine("sqlite:///./app.db")
 
 app = CofyApi()
 app.register_module(MembersModule(source=MembersDbSource(engine), name="members"))
-
 ```
 
 ##### Migrations
-To setup your database schema, and update it as your models evolve, we offer `CofyDB` — a thin wrapper around [Alembic](https://alembic.sqlalchemy.org/en/latest/). See [Database & Migrations](#database--migrations) for details.
+To setup your database schema, and update it as your models evolve, we offer `CofyDB` — a thin wrapper around [Alembic](https://alembic.sqlalchemy.org/en/latest/). See [Database & Migrations](#database--migrations) for details. To use it you need to install the `db` extra. (`pip install "cofy-api[db]"`)
 
 Create a `db.py`:
 
 ```python
-from cofy import CofyDB
+from cofy.db import CofyDB
 from .main import app
 
 db = CofyDB(url="sqlite:///./app.db")
@@ -116,10 +115,10 @@ python db.py seed
 
 #### Background worker
 
-The worker runs async jobs (data ingestion, scheduled syncs) via Redis and [SAQ](https://github.com/tobymao/saq). Create a `worker.py`:
+The worker runs async jobs (data ingestion, scheduled syncs) via Redis and [SAQ](https://github.com/tobymao/saq). To use it you need to install the `worker` extra (`pip install "cofy-api[worker]"`). Create a `worker.py`:
 
 ```python
-from cofy import CofyWorker
+from cofy.worker import CofyWorker
 from cofy.modules.members import sync_members_from_csv
 from sqlalchemy import create_engine
 

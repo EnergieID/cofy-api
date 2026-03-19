@@ -4,8 +4,8 @@ from os import environ
 from sqlalchemy import create_engine
 from sqlalchemy.engine import make_url
 
-from cofy import CofyWorker
 from cofy.modules.members import sync_members_from_csv
+from cofy.worker import CofyWorker
 
 DB_URL = environ.get("DB_URL", "")
 assert DB_URL, "DB_URL environment variable must be set to connect to the database"
