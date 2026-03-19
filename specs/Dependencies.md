@@ -18,13 +18,6 @@
 ### [Pydantic](https://pydantic.dev/)
 - data validation using python type annotations
 
-### [SQLAlchemy](https://www.sqlalchemy.org/)
-- For database interactions in our default db source implementations
-- We use **[alembic](https://alembic.sqlalchemy.org/en/latest/)** for database migrations
-
-### [saq](https://pypi.org/project/saq/)
-- For running and scheduling background jobs in our default worker implementation
-
 ## Module specific dependencies
 - entsoe-py: used by the Tariff module as default source for entsoe data
 

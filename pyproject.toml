@@ -16,13 +16,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Functional extras
-worker = ["saq[postgres,web] @ git+https://github.com/tobymao/saq.git@860afaafd2b3e9872f4b439ae030fb24e5d4689e"]
-db = [
-    "psycopg>=3.3.3",
-    "alembic>=1.18.4", 
-    "sqlalchemy>=2.0.0"
-]
 
 # Module extras
 timeseries = [
@@ -40,10 +33,10 @@ production = [
     "polars>=1.38.1",
     "requests>=2.32.0",
 ]
-members = ["cofy-api[db]"]
+members = []
 
 # Convenience extras
-all = ["cofy-api[worker,db,timeseries,tariff,members,production]"]
+all = ["cofy-api[timeseries,tariff,members,production]"]
 
 [build-system]
 requires = ["setuptools>=75.0", "wheel"]
@@ -72,19 +65,12 @@ check = "ty check"
 [tool.poe.tasks.demo]
 cmd = "fastapi dev demo/main.py"
 envfile = ".env.local"
-[tool.poe.tasks.db]
-cmd = "python -m demo.db"
-envfile = ".env.local"
-[tool.poe.tasks.worker]
-cmd = "saq demo.worker.settings"
-envfile = ".env.local"
 [tool.poe.tasks.test]
 cmd = "pytest --cov=cofy --cov-report=term-missing --import-mode=importlib"
 [tool.coverage.report]
 skip_covered = true
 [tool.coverage.run]
 source = ["cofy"]
-omit = ["src/cofy/modules/*/migrations/*", "src/cofy/db/alembic/*"]
 [tool.ruff]
 line-length = 120
 [tool.ruff.lint]

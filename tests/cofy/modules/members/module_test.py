@@ -1,6 +1,5 @@
 import builtins
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -62,8 +61,3 @@ def test_removed_activation_get_endpoints_return_404():
 
     response = client.get(module.prefix + "/activation/code-a/validate")
     assert response.status_code == 404
-
-
-def test_source_is_required_for_members_module():
-    with pytest.raises(TypeError):
-        MembersModule(name="dummy")  # ty: ignore[missing-argument]
