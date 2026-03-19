@@ -1,8 +1,4 @@
 import datetime as dt
-from typing import Annotated
-
-from fastapi.params import Query
-from pydantic import Field
 
 from cofy.modules.timeseries import (
     CSVFormat,
@@ -13,8 +9,6 @@ from cofy.modules.timeseries import (
     TimeseriesModule,
     TimeseriesSource,
 )
-
-from .sources.entsoe_day_ahead import EntsoeDayAheadTariffSource
 
 
 class TariffMetadata(DefaultMetadataType):
@@ -35,9 +29,7 @@ class TariffModule(TimeseriesModule):
     def __init__(
         self,
         *,
-        source: TimeseriesSource | None = None,
-        api_key: str = "",
-        country_code: str | None = None,
+        source: TimeseriesSource,
         formats: list[TimeseriesFormat] | None = None,
         supported_resolutions: list[str] | None = None,
         extra_args: dict | None = None,
@@ -48,22 +40,6 @@ class TariffModule(TimeseriesModule):
                 JSONFormat[DefaultDataType, TariffMetadata](DefaultDataType, TariffMetadata),
                 CSVFormat(),
             ]
-        if source is None:
-            # use default source, with its own defaults for country_code and resolution
-            source = EntsoeDayAheadTariffSource(
-                api_key=api_key,
-                country_code=country_code or "BE",
-            )
-
-            if country_code is None and (extra_args is None or "country_code" not in extra_args):
-                extra_args = extra_args or {}
-                extra_args["country_code"] = Annotated[
-                    str,
-                    Field(Query(default="BE", description="Country code for ENTSOE")),
-                ]
-
-        if supported_resolutions is None:
-            supported_resolutions = ["PT15M"]
         super().__init__(
             source=source,
             formats=formats,

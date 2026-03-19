@@ -20,6 +20,16 @@ def test_init_valid():
     assert hasattr(src, "client")
 
 
+def test_supported_resolutions():
+    src = EntsoeDayAheadTariffSource("key", "DE")
+    assert src.supported_resolutions == ["PT15M"]
+
+
+def test_extra_args_empty_when_country_code_set():
+    src = EntsoeDayAheadTariffSource("key", "DE")
+    assert src.extra_args == {}
+
+
 @pytest.mark.parametrize(
     "api_key, country_code, error_msg",
     [
@@ -30,6 +40,17 @@ def test_init_valid():
 def test_init_invalid(api_key, country_code, error_msg):
     with pytest.raises(ValueError, match=error_msg):
         EntsoeDayAheadTariffSource(api_key, country_code)
+
+
+@pytest.mark.asyncio
+async def test_fetch_timeseries_no_country_code():
+    src = EntsoeDayAheadTariffSource("key")
+    with pytest.raises(ValueError, match="country_code must be provided"):
+        await src.fetch_timeseries(
+            start=dt.datetime(2026, 1, 21),
+            end=dt.datetime(2026, 1, 22),
+            resolution=dt.timedelta(minutes=15),
+        )
 
 
 @pytest.mark.asyncio
