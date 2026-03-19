@@ -28,7 +28,7 @@ jobs:
       - name: Build and Push
         run: |
           VERSION=$(date +%Y%m%d%H%M%S)
-          IMAGE=${{ vars.REGISTRY }}/${{ vars.IMAGE_NAME }}
+          IMAGE=${{ vars.REGISTRY_NAME }}.azurecr.io/${{ vars.IMAGE_NAME }}
           
           docker build \
             --build-arg VERSION=${VERSION} \
