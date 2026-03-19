@@ -2,11 +2,11 @@ from importlib import resources
 
 from cofy.db import CofyDB
 from cofy.modules.members import sync_members_from_csv
-from demo.main import DB_CONNECT_ARGS, DB_URL, cofy
+from demo.main import DB_URL, cofy
 
 MEMBERS_CSV_PATH = str(resources.files("demo.data").joinpath("members_example.csv"))
 
-db = CofyDB(url=DB_URL, connect_args=DB_CONNECT_ARGS)
+db = CofyDB(url=DB_URL)
 db.bind_api(cofy)
 
 
