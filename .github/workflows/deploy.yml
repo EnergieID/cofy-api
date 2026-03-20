@@ -12,8 +12,13 @@ permissions:
 
 jobs:
   build-and-push:
-    environment: dev
+    environment: azure
     runs-on: ubuntu-latest
+    env:
+      REGISTRY: crenergyid.azurecr.io
+      REGISTRY_NAME: crenergyid
+      IMAGE_NAME: cofy-api
+      TAG: dev
     steps:
       - uses: actions/checkout@v6
       - name: Azure Login via OIDC
@@ -23,18 +28,18 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Login to ACR
-        run: az acr login --name ${{ vars.REGISTRY_NAME }}
+        run: az acr login --name ${{ env.REGISTRY_NAME }}
           
       - name: Build and Push
         run: |
           VERSION=$(date +%Y%m%d%H%M%S)
-          IMAGE=${{ vars.REGISTRY }}/${{ vars.IMAGE_NAME }}
+          IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
           docker build \
             --build-arg VERSION=${VERSION} \
             -t ${IMAGE}:${VERSION} \
-            -t ${IMAGE}:latest \
+            -t ${IMAGE}:${TAG} \
             .
           
           docker push ${IMAGE}:${VERSION}
-          docker push ${IMAGE}:latest
+          docker push ${IMAGE}:${TAG}
