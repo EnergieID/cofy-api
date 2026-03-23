@@ -39,6 +39,7 @@ jobs:
             docker run -d \
                 --name "$CONTAINER_NAME" \
                 -p 8080:8080 \
+                --env-file .env.example \
                 cofy-api:latest
 
             for i in {1..15}; do
