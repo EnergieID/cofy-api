@@ -1,0 +1,28 @@
+name: test container
+
+on:
+  workflow_call:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: "build container and check health endpoint"
+        run: |
+          docker build -t cofy-api:latest .
+          CONTAINER_ID=$(docker run -d -p 8080:8080 cofy-api:latest)
+          sleep 5
+          RESPONSE=$(curl -s http://localhost:8080/health)
+          echo "Health check response: $RESPONSE"
+          if [[ "$RESPONSE" != '{"status":"ok"}' ]]; then
+            echo "Health check failed"
+            exit 1
+          fi
+          docker stop $CONTAINER_ID

@@ -1,7 +1,8 @@
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 
 from ..version import get_installed_version
 from .docs_router import DocsRouter
@@ -22,6 +23,7 @@ class CofyApi(FastAPI):
         super().__init__(**(DEFAULT_ARGS | kwargs))
         self._modules: list[Module] = []
         self.include_router(DocsRouter(self.openapi))
+        self.add_route("/health", self.health_check, methods=["GET"])
 
     def openapi(self):
         return get_openapi(
@@ -34,6 +36,9 @@ class CofyApi(FastAPI):
     def register_module(self, module: Module):
         self._modules.append(module)
         self.include_router(module)
+
+    def health_check(self, request: Request) -> JSONResponse:
+        return JSONResponse({"status": "ok"})
 
     @property
     def tags_metadata(self) -> list[dict[str, Any]]:
