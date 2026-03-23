@@ -72,3 +72,8 @@ class TestCofyApiModuleRegistration:
             None,
         )
         assert module_tag is not None
+
+    def test_health_check_endpoint(self):
+        response = self.client.get("/health")
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok"}
