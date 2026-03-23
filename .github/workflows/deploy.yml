@@ -11,7 +11,11 @@ permissions:
   contents: read
 
 jobs:
+  test-container:
+    uses: ./.github/workflows/test-container.yml
+
   build-and-push:
+    needs: test-container
     environment: azure
     runs-on: ubuntu-latest
     env:

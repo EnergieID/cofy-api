@@ -76,20 +76,6 @@ async def test_fetch_timeseries_success(mock_requests_get):
 
 
 @pytest.mark.asyncio
-async def test_fetch_timeseries_invalid_api_key():
-    def _mocked_requests_get(url, headers=None, *args, **kwargs):
-        mock_resp = MagicMock()
-        mock_resp.status_code = 401
-        return mock_resp
-
-    with (
-        patch("requests.get", side_effect=_mocked_requests_get),
-        pytest.raises(ValueError, match="Invalid API key"),
-    ):
-        EnergyIDProduction("bad_key", "dummy_record")
-
-
-@pytest.mark.asyncio
 async def test_fetch_timeseries_api_error(mock_requests_get):
     api_key = "dummy_key"
     record_id = "dummy_record"

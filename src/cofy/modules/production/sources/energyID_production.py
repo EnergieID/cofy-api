@@ -34,9 +34,6 @@ class EnergyIDProduction(TimeseriesSource):
             raise ValueError("Record ID must be provided")
 
         self.headers = {"Authorization": f"apikey {api_key}"}
-        response = requests.get("https://api.energyid.eu/api/v1/members/me", headers=self.headers)
-        if response.status_code != 200:
-            raise ValueError("Invalid API key provided for EnergyIDProduction source.")
         self.record_id = record_id
 
     async def fetch_timeseries(
