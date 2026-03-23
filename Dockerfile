@@ -8,14 +8,14 @@ WORKDIR /app
 # Copy dependency files first (better layer caching)
 COPY pyproject.toml uv.lock* ./
 
-# Install dependencies only (not the project itself yet)
-RUN uv sync --frozen --no-dev --no-install-project
+# Install dependencies for the demo app (including optional extras) first for better layer caching
+RUN uv sync --frozen --no-dev --all-extras --no-install-project
 
 # Copy source code
 COPY . .
 
-# Install the project itself
-RUN uv sync --frozen --no-dev \
+# Install the project itself with the same extras used by the demo entrypoint
+RUN uv sync --frozen --no-dev --all-extras \
     && find /app/.venv -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
 # --- Final stage (no uv, no build deps) ---
