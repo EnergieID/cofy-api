@@ -54,6 +54,6 @@ class TariffModule(TimeseriesModule):
             "start": lambda: floor_datetime(dt.datetime.now(dt.UTC), dt.timedelta(minutes=15)),
             "end": lambda: None,
             "offset": 0,
-            "limit": 288,
+            "limit": None,
             "resolution": "PT15M",
         }

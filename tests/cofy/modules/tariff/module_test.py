@@ -29,7 +29,7 @@ def test_floor_datetime():
 
 class TestTariffModule:
     def setup_method(self):
-        self.module = TariffModule(source=DummySource(), default_args={"limit": None})
+        self.module = TariffModule(source=DummySource())
         self.start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
         self.end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
 
@@ -62,3 +62,24 @@ class TestTariffModule:
         for i, entry in enumerate(data):
             assert entry["value"] == i * 10.0
             assert dt.datetime.fromisoformat(entry["timestamp"]) == self.start + dt.timedelta(minutes=15 * i)
+
+    def test_a_spcific_end_date_allows_returning_more_entries_then_the_default_limit(self):
+        app = FastAPI()
+        app.include_router(self.module)
+        client = TestClient(app)
+
+        # 2 months of 15 minute data:
+        start = dt.datetime(2026, 1, 1, tzinfo=dt.UTC)
+        end = start + dt.timedelta(days=300)
+
+        # The default limit is None, so we should get all entries between start and end
+        response = client.get(
+            self.module.prefix,
+            params={"start": start.isoformat(), "end": end.isoformat()},
+        )
+        assert response.status_code == 200
+        result = response.json()
+        assert isinstance(result, dict)
+        assert "data" in result
+        data = result.get("data")
+        assert len(data) == 300 * 24 * 4  # 300 days * 24 hours/day * 4 entries/hour
