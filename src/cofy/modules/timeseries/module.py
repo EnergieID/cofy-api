@@ -1,7 +1,7 @@
 import datetime as dt
 from typing import Annotated
 
-from fastapi import Depends, Query
+from fastapi import Depends, Query, Request
 from fastapi.exceptions import RequestValidationError
 from isodate import ISO8601Error, parse_duration
 from pydantic import create_model
@@ -55,6 +55,31 @@ class TimeseriesModule(Module):
     def DynamicParameters(self):
         return create_model("DynamicParameters", **self._extra_args)
 
+    def _resolve_end(
+        self,
+        *,
+        start: dt.datetime,
+        end: dt.datetime | None,
+        limit: int | None,
+        resolution: ISODuration,
+        end_provided_by_api: bool,
+        limit_provided_by_api: bool,
+    ) -> dt.datetime | None:
+        explicit_end = end
+        limit_end = start + limit * resolution if limit is not None else None
+
+        if end_provided_by_api and not limit_provided_by_api:
+            return explicit_end
+        if limit_provided_by_api and not end_provided_by_api:
+            return limit_end
+
+        if explicit_end is None:
+            return limit_end
+        if limit_end is None:
+            return explicit_end
+
+        return max(explicit_end, limit_end)
+
     def create_format_endpoint(self, format: TimeseriesFormat, default: bool = False):
         supported_resolutions = self._supported_resolutions
 
@@ -88,6 +113,7 @@ class TimeseriesModule(Module):
         params_default = Depends()
 
         async def get_timeseries(
+            request: Request,
             start: Annotated[
                 dt.datetime,
                 Query(
@@ -114,10 +140,6 @@ class TimeseriesModule(Module):
             # validate inputs
             if start is None:
                 raise RequestValidationError("Start datetime must be provided.")
-            if limit is None and end is None:
-                raise RequestValidationError("Either end datetime or limit must be provided.")
-            if limit is None and end is not None and start >= end:
-                raise RequestValidationError("Start datetime must be before end datetime.")
             # If no timezone is provided, assume UTC
             if start.tzinfo is None:
                 start = start.replace(tzinfo=dt.UTC)
@@ -128,8 +150,20 @@ class TimeseriesModule(Module):
                 start += offset * resolution
                 if end is not None:
                     end += offset * resolution
-            if limit is not None:
-                end = start + limit * resolution
+
+            end = self._resolve_end(
+                start=start,
+                end=end,
+                limit=limit,
+                resolution=resolution,
+                end_provided_by_api="end" in request.query_params,
+                limit_provided_by_api="limit" in request.query_params,
+            )
+
+            if end is None:
+                raise RequestValidationError("Either end datetime or limit must be provided.")
+            if start >= end:
+                raise RequestValidationError("Start datetime must be before end datetime.")
 
             assert end is not None  # for type checker, we know end is not None here
 
