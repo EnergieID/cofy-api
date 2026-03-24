@@ -7,6 +7,7 @@ from fastapi import Depends
 
 from cofy import CofyApi
 from cofy.api import token_verifier
+from cofy.modules.directive import DirectiveModule, DirectiveSource
 from cofy.modules.members import MembersCSVSource, MembersModule
 from cofy.modules.production import EnergyIDProduction, ProductionModule
 from cofy.modules.tariff import EnergyCostTariffSource, EntsoeDayAheadTariffSource, KiwattFormat, TariffModule
@@ -71,5 +72,17 @@ cofy.register_module(
         name="demo",
     )
 )
+
+# a directive module based on the entsoe day-ahead prices, with custom boundries
+directive = DirectiveModule(
+    source=DirectiveSource(
+        source=entsoe.source,
+        boundries=(0, 10, 25, 50),
+    ),
+    name="entsoe",
+    description="A directive module based on the entsoe day-ahead prices, with custom boundries.",
+)
+cofy.register_module(directive)
+
 
 app = cofy
