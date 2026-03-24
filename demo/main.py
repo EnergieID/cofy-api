@@ -78,6 +78,7 @@ directive = DirectiveModule(
     source=DirectiveSource(
         source=entsoe.source,
         boundries=(0, 10, 25, 50),
+        reverse=True,  # now low is good and high is bad, the opposite of the default behavior
     ),
     name="entsoe",
     description="A directive module based on the entsoe day-ahead prices, with custom boundries.",

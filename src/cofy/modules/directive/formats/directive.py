@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from cofy.modules.timeseries import JSONFormat
 
-DIRECTIVE_STEPS = ("++", "+", "0", "-", "--")
+DIRECTIVE_STEPS = ("--", "-", "0", "+", "++")
 
 
 class DirectiveSteps(StrEnum):

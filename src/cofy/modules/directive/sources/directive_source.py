@@ -8,9 +8,10 @@ from ..formats.directive import DIRECTIVE_STEPS
 
 
 class DirectiveSource(TimeseriesSource):
-    def __init__(self, source: TimeseriesSource, boundries: tuple[float, float, float, float]):
+    def __init__(self, source: TimeseriesSource, boundries: tuple[float, float, float, float], reverse: bool = False):
         self.source = source
         self.boundries = boundries
+        self.reverse = reverse
 
     async def fetch_timeseries(
         self,
@@ -21,8 +22,10 @@ class DirectiveSource(TimeseriesSource):
     ) -> Timeseries:
         timeseries = await self.source.fetch_timeseries(start, end, resolution, **kwargs)
 
-        expr = nw.lit(DIRECTIVE_STEPS[0])
-        for boundry, step in list(zip(self.boundries, DIRECTIVE_STEPS[1:], strict=True)):
+        steps = DIRECTIVE_STEPS if not self.reverse else list(reversed(DIRECTIVE_STEPS))
+
+        expr = nw.lit(steps[0])
+        for boundry, step in list(zip(self.boundries, steps[1:], strict=True)):
             expr = nw.when(nw.col("value") > boundry).then(nw.lit(step)).otherwise(expr)
 
         timeseries.frame = timeseries.frame.with_columns(value=expr)
