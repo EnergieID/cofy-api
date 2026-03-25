@@ -1,8 +1,8 @@
-from .api import CofyApi, Module
+from .api import CofyAPI, Module
 from .version import __version__
 
 __all__ = [
-    "CofyApi",
+    "CofyAPI",
     "Module",
     "__version__",
 ]

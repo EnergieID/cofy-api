@@ -1,10 +1,10 @@
-from .cofy_api import CofyApi
+from .cofy_api import CofyAPI
 from .docs_router import DocsRouter
 from .module import Module
 from .token_auth import TokenInfo, token_verifier
 
 __all__ = [
-    "CofyApi",
+    "CofyAPI",
     "DocsRouter",
     "Module",
     "TokenInfo",
