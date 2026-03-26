@@ -360,7 +360,7 @@ class TestTimeseriesModule:
         )
         assert response.status_code == 422
 
-    def test_a_spcific_end_date_allows_returning_more_entries_then_the_default_limit(self):
+    def test_a_specific_end_date_allows_returning_more_entries_than_the_default_limit(self):
         app = FastAPI()
         module = TimeseriesModule(
             source=DummyTimeseriesSource(),
