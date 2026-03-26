@@ -125,14 +125,17 @@ class TimeseriesModule(Module):
                 dt.datetime | None,
                 Query(
                     default_factory=self.merged_default_args["end"],
-                    description="End datetime in ISO8601 format",
+                    description="End datetime in ISO8601 format, if both end and limit are provided, the later of the two will be used",
                 ),
             ],
             offset: Annotated[
                 int | None, Query(description="Offset in number of resolution steps")
             ] = self.merged_default_args["offset"],
             limit: Annotated[
-                int | None, Query(description="Limit number of resolution steps")
+                int | None,
+                Query(
+                    description="Limit number of resolution steps, if both end and limit are provided, the later of the two will be used"
+                ),
             ] = self.merged_default_args["limit"],
             resolution: ISODuration = resolution_default,
             params: self.DynamicParameters = params_default,
