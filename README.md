@@ -25,10 +25,10 @@ pip install "cofy-api[tariff,members]"
 Create an `app.py` with a minimal Cofy API:
 
 ```python
-from cofy import CofyApi
+from cofy import CofyAPI
 from cofy.modules.tariff import TariffModule
 
-app = CofyApi()
+app = CofyAPI()
 app.register_module(TariffModule(api_key="YOUR_ENTSOE_KEY", name="entsoe"))
 ```
 
@@ -47,10 +47,10 @@ Protect the API with bearer-token authentication:
 ```python
 from fastapi import Depends
 
-from cofy import CofyApi
+from cofy import CofyAPI
 from cofy.api import token_verifier
 
-app = CofyApi(
+app = CofyAPI(
     dependencies=[Depends(token_verifier({"my-secret-token": {"name": "Admin"}}))]
 )
 ```

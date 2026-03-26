@@ -2,7 +2,7 @@
 ```sh
 src/
     cofy/                           # Core framework (installable package)
-        __init__.py                 # Public API: CofyApi, Module
+        __init__.py                 # Public API: CofyAPI, Module
         api/
             cofy_api.py                 # Main app class, handles settings and module registration
             module.py                   # Base Module class (abstract APIRouter)

@@ -1,21 +1,21 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cofy import CofyApi
+from cofy import CofyAPI
 from tests.mocks.dummy_module import DummyModule
 
 
 def test_cofy_initialization():
-    cofy = CofyApi(title="Test API", version="1.2.3", description="Test desc")
+    cofy = CofyAPI(title="Test API", version="1.2.3", description="Test desc")
     assert isinstance(cofy, FastAPI)
     assert cofy.title == "Test API"
     assert cofy.version == "1.2.3"
     assert cofy.description == "Test desc"
 
 
-class TestCofyApiModuleRegistration:
+class TestCofyAPIModuleRegistration:
     def setup_method(self):
-        self.cofy = CofyApi()
+        self.cofy = CofyAPI()
         self.module = DummyModule("test_module")
         self.client = TestClient(self.cofy)
 
