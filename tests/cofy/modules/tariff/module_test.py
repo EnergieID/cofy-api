@@ -29,7 +29,7 @@ def test_floor_datetime():
 
 class TestTariffModule:
     def setup_method(self):
-        self.module = TariffModule(source=DummySource(), default_args={"limit": None})
+        self.module = TariffModule(source=DummySource())
         self.start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
         self.end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
 

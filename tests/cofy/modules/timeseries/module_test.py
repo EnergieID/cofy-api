@@ -359,3 +359,50 @@ class TestTimeseriesModule:
             },
         )
         assert response.status_code == 422
+
+    def test_a_specific_end_date_allows_returning_more_entries_than_the_default_limit(self):
+        app = FastAPI()
+        module = TimeseriesModule(
+            source=DummyTimeseriesSource(),
+            default_args={"limit": 288},
+        )
+        app.include_router(module)
+        client = TestClient(app)
+
+        # 2 months of 15 minute data:
+        start = dt.datetime(2026, 1, 1, tzinfo=dt.UTC)
+        end = start + dt.timedelta(days=300)
+
+        response = client.get(
+            module.prefix,
+            params={"start": start.isoformat(), "end": end.isoformat()},
+        )
+        assert response.status_code == 200
+        result = response.json()
+        assert isinstance(result, dict)
+        assert "data" in result
+        data = result.get("data")
+        assert len(data) == 300 * 24  # 300 days * 24 hours/day
+
+    def test_providing_limit_and_end_date_should_return_maximum_of_both(self):
+        response = self.client.get(
+            self.module.prefix,
+            params={"start": self.start.isoformat(), "end": self.end.isoformat(), "limit": 2},
+        )
+        assert response.status_code == 200
+        result = response.json()
+        assert isinstance(result, dict)
+        assert "data" in result
+        data = result.get("data")
+        assert len(data) == 3  # 3 hours, even though limit is 2, because end date allows for 3 entries
+
+        response = self.client.get(
+            self.module.prefix,
+            params={"start": self.start.isoformat(), "end": self.end.isoformat(), "limit": 10},
+        )
+        assert response.status_code == 200
+        result = response.json()
+        assert isinstance(result, dict)
+        assert "data" in result
+        data = result.get("data")
+        assert len(data) == 10  # 3 hours before end date, but limit is 10, so we return 10 entries
