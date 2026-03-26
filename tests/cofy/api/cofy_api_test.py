@@ -13,7 +13,7 @@ def test_cofy_initialization():
     assert cofy.description == "Test desc"
 
 
-class TestCofyApiModuleRegistration:
+class TestCofyAPIModuleRegistration:
     def setup_method(self):
         self.cofy = CofyAPI()
         self.module = DummyModule("test_module")
