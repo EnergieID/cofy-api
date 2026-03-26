@@ -11,7 +11,7 @@ from ...timeseries.dummy_source import DummyTimeseriesSource
 async def test_fetch_timeseries_maps_values_to_directive_steps():
     source = DirectiveSource(
         DummyTimeseriesSource(),
-        boundries=(0, 10, 20, 40),
+        boundaries=(0, 10, 20, 40),
     )
 
     result = await source.fetch_timeseries(
@@ -28,7 +28,7 @@ async def test_fetch_timeseries_maps_values_to_directive_steps():
 async def test_fetch_timeseries_maps_values_to_reversed_directive_steps():
     source = DirectiveSource(
         DummyTimeseriesSource(),
-        boundries=(0, 10, 20, 30),
+        boundaries=(0, 10, 20, 30),
         reverse=True,
     )
 
@@ -43,7 +43,7 @@ async def test_fetch_timeseries_maps_values_to_reversed_directive_steps():
 
 def test_supported_resolutions_and_extra_args_are_forwarded():
     wrapped = DummyTimeseriesSource()
-    source = DirectiveSource(wrapped, boundries=(5, 15, 25, 35))
+    source = DirectiveSource(wrapped, boundaries=(5, 15, 25, 35))
 
     assert source.supported_resolutions == wrapped.supported_resolutions
     assert source.extra_args == wrapped.extra_args

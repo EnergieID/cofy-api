@@ -73,15 +73,15 @@ cofy.register_module(
     )
 )
 
-# a directive module based on the entsoe day-ahead prices, with custom boundries
+# a directive module based on the entsoe day-ahead prices, with custom boundaries
 directive = DirectiveModule(
     source=DirectiveSource(
         source=entsoe.source,
-        boundries=(0, 10, 25, 50),
+        boundaries=(0, 10, 25, 50),
         reverse=True,  # now low is good and high is bad, the opposite of the default behavior
     ),
     name="entsoe",
-    description="A directive module based on the entsoe day-ahead prices, with custom boundries.",
+    description="A directive module based on the entsoe day-ahead prices, with custom boundaries.",
 )
 cofy.register_module(directive)
 

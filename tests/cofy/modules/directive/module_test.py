@@ -9,12 +9,12 @@ from ..timeseries.dummy_source import DummyTimeseriesSource
 
 
 def test_directivemodule_type_property():
-    module = DirectiveModule(source=DirectiveSource(DummyTimeseriesSource(), boundries=(5, 15, 25, 35)))
+    module = DirectiveModule(source=DirectiveSource(DummyTimeseriesSource(), boundaries=(5, 15, 25, 35)))
     assert module.type == "directive"
 
 
 def test_formats_default():
-    module = DirectiveModule(source=DirectiveSource(DummyTimeseriesSource(), boundries=(5, 15, 25, 35)))
+    module = DirectiveModule(source=DirectiveSource(DummyTimeseriesSource(), boundaries=(5, 15, 25, 35)))
     assert len(module.formats) == 1
     assert isinstance(module.formats[0], DirectiveFormat)
 
@@ -23,7 +23,7 @@ def test_api_endpoint_returns_directives():
     start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
     end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
     module = DirectiveModule(
-        source=DirectiveSource(DummyTimeseriesSource(), boundries=(5, 15, 25, 35)),
+        source=DirectiveSource(DummyTimeseriesSource(), boundaries=(5, 15, 25, 35)),
     )
 
     app = FastAPI()
