@@ -35,6 +35,7 @@ EXTRA_ZONES: dict[str, set[str]] = {
     "tariff": {"modules/tariff/"},
     "production": {"modules/production/"},
     "members": {"modules/members/"},
+    "directive": {"modules/directive/"},
 }
 
 # Zones that are always accessible (no extra required).

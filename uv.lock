@@ -152,6 +152,10 @@ all = [
     { name = "polars" },
     { name = "requests" },
 ]
+directive = [
+    { name = "isodate" },
+    { name = "narwhals" },
+]
 production = [
     { name = "isodate" },
     { name = "narwhals" },
@@ -182,13 +186,15 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'directive'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'production'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'tariff'" },
-    { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production"], marker = "extra == 'all'" },
+    { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production", "directive"], marker = "extra == 'all'" },
     { name = "energy-cost", marker = "extra == 'tariff'", specifier = ">=0.1.0" },
     { name = "entsoe-py", marker = "extra == 'tariff'", specifier = ">=0.7.10" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.128.0" },
     { name = "isodate", marker = "extra == 'timeseries'", specifier = ">=0.7.2" },
+    { name = "narwhals", marker = "extra == 'directive'", specifier = ">=2.15.0" },
     { name = "narwhals", marker = "extra == 'timeseries'", specifier = ">=2.15.0" },
     { name = "pandas", marker = "extra == 'tariff'", specifier = ">=3.0.0" },
     { name = "polars", marker = "extra == 'production'", specifier = ">=1.38.1" },
@@ -196,7 +202,7 @@ requires-dist = [
     { name = "requests", marker = "extra == 'production'", specifier = ">=2.32.0" },
     { name = "starlette", specifier = ">=0.41.0" },
 ]
-provides-extras = ["timeseries", "tariff", "production", "members", "all"]
+provides-extras = ["timeseries", "tariff", "production", "members", "directive", "all"]
 
 [package.metadata.requires-dev]
 dev = [
