@@ -1,18 +1,8 @@
 import datetime as dt
 
 from cofy.modules.timeseries import (
-    CSVFormat,
-    DefaultDataType,
-    DefaultMetadataType,
-    JSONFormat,
-    TimeseriesFormat,
     TimeseriesModule,
-    TimeseriesSource,
 )
-
-
-class TariffMetadata(DefaultMetadataType):
-    unit: str
 
 
 def floor_datetime(dt_obj: dt.datetime, delta: dt.timedelta) -> dt.datetime:
@@ -25,28 +15,6 @@ def floor_datetime(dt_obj: dt.datetime, delta: dt.timedelta) -> dt.datetime:
 class TariffModule(TimeseriesModule):
     type: str = "tariff"
     type_description: str = "Module providing tariff data as time series."
-
-    def __init__(
-        self,
-        *,
-        source: TimeseriesSource,
-        formats: list[TimeseriesFormat] | None = None,
-        supported_resolutions: list[str] | None = None,
-        extra_args: dict | None = None,
-        **kwargs,
-    ):
-        if formats is None:
-            formats = [
-                JSONFormat[DefaultDataType, TariffMetadata](DefaultDataType, TariffMetadata),
-                CSVFormat(),
-            ]
-        super().__init__(
-            source=source,
-            formats=formats,
-            supported_resolutions=supported_resolutions,
-            extra_args=extra_args,
-            **kwargs,
-        )
 
     @property
     def default_args(self):

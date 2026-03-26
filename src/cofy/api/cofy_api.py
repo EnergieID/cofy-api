@@ -18,7 +18,7 @@ DEFAULT_ARGS: dict[str, Any] = {
 }
 
 
-class CofyApi(FastAPI):
+class CofyAPI(FastAPI):
     def __init__(self, **kwargs):
         super().__init__(**(DEFAULT_ARGS | kwargs))
         self._modules: list[Module] = []

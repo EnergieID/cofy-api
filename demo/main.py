@@ -5,8 +5,9 @@ from energy_cost.index import EntsoeDayAheadIndex, Index
 from energy_cost.tariff import MeterType
 from fastapi import Depends
 
-from cofy import CofyApi
+from cofy import CofyAPI
 from cofy.api import token_verifier
+from cofy.modules.directive import DirectiveModule, DirectiveSource
 from cofy.modules.members import MembersCSVSource, MembersModule
 from cofy.modules.production import EnergyIDProduction, ProductionModule
 from cofy.modules.tariff import EnergyCostTariffSource, EntsoeDayAheadTariffSource, KiwattFormat, TariffModule
@@ -14,7 +15,7 @@ from cofy.modules.tariff import EnergyCostTariffSource, EntsoeDayAheadTariffSour
 DATA_DIR = Path(__file__).resolve().parent / "data"
 
 # Initialize the Cofy API
-cofy = CofyApi(dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))])
+cofy = CofyAPI(dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))])
 
 entsoe = TariffModule(
     source=EntsoeDayAheadTariffSource(
@@ -71,5 +72,18 @@ cofy.register_module(
         name="demo",
     )
 )
+
+# a directive module based on the entsoe day-ahead prices, with custom boundaries
+directive = DirectiveModule(
+    source=DirectiveSource(
+        source=entsoe.source,
+        boundaries=(0, 10, 25, 50),
+        reverse=True,  # now low is good and high is bad, the opposite of the default behavior
+    ),
+    name="entsoe",
+    description="A directive module based on the entsoe day-ahead prices, with custom boundaries.",
+)
+cofy.register_module(directive)
+
 
 app = cofy

@@ -34,10 +34,13 @@ production = [
     "requests>=2.32.0",
 ]
 members = []
+directive = [
+    "cofy-api[timeseries]",
+    "narwhals>=2.15.0"
+]
 
 # Convenience extras
-all = ["cofy-api[timeseries,tariff,members,production]"]
-
+all = ["cofy-api[timeseries,tariff,members,production,directive]"]
 [build-system]
 requires = ["setuptools>=75.0", "wheel"]
 build-backend = "setuptools.build_meta"

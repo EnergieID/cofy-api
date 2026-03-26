@@ -17,6 +17,7 @@ class DefaultMetadataType(BaseModel):
     end: dt.datetime | None = None
     format: str = "json"
     resolution: ISODuration | None = None
+    unit: str | None = None
 
 
 class ResponseModel[DataType: BaseModel, MetadataType: BaseModel](BaseModel):

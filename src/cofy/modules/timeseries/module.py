@@ -198,7 +198,7 @@ class TimeseriesModule(Module):
             "end": lambda: dt.datetime.now(dt.UTC),
             "offset": 0,
             "limit": None,
-            "resolution": "PT1H",
+            "resolution": "PT1H" if not self._supported_resolutions else self._supported_resolutions[0],
         }
 
     @property
