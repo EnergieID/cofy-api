@@ -28,6 +28,11 @@ tariff = [
     "entsoe-py>=0.7.10",
     "pandas>=3.0.0"
 ]
+billing = [
+    "cofy-api[timeseries]",
+    "energy-cost @ git+https://github.com/EnergieID/energy-cost@feat/add-distributor-tariffs",
+    "pandas>=3.0.0"
+]
 production = [
     "cofy-api[timeseries]",
     "polars>=1.38.1",
@@ -40,7 +45,7 @@ directive = [
 ]
 
 # Convenience extras
-all = ["cofy-api[timeseries,tariff,members,production,directive]"]
+all = ["cofy-api[timeseries,tariff,members,production,directive,billing]"]
 [build-system]
 requires = ["setuptools>=75.0", "wheel"]
 build-backend = "setuptools.build_meta"

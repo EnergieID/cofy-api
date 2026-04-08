@@ -152,6 +152,12 @@ all = [
     { name = "polars" },
     { name = "requests" },
 ]
+billing = [
+    { name = "energy-cost" },
+    { name = "isodate" },
+    { name = "narwhals" },
+    { name = "pandas" },
+]
 directive = [
     { name = "isodate" },
     { name = "narwhals" },
@@ -186,23 +192,26 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'billing'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'directive'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'production'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'tariff'" },
-    { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production", "directive"], marker = "extra == 'all'" },
+    { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production", "directive", "billing"], marker = "extra == 'all'" },
+    { name = "energy-cost", marker = "extra == 'billing'", git = "https://github.com/EnergieID/energy-cost?rev=feat%2Fadd-distributor-tariffs" },
     { name = "energy-cost", marker = "extra == 'tariff'", specifier = ">=0.1.0" },
     { name = "entsoe-py", marker = "extra == 'tariff'", specifier = ">=0.7.10" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.128.0" },
     { name = "isodate", marker = "extra == 'timeseries'", specifier = ">=0.7.2" },
     { name = "narwhals", marker = "extra == 'directive'", specifier = ">=2.15.0" },
     { name = "narwhals", marker = "extra == 'timeseries'", specifier = ">=2.15.0" },
+    { name = "pandas", marker = "extra == 'billing'", specifier = ">=3.0.0" },
     { name = "pandas", marker = "extra == 'tariff'", specifier = ">=3.0.0" },
     { name = "polars", marker = "extra == 'production'", specifier = ">=1.38.1" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "requests", marker = "extra == 'production'", specifier = ">=2.32.0" },
     { name = "starlette", specifier = ">=0.41.0" },
 ]
-provides-extras = ["timeseries", "tariff", "production", "members", "directive", "all"]
+provides-extras = ["timeseries", "tariff", "billing", "production", "members", "directive", "all"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -322,16 +331,13 @@ wheels = [
 [[package]]
 name = "energy-cost"
 version = "0.1.0"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/EnergieID/energy-cost?rev=feat%2Fadd-distributor-tariffs#d509ebd861e1277cf2ede191f24f67a2387a4f34" }
 dependencies = [
     { name = "entsoe-py" },
+    { name = "isodate" },
     { name = "pandas" },
     { name = "pydantic" },
     { name = "pyyaml" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/6e/2c6be9af92458a95064fed350de61a2832eb3de26c162cf4cfd93a0c313e/energy_cost-0.1.0.tar.gz", hash = "sha256:1a529aa86017f0cb31dd87ac57b2ba893bfa2bfd912d1675a5441459e85d5ec5", size = 9585, upload-time = "2026-03-16T10:25:08.989Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/9e/7d483e8b8261b37dcd50fe22fe0a11d4de22710a30bc630206da1642daf9/energy_cost-0.1.0-py3-none-any.whl", hash = "sha256:1648c91ff33f54973712d956f56e14a59398f310314879998445913c469f7d0c", size = 8103, upload-time = "2026-03-16T10:25:08.178Z" },
 ]
 
 [[package]]
