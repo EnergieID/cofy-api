@@ -1,12 +1,14 @@
 from os import environ
 from pathlib import Path
 
+from energy_cost import MeterType, Tariff
+from energy_cost.data.be import distributors
 from energy_cost.index import EntsoeDayAheadIndex, Index
-from energy_cost.tariff import MeterType
 from fastapi import Depends
 
 from cofy import CofyAPI
 from cofy.api import token_verifier
+from cofy.modules.billing.module import BillingModule
 from cofy.modules.directive import DirectiveModule, DirectiveSource
 from cofy.modules.members import MembersCSVSource, MembersModule
 from cofy.modules.production import EnergyIDProduction, ProductionModule
@@ -48,6 +50,13 @@ dynamic_tariff = TariffModule(
     description="Our dynamic tariff tracking the Belpex.",
 )
 cofy.register_module(dynamic_tariff)
+
+## Billing app for our tariff
+billing = BillingModule(
+    products={"dynamic": Tariff.from_yaml(TARIFF_CONFIG_PATH)},
+    distributors=distributors,
+)
+cofy.register_module(billing)
 
 ## Production app with EnergyID as source
 wind = ProductionModule(

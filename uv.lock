@@ -197,7 +197,7 @@ requires-dist = [
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'production'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'tariff'" },
     { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production", "directive", "billing"], marker = "extra == 'all'" },
-    { name = "energy-cost", marker = "extra == 'billing'", git = "https://github.com/EnergieID/energy-cost?rev=feat%2Fadd-distributor-tariffs" },
+    { name = "energy-cost", marker = "extra == 'billing'", specifier = ">=0.2.1" },
     { name = "energy-cost", marker = "extra == 'tariff'", specifier = ">=0.1.0" },
     { name = "entsoe-py", marker = "extra == 'tariff'", specifier = ">=0.7.10" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.128.0" },
@@ -330,14 +330,18 @@ wheels = [
 
 [[package]]
 name = "energy-cost"
-version = "0.1.0"
-source = { git = "https://github.com/EnergieID/energy-cost?rev=feat%2Fadd-distributor-tariffs#d509ebd861e1277cf2ede191f24f67a2387a4f34" }
+version = "0.2.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "entsoe-py" },
     { name = "isodate" },
     { name = "pandas" },
     { name = "pydantic" },
     { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d5/e6/62cfb14980e209c7ddca900179ff76c73d06957aa5e89bccc26dfebecf86/energy_cost-0.2.1.tar.gz", hash = "sha256:f643ab9cbd4bd3dcb896f53496302f2a8faa96abfdb16a4370458781857ac1dc", size = 35344, upload-time = "2026-04-09T15:01:54.543Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/04/27/d0e1c679dc9b1e7175561b1fad47209376d61f889556ecd81d085b968295/energy_cost-0.2.1-py3-none-any.whl", hash = "sha256:a91916d372321b2b737a6f11f20313d8127d8afaef6e2feed617fb02e5033645", size = 33983, upload-time = "2026-04-09T15:01:53.333Z" },
 ]
 
 [[package]]

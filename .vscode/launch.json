@@ -18,7 +18,8 @@
             "envFile": "${workspaceFolder}/.env.local",
             "env": {
                 "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache"
-            }
+            },
+            "justMyCode": false
         }
     ]
 }

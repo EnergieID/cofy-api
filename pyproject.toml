@@ -30,7 +30,7 @@ tariff = [
 ]
 billing = [
     "cofy-api[timeseries]",
-    "energy-cost @ git+https://github.com/EnergieID/energy-cost@feat/add-distributor-tariffs",
+    "energy-cost>=0.2.1",
     "pandas>=3.0.0"
 ]
 production = [

@@ -37,13 +37,15 @@ class EnergyCostTariffSource(TimeseriesSource):
         if direction is None:
             raise ValueError("direction must be provided.")
         series = await asyncio.to_thread(
-            self.tariff.get_cost,
+            self.tariff.get_energy_cost,
             start=start,
             end=end,
             resolution=resolution,
             meter_type=meter_type,
             direction=direction,
         )
+        if series is None:
+            raise ValueError("No tariff data available for the given parameters.")
         df = series.rename(columns={"total": "value"})
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         return Timeseries(frame=df, metadata={"unit": "EUR/MWh"})
