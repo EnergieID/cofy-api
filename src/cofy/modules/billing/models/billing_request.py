@@ -51,7 +51,7 @@ class BillingRequest(BaseModel):
 
     start: dt.datetime | None = None
     end: dt.datetime | None = None
-    resolution: ISODuration = Duration(months=1)
+    resolution: ISODuration = Field(default_factory=lambda: Duration(months=1))
     meters: list[MeterInfo]
     contract: Any  # narrowed to a ContractInfo subclass by make_billing_request_model
 

@@ -33,6 +33,7 @@ IMPORT_OVERRIDES: dict[str, set[str]] = {
 EXTRA_ZONES: dict[str, set[str]] = {
     "timeseries": {"modules/timeseries/"},
     "tariff": {"modules/tariff/"},
+    "billing": {"modules/billing/"},
     "production": {"modules/production/"},
     "members": {"modules/members/"},
     "directive": {"modules/directive/"},
