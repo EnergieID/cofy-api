@@ -116,6 +116,15 @@ def test_members_file_source_reloads_when_file_changes(tmp_path):
     assert call_count == 2
 
 
+def test_members_file_source_response_model_is_member(tmp_path):
+    file_path = tmp_path / "members.txt"
+    _write(file_path)
+
+    source = MembersFileSource(str(file_path), _make_loader({}))
+
+    assert source.response_model is Member
+
+
 def test_members_file_source_does_not_reload_for_missing_file(tmp_path):
     file_path = tmp_path / "missing.txt"
 
@@ -124,3 +133,66 @@ def test_members_file_source_does_not_reload_for_missing_file(tmp_path):
     # File doesn't exist: initial load is skipped, list returns empty
     assert source.list() == []
     assert source.verify("M001") is None
+
+
+def test_members_file_source_preserves_state_when_loader_raises(tmp_path):
+    file_path = tmp_path / "members.txt"
+    _write(file_path, "v1")
+
+    m1 = Member(id="M001")
+    call_count = 0
+
+    def flaky_loader(path: Path) -> dict[str, Member]:
+        nonlocal call_count
+        call_count += 1
+        if call_count == 2:
+            raise ValueError("parse error")
+        return {"M001": m1}
+
+    source = MembersFileSource(str(file_path), flaky_loader)
+    assert source.list() == [m1]
+
+    # Trigger a reload with a failing loader — previous state should be retained
+    _write(file_path, "v2")
+    assert source.list() == [m1]
+    assert call_count == 2
+
+
+def test_members_file_source_no_double_reload_under_lock(tmp_path):
+    """Inside the lock, _maybe_reload re-checks the signature so that a second
+    thread that lost the race does not call the loader again."""
+    file_path = tmp_path / "members.txt"
+    _write(file_path, "v1")
+
+    m1 = Member(id="M001")
+    call_count = 0
+
+    def counting_loader(path: Path) -> dict[str, Member]:
+        nonlocal call_count
+        call_count += 1
+        return {"M001": m1}
+
+    source = MembersFileSource(str(file_path), counting_loader)
+    assert call_count == 1
+
+    # Change the file so the outer signature check fails (reload looks needed)
+    _write(file_path, "v2")
+
+    # Simulate a concurrent thread having already reloaded: the second call to
+    # _get_file_signature (inside the lock) updates the stored signature so the
+    # inner guard detects there is nothing left to do.
+    original_get_sig = source._get_file_signature
+    inner_call = False
+
+    def patched_get_sig():
+        nonlocal inner_call
+        sig = original_get_sig()
+        if inner_call:
+            # Pretend the other thread already persisted this signature
+            source._file_signature = sig
+        inner_call = True
+        return sig
+
+    source._get_file_signature = patched_get_sig  # type: ignore[method-assign]
+    source.list()
+    assert call_count == 1  # loader was not called a second time
