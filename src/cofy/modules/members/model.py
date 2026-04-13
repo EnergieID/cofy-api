@@ -41,6 +41,7 @@ class Address(BaseModel):
 
 class Member(BaseModel):
     id: str
+    activation_code: Annotated[str | None, Field(None, description="Activation code used to verify membership")] = None
     addresses: list[Address] = Field(default_factory=list)
 
 

@@ -50,7 +50,7 @@ def test_members_file_source_paginates(tmp_path):
     assert source.list(page=4) == []
 
 
-def test_members_file_source_verify(tmp_path):
+def test_members_file_source_get_by_id(tmp_path):
     file_path = tmp_path / "members.txt"
     _write(file_path)
 
@@ -58,9 +58,35 @@ def test_members_file_source_verify(tmp_path):
     m2 = Member(id="M002")
     source = MembersFileSource(str(file_path), _make_loader({"M001": m1, "M002": m2}))
 
-    assert source.verify("M001") is m1
-    assert source.verify("M002") is m2
+    assert source.get("M001") is m1
+    assert source.get("M002") is m2
+    assert source.get("nonexistent") is None
+
+
+def test_members_file_source_verify(tmp_path):
+    file_path = tmp_path / "members.txt"
+    _write(file_path)
+
+    m1 = Member(id="M001", activation_code="ACT-001")
+    m2 = Member(id="M002", activation_code="ACT-002")
+    source = MembersFileSource(str(file_path), _make_loader({"M001": m1, "M002": m2}))
+
+    assert source.verify("ACT-001") is m1
+    assert source.verify("ACT-002") is m2
     assert source.verify("nonexistent") is None
+    # member ID alone is not a valid activation code
+    assert source.verify("M001") is None
+
+
+def test_members_file_source_verify_without_activation_code(tmp_path):
+    file_path = tmp_path / "members.txt"
+    _write(file_path)
+
+    m1 = Member(id="M001")  # no activation_code
+    source = MembersFileSource(str(file_path), _make_loader({"M001": m1}))
+
+    assert source.verify("M001") is None
+    assert source.verify("") is None
 
 
 def test_members_file_source_reloads_when_file_changes(tmp_path):

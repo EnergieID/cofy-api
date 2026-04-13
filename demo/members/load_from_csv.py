@@ -14,6 +14,7 @@ CSV_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 class CSVColumns(StrEnum):
     EAN = "ean"
     MEMBER_ID = "member_id"
+    ACTIVATION_CODE = "activation_code"
     ADDRESS_ID = "address_id"
     CUSTOMER_TYPE = "customer_type"
     CONNECTION_TYPE = "connection_type"
@@ -40,7 +41,10 @@ def example_load_members_from_file(file_path: Path) -> dict[str, Member]:
             try:
                 member_id = row[CSVColumns.MEMBER_ID]
                 if member_id not in members:
-                    members[member_id] = Member(id=member_id)
+                    members[member_id] = Member(
+                        id=member_id,
+                        activation_code=row[CSVColumns.ACTIVATION_CODE] or None,
+                    )
                     contracts_by_member_and_address[member_id] = {}
 
                 contract = Contract(

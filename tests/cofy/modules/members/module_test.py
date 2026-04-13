@@ -22,6 +22,9 @@ class DummyMemberSource(MemberSource[Member]):
     def list(self, email: str | None = None) -> builtins.list[Member]:
         return self.members
 
+    def get(self, member_id: str) -> Member | None:
+        return next((m for m in self.members if m.id == member_id), None)
+
     def verify(self, activation_code: str) -> Member | None:
         member_id = self.activation_codes.get(activation_code)
         if member_id is None:
@@ -44,6 +47,20 @@ def test_members_module_list_and_verify_routes():
     assert response.json()["id"] == "1"
 
     response = client.post(module.prefix + "/verify", json={"activation_code": "invalid"})
+    assert response.status_code == 404
+
+
+def test_members_module_get_by_id():
+    app = FastAPI()
+    module = MembersModule(source=DummyMemberSource(), name="dummy")
+    app.include_router(module)
+    client = TestClient(app)
+
+    response = client.get(module.prefix + "/1")
+    assert response.status_code == 200
+    assert response.json()["id"] == "1"
+
+    response = client.get(module.prefix + "/nonexistent")
     assert response.status_code == 404
 
 
