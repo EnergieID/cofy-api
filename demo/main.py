@@ -8,9 +8,10 @@ from fastapi import Depends
 from cofy import CofyAPI
 from cofy.api import token_verifier
 from cofy.modules.directive import DirectiveModule, DirectiveSource
-from cofy.modules.members import MembersCSVSource, MembersModule
+from cofy.modules.members import MembersFileSource, MembersModule
 from cofy.modules.production import EnergyIDProduction, ProductionModule
 from cofy.modules.tariff import EnergyCostTariffSource, EntsoeDayAheadTariffSource, KiwattFormat, TariffModule
+from demo.members.load_from_csv import example_load_members_from_file
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 
@@ -63,12 +64,7 @@ cofy.register_module(wind)
 CSV_PATH = str(DATA_DIR / "members_example.csv")
 cofy.register_module(
     MembersModule(
-        source=MembersCSVSource(
-            CSV_PATH,
-            id_field="KLANTNUMMER",
-            email_field="EMAIL",
-            activation_code_field="ACTIVATIECODE",
-        ),
+        source=MembersFileSource(CSV_PATH, example_load_members_from_file),
         name="demo",
     )
 )

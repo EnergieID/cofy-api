@@ -5,6 +5,9 @@ class DummyMemberSource(MemberSource[Member]):
     def list(self, email: str | None = None) -> list[Member]:
         return []
 
+    def get(self, member_id: str) -> Member | None:
+        return None
+
     def verify(self, activation_code: str) -> Member | None:
         return None
 

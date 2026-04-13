@@ -1,12 +1,17 @@
-from .model import Member, VerifyMemberRequest
+from .model import Address, ConnectionType, Contract, CustomerType, Member, NamedIdentifier, VerifyMemberRequest
 from .module import MembersModule
 from .source import MemberSource
-from .sources.csv_source import MembersCSVSource
+from .sources.file_source import MembersFileSource
 
 __all__ = [
+    "Address",
+    "Contract",
+    "ConnectionType",
+    "CustomerType",
     "Member",
     "MemberSource",
-    "MembersCSVSource",
+    "MembersFileSource",
     "MembersModule",
+    "NamedIdentifier",
     "VerifyMemberRequest",
 ]

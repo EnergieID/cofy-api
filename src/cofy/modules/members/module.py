@@ -32,6 +32,20 @@ class MembersModule(Module):
             response_model=self.source.response_model,
             responses={404: {"description": "Member not found"}},
         )
+        self.add_api_route(
+            "/{member_id}",
+            self.get_by_id,
+            methods=["GET"],
+            summary="Get member by ID",
+            response_model=self.source.response_model,
+            responses={404: {"description": "Member not found"}},
+        )
+
+    def get_by_id(self, member_id: str) -> Any:
+        member = self.source.get(member_id)
+        if member is None:
+            raise HTTPException(status_code=404, detail="Member not found")
+        return member
 
     def verify(self, body: VerifyMemberRequest) -> Any:
         member = self.source.verify(body.activation_code)
