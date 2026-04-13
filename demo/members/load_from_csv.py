@@ -18,8 +18,8 @@ class CSVColumns(StrEnum):
     ADDRESS_ID = "address_id"
     CUSTOMER_TYPE = "customer_type"
     CONNECTION_TYPE = "connection_type"
-    PROVIDER_ID = "provider_id"
-    PROVIDER_NAME = "provider_name"
+    SUPPLIER_ID = "supplier_id"
+    SUPPLIER_NAME = "supplier_name"
     PRODUCT_ID = "product_id"
     PRODUCT_NAME = "product_name"
     DISTRIBUTOR_ID = "distributor_id"
@@ -51,9 +51,9 @@ def example_load_members_from_file(file_path: Path) -> dict[str, Member]:
                     ean=row[CSVColumns.EAN],
                     customer_type=CustomerType(row[CSVColumns.CUSTOMER_TYPE]),
                     connection_type=ConnectionType(row[CSVColumns.CONNECTION_TYPE]),
-                    providor=NamedIdentifier(
-                        id=row[CSVColumns.PROVIDER_ID],
-                        name=row[CSVColumns.PROVIDER_NAME],
+                    supplier=NamedIdentifier(
+                        id=row[CSVColumns.SUPPLIER_ID],
+                        name=row[CSVColumns.SUPPLIER_NAME],
                     ),
                     product=NamedIdentifier(
                         id=row[CSVColumns.PRODUCT_ID],
