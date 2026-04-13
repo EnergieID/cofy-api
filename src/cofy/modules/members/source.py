@@ -8,7 +8,6 @@ class MemberSource[T](ABC):
     @abstractmethod
     def list(
         self,
-        email: str | None = None,
     ) -> builtins.list[T]:
         """List all members."""
 
