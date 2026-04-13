@@ -26,9 +26,9 @@ class Contract(BaseModel):
     ean: Annotated[str, Field(..., description="European Article Number")]
     customer_type: CustomerType
     connection_type: ConnectionType
-    supplier: Annotated[NamedIdentifier, Field(..., description="Energy supplier name")]
-    product: Annotated[NamedIdentifier, Field(..., description="Product name")]
-    distributor: Annotated[NamedIdentifier, Field(..., description="Distributor name")]
+    supplier: NamedIdentifier
+    product: NamedIdentifier
+    distributor: NamedIdentifier
     start_date: datetime
     end_date: datetime | None
     last_invoice_date: datetime | None
