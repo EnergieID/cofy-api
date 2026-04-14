@@ -82,6 +82,15 @@ class TestMakeBillingRequestModel:
         assert "distributor" in all_props
         assert "customer_type" in all_props
 
+    def test_schema_documents_string_and_object_forms(self, mock_tariff):
+        Model = make_billing_request_model(products={"prod1": mock_tariff}, distributors={"dist1": mock_tariff})
+        schema_str = str(Model.model_json_schema())
+        # Both the bare-string Literal and the object reference form should appear
+        assert "prod1" in schema_str
+        assert "dist1" in schema_str
+        # The object reference form introduces a $defs entry with an 'id' property
+        assert "id" in schema_str
+
     def _two_dps(self) -> list[DataPoint]:
         return [
             DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0),
@@ -174,3 +183,55 @@ class TestContractInfo:
         model = Model(meters=[MeterInfo(data=dps)], contract={"customer_type": customer_type})
         contract = model.contract.to_contract()
         assert isinstance(contract, Contract)
+
+
+class TestContractInfoObjectInput:
+    """Verify that product/distributor can be provided as an object with an 'id' field."""
+
+    @pytest.fixture
+    def mock_tariff(self):
+        return MagicMock(spec=Tariff)
+
+    @pytest.fixture
+    def Model(self, mock_tariff):
+        return make_billing_request_model(
+            products={"prod1": mock_tariff},
+            distributors={"dist1": mock_tariff},
+        )
+
+    def _two_dps(self) -> list[DataPoint]:
+        return [
+            DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0),
+            DataPoint(timestamp=dt.datetime(2024, 1, 2, tzinfo=dt.UTC), value=2.0),
+        ]
+
+    def _meter(self) -> MeterInfo:
+        return MeterInfo(data=self._two_dps())
+
+    def test_product_as_id_only_object(self, Model):
+        model = Model(meters=[self._meter()], contract={"product": {"id": "prod1"}})
+        contract = model.contract.to_contract()
+        assert isinstance(contract, Contract)
+
+    def test_product_as_object_with_extra_fields(self, Model, mock_tariff):
+        model = Model(meters=[self._meter()], contract={"product": {"id": "prod1", "name": "Prod One"}})
+        contract = model.contract.to_contract()
+        assert contract.provider is mock_tariff
+
+    def test_distributor_as_id_only_object(self, Model):
+        model = Model(meters=[self._meter()], contract={"distributor": {"id": "dist1"}})
+        contract = model.contract.to_contract()
+        assert isinstance(contract, Contract)
+
+    def test_distributor_as_object_with_extra_fields(self, Model, mock_tariff):
+        model = Model(meters=[self._meter()], contract={"distributor": {"id": "dist1", "name": "Dist One"}})
+        contract = model.contract.to_contract()
+        assert contract.distributor is mock_tariff
+
+    def test_rejects_object_with_unknown_product_id(self, Model):
+        with pytest.raises(ValidationError):
+            Model(meters=[self._meter()], contract={"product": {"id": "unknown"}})
+
+    def test_rejects_object_with_unknown_distributor_id(self, Model):
+        with pytest.raises(ValidationError):
+            Model(meters=[self._meter()], contract={"distributor": {"id": "unknown"}})

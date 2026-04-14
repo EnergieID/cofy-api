@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 from energy_cost import Contract, Meter, MeterType, PowerDirection, Tariff
 from isodate import Duration
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from cofy.enums import CustomerType
 from cofy.modules.timeseries import ISODuration
@@ -62,23 +62,27 @@ def make_billing_request_model(
     products: dict[str, Tariff],
     distributors: dict[str, Tariff],
 ) -> type[BillingRequest]:
-    distributor_annotation = Literal[*tuple(distributors.keys())] | None if distributors else None  # type: ignore[valid-type]  # ty: ignore[invalid-type-form]
-    product_annotation = Literal[*tuple(products.keys())] | None if products else None  # type: ignore[valid-type]  # ty: ignore[invalid-type-form]
+    # Literal types for the known key sets
+    distributor_id_type = Literal[*tuple(distributors.keys())] | None if distributors else None  # type: ignore[valid-type]  # ty: ignore[invalid-type-form]
+    product_id_type = Literal[*tuple(products.keys())] | None if products else None  # type: ignore[valid-type]  # ty: ignore[invalid-type-form]
+
+    class _DistributorRef(BaseModel):
+        model_config = ConfigDict(extra="ignore")
+        id: distributor_id_type  # type: ignore[valid-type]
+
+    class _ProductRef(BaseModel):
+        model_config = ConfigDict(extra="ignore")
+        id: product_id_type  # type: ignore[valid-type]
+
+    # Union: bare string id  OR  object with .id  OR  None
+    distributor_annotation = (distributor_id_type | _DistributorRef) if distributors else None  # type: ignore[valid-type]
+    product_annotation = (product_id_type | _ProductRef) if products else None  # type: ignore[valid-type]
 
     class ContractInfo(BaseModel):
         model_config = ConfigDict(extra="ignore")
         customer_type: CustomerType = CustomerType.RESIDENTIAL
         distributor: distributor_annotation = None  # type: ignore[valid-type]
         product: product_annotation = None  # type: ignore[valid-type]
-
-        @field_validator("distributor", "product", mode="before")
-        @classmethod
-        def _extract_id(cls, v: Any) -> Any:
-            if isinstance(v, dict):
-                return v.get("id", v)
-            if hasattr(v, "id"):
-                return v.id
-            return v
 
         def to_contract(self) -> Contract:
             from energy_cost.data.be import fees, tax_rate
@@ -87,10 +91,13 @@ def make_billing_request_model(
                 fees[f"be_{self.customer_type.value}"],
                 fees[f"flanders_{self.customer_type.value}"],
             ]
+            distributor_id = self.distributor.id if isinstance(self.distributor, _DistributorRef) else self.distributor
+            product_id = self.product.id if isinstance(self.product, _ProductRef) else self.product
+
             distributor_tariff = (
-                distributors[self.distributor] if self.distributor and self.distributor in distributors else None
+                distributors[distributor_id] if distributor_id and distributor_id in distributors else None
             )
-            product_tariff = products[self.product] if self.product and self.product in products else None
+            product_tariff = products[product_id] if product_id and product_id in products else None
 
             return Contract(
                 provider=product_tariff,
