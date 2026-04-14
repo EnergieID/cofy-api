@@ -20,12 +20,13 @@ class MeterInfo(BaseModel):
     direction: PowerDirection = Field(default=PowerDirection.CONSUMPTION, examples=["consumption"])
     type: MeterType = Field(default=MeterType.SINGLE_RATE, examples=["single_rate"])
     data: list[DataPoint] = Field(
+        min_length=2,
         examples=[
             [
                 {"timestamp": "2024-01-01T00:00:00+01:00", "value": 150.5},
                 {"timestamp": "2024-01-15T00:00:00+01:00", "value": 75.3},
             ]
-        ]
+        ],
     )
 
     def to_meter(self) -> Meter:
@@ -53,7 +54,7 @@ class BillingRequest(BaseModel):
     start: dt.datetime | None = None
     end: dt.datetime | None = None
     resolution: ISODuration = Field(default_factory=lambda: Duration(months=1))
-    meters: list[MeterInfo]
+    meters: list[MeterInfo] = Field(min_length=1)
     contract: Any  # narrowed to a ContractInfo subclass by make_billing_request_model
 
     @model_validator(mode="after")

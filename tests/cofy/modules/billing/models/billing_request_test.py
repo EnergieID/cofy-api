@@ -24,18 +24,21 @@ class TestDataPoint:
 
 
 class TestMeterInfo:
-    def _dp(self, value: float = 100.0) -> DataPoint:
-        return DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=value)
+    def _dp(self, value: float = 100.0, day: int = 1) -> DataPoint:
+        return DataPoint(timestamp=dt.datetime(2024, 1, day, tzinfo=dt.UTC), value=value)
+
+    def _two_dps(self) -> list[DataPoint]:
+        return [self._dp(100.0, day=1), self._dp(200.0, day=2)]
 
     def test_to_meter_has_default_direction_and_type(self):
-        info = MeterInfo(data=[self._dp()])
+        info = MeterInfo(data=self._two_dps())
         meter = info.to_meter()
         assert isinstance(meter, Meter)
         assert meter.direction == PowerDirection.CONSUMPTION
         assert meter.type == MeterType.SINGLE_RATE
 
     def test_to_meter_preserves_explicit_direction_and_type(self):
-        info = MeterInfo(direction=PowerDirection.INJECTION, type=MeterType.TOU_PEAK, data=[self._dp()])
+        info = MeterInfo(direction=PowerDirection.INJECTION, type=MeterType.TOU_PEAK, data=self._two_dps())
         meter = info.to_meter()
         assert meter.direction == PowerDirection.INJECTION
         assert meter.type == MeterType.TOU_PEAK
@@ -51,11 +54,13 @@ class TestMeterInfo:
         assert list(meter.data["value"]) == [10.0, 20.0]
         assert list(meter.data["timestamp"]) == [dp.timestamp for dp in dps]
 
-    def test_to_meter_with_single_datapoint(self):
-        dp = self._dp()
-        info = MeterInfo(data=[dp])
-        meter = info.to_meter()
-        assert len(meter.data) == 1
+    def test_raises_for_empty_data(self):
+        with pytest.raises(ValidationError):
+            MeterInfo(data=[])
+
+    def test_raises_for_single_datapoint(self):
+        with pytest.raises(ValidationError):
+            MeterInfo(data=[self._dp()])
 
 
 class TestMakeBillingRequestModel:
@@ -77,29 +82,39 @@ class TestMakeBillingRequestModel:
         assert "distributor" in all_props
         assert "customer_type" in all_props
 
+    def _two_dps(self) -> list[DataPoint]:
+        return [
+            DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0),
+            DataPoint(timestamp=dt.datetime(2024, 1, 2, tzinfo=dt.UTC), value=2.0),
+        ]
+
+    def _meter(self) -> MeterInfo:
+        return MeterInfo(data=self._two_dps())
+
     def test_accepts_known_product(self, mock_tariff):
         Model = make_billing_request_model(products={"prod1": mock_tariff}, distributors={})
-        dp = DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0)
-        model = Model(meters=[MeterInfo(data=[dp])], contract={"product": "prod1"})
+        model = Model(meters=[self._meter()], contract={"product": "prod1"})
         assert model.contract.product == "prod1"
 
     def test_rejects_unknown_product(self, mock_tariff):
         Model = make_billing_request_model(products={"prod1": mock_tariff}, distributors={})
-        dp = DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0)
         with pytest.raises(ValidationError):
-            Model(meters=[MeterInfo(data=[dp])], contract={"product": "unknown"})
+            Model(meters=[self._meter()], contract={"product": "unknown"})
 
     def test_accepts_known_distributor(self, mock_tariff):
         Model = make_billing_request_model(products={}, distributors={"dist1": mock_tariff})
-        dp = DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0)
-        model = Model(meters=[MeterInfo(data=[dp])], contract={"distributor": "dist1"})
+        model = Model(meters=[self._meter()], contract={"distributor": "dist1"})
         assert model.contract.distributor == "dist1"
 
     def test_rejects_unknown_distributor(self, mock_tariff):
         Model = make_billing_request_model(products={}, distributors={"dist1": mock_tariff})
-        dp = DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0)
         with pytest.raises(ValidationError):
-            Model(meters=[MeterInfo(data=[dp])], contract={"distributor": "unknown"})
+            Model(meters=[self._meter()], contract={"distributor": "unknown"})
+
+    def test_rejects_empty_meters_list(self, mock_tariff):
+        Model = make_billing_request_model(products={"prod1": mock_tariff}, distributors={})
+        with pytest.raises(ValidationError):
+            Model(meters=[], contract={})
 
     def test_json_schema_includes_example(self, mock_tariff):
         Model = make_billing_request_model(products={"prod1": mock_tariff}, distributors={"dist1": mock_tariff})
@@ -118,9 +133,12 @@ class TestContractInfo:
             products={"prod1": mock_tariff},
             distributors={"dist1": mock_tariff},
         )
-        dp = DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0)
+        dps = [
+            DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0),
+            DataPoint(timestamp=dt.datetime(2024, 1, 2, tzinfo=dt.UTC), value=2.0),
+        ]
         return Model(
-            meters=[MeterInfo(data=[dp])],
+            meters=[MeterInfo(data=dps)],
             contract={"customer_type": "residential", "product": "prod1", "distributor": "dist1"},
         )
 
@@ -138,15 +156,21 @@ class TestContractInfo:
 
     def test_to_contract_without_product_sets_none_provider(self, mock_tariff):
         Model = make_billing_request_model(products={"prod1": mock_tariff}, distributors={})
-        dp = DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0)
-        model = Model(meters=[MeterInfo(data=[dp])], contract={"customer_type": "residential"})
+        dps = [
+            DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0),
+            DataPoint(timestamp=dt.datetime(2024, 1, 2, tzinfo=dt.UTC), value=2.0),
+        ]
+        model = Model(meters=[MeterInfo(data=dps)], contract={"customer_type": "residential"})
         contract = model.contract.to_contract()
         assert contract.provider is None
 
     @pytest.mark.parametrize("customer_type", [ct.value for ct in CustomerType])
     def test_to_contract_for_all_customer_types(self, mock_tariff, customer_type):
         Model = make_billing_request_model(products={"prod1": mock_tariff}, distributors={})
-        dp = DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0)
-        model = Model(meters=[MeterInfo(data=[dp])], contract={"customer_type": customer_type})
+        dps = [
+            DataPoint(timestamp=dt.datetime(2024, 1, 1, tzinfo=dt.UTC), value=1.0),
+            DataPoint(timestamp=dt.datetime(2024, 1, 2, tzinfo=dt.UTC), value=2.0),
+        ]
+        model = Model(meters=[MeterInfo(data=dps)], contract={"customer_type": customer_type})
         contract = model.contract.to_contract()
         assert isinstance(contract, Contract)

@@ -23,17 +23,19 @@ def _make_cost_df(start: dt.datetime) -> pd.DataFrame:
 
 _START = "2024-01-01T00:00:00+00:00"
 _END = "2024-02-01T00:00:00+00:00"
+_METER: dict = {
+    "direction": "consumption",
+    "type": "single_rate",
+    "data": [
+        {"timestamp": _START, "value": 150.5},
+        {"timestamp": "2024-01-15T00:00:00+00:00", "value": 75.3},
+    ],
+}
 _BODY = {
     "start": _START,
     "end": _END,
     "resolution": "P1M",
-    "meters": [
-        {
-            "direction": "consumption",
-            "type": "single_rate",
-            "data": [{"timestamp": _START, "value": 150.5}],
-        }
-    ],
+    "meters": [_METER],
     "contract": {
         "customer_type": "residential",
         "product": "product1",
@@ -150,6 +152,21 @@ class TestBillingEndpoint:
 
     def test_post_returns_422_for_missing_meters(self):
         body = {k: v for k, v in _BODY.items() if k != "meters"}
+        response = self.client.post(self.module.prefix, json=body)
+        assert response.status_code == 422
+
+    def test_post_returns_422_for_empty_meters_list(self):
+        body = {**_BODY, "meters": []}
+        response = self.client.post(self.module.prefix, json=body)
+        assert response.status_code == 422
+
+    def test_post_returns_422_for_empty_meter_data(self):
+        body = {**_BODY, "meters": [{**_METER, "data": []}]}
+        response = self.client.post(self.module.prefix, json=body)
+        assert response.status_code == 422
+
+    def test_post_returns_422_for_single_datapoint(self):
+        body = {**_BODY, "meters": [{**_METER, "data": [{"timestamp": _START, "value": 100.0}]}]}
         response = self.client.post(self.module.prefix, json=body)
         assert response.status_code == 422
 
