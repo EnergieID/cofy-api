@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from cofy.modules.members import Member, MembersModule, MemberSource
 
 
-class DummyMemberSource(MemberSource):
+class DummyMemberSource(MemberSource[Member]):
     response_model = Member
 
     def __init__(self):
@@ -15,15 +15,15 @@ class DummyMemberSource(MemberSource):
             "code-b": "2",
         }
         self.members = [
-            Member(id="1", email="a@example.com"),
-            Member(id="2", email="b@example.com"),
+            Member(id="1"),
+            Member(id="2"),
         ]
 
-    def list(self, email=None) -> builtins.list[Member]:
-        members = self.members
-        if email is not None:
-            members = [member for member in members if member.email == email]
-        return members
+    def list(self, email: str | None = None) -> builtins.list[Member]:
+        return self.members
+
+    def get(self, member_id: str) -> Member | None:
+        return next((m for m in self.members if m.id == member_id), None)
 
     def verify(self, activation_code: str) -> Member | None:
         member_id = self.activation_codes.get(activation_code)
@@ -38,15 +38,29 @@ def test_members_module_list_and_verify_routes():
     app.include_router(module)
     client = TestClient(app)
 
-    response = client.get(module.prefix, params={"email": "a@example.com"})
+    response = client.get(module.prefix)
     assert response.status_code == 200
-    assert len(response.json()) == 1
+    assert len(response.json()) == 2
 
     response = client.post(module.prefix + "/verify", json={"activation_code": "code-a"})
     assert response.status_code == 200
     assert response.json()["id"] == "1"
 
     response = client.post(module.prefix + "/verify", json={"activation_code": "invalid"})
+    assert response.status_code == 404
+
+
+def test_members_module_get_by_id():
+    app = FastAPI()
+    module = MembersModule(source=DummyMemberSource(), name="dummy")
+    app.include_router(module)
+    client = TestClient(app)
+
+    response = client.get(module.prefix + "/1")
+    assert response.status_code == 200
+    assert response.json()["id"] == "1"
+
+    response = client.get(module.prefix + "/nonexistent")
     assert response.status_code == 404
 
 
