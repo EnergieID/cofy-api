@@ -3,8 +3,9 @@ from pathlib import Path
 
 from energy_cost import MeterType, Tariff
 from energy_cost.data.be import distributors
-from energy_cost.index import EntsoeDayAheadIndex, Index
+from energy_cost.index import CSVIndex, EntsoeDayAheadIndex, Index
 from fastapi import Depends
+from isodate import Duration
 
 from cofy import CofyAPI
 from cofy.api import token_verifier
@@ -44,7 +45,7 @@ cofy.register_module(kiwatt)
 
 ## Tariff app with EnergyCost as source
 Index.register("Belpex15min", EntsoeDayAheadIndex("BE", api_key=environ.get("ENTSOE_API_KEY", "")))
-TARIFF_CONFIG_PATH = str(DATA_DIR / "energy_cost_tariff.yaml")
+TARIFF_CONFIG_PATH = str(DATA_DIR / "dynamic_tariff.yaml")
 dynamic_tariff = TariffModule(
     source=EnergyCostTariffSource(yaml_config=TARIFF_CONFIG_PATH, meter_type=MeterType.SINGLE_RATE),
     name="dynamic",
@@ -53,8 +54,13 @@ dynamic_tariff = TariffModule(
 cofy.register_module(dynamic_tariff)
 
 ## Billing app for our tariff
+Index.register("BelMonthly", CSVIndex(str(DATA_DIR / "monthly_index.csv"), resolution=Duration(months=1)))
 billing = BillingModule(
-    products={"dynamic": Tariff.from_yaml(TARIFF_CONFIG_PATH)},
+    products={
+        "fixed": Tariff.from_yaml(str(DATA_DIR / "fixed_tariff.yaml")),
+        "variable": Tariff.from_yaml(str(DATA_DIR / "variable_tariff.yaml")),
+        "dynamic": Tariff.from_yaml(TARIFF_CONFIG_PATH),
+    },
     distributors=distributors,
 )
 cofy.register_module(billing)

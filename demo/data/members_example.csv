@@ -1,11 +1,11 @@
 ean,member_id,activation_code,address_id,customer_type,connection_type,supplier_id,supplier_name,product_id,product_name,distributor_id,distributor_name,start_date,end_date,last_invoice_date,is_green
-541448820059478667,M001,ACT-M001,A001,residential,electricity,eb,Energie Belgie,eb-super-plus,EB Super+,fluvius-antwerpen,Fluvius Antwerpen,2012-01-21 00:00:00,,,false
-541100000002,M001,ACT-M001,A001,residential,gas,eb,Energie Belgie,eb-fossil,EB Fossil,fluvius-kempen,Fluvius Kempen,2012-01-21 00:00:00,2017-12-13 00:00:00,2017-11-01 00:00:00,false
-542700000001,M002,ACT-M002,A002,non_residential,electricity,eb,Energie Belgie,eb-pro,EB Pro,fluvius-west,Fluvius West,2025-02-15 00:00:00,,,false
-543000000001,M003,ACT-M003,A003,non_residential,electricity,eb,Energie Belgie,eb-pro,EB Pro,fluvius-antwerpen,Fluvius Antwerpen,2020-01-01 00:00:00,,,false
-543100000001,M003,ACT-M003,A003,non_residential,gas,eb,Energie Belgie,eb-pro-gas,EB Pro Gas,fluvius-antwerpen,Fluvius Antwerpen,2020-01-01 00:00:00,,,false
-543200000001,M003,ACT-M003,A003,non_residential,electricity,eb,Energie Belgie,eb-pro-green,EB Pro Green,fluvius-antwerpen,Fluvius Antwerpen,2021-01-01 00:00:00,2022-12-31 00:00:00,,true
-544000000001,M004,ACT-M004,A004,residential,electricity,eb,Energie Belgie,eb-basic,EB Basic,fluvius-kempen,Fluvius Kempen,2023-03-10 00:00:00,,,false
-544100000001,M005,ACT-M005,A005,residential,gas,eb,Energie Belgie,eb-basic-gas,EB Basic Gas,fluvius-limburg,Fluvius Limburg,2024-07-05 00:00:00,,,false
-544200000001,M006,ACT-M006,A006,residential,electricity,eb,Energie Belgie,eb-micro,EB Micro,fluvius-west,Fluvius West,2025-01-01 00:00:00,,,false
+541448820059478667,M001,ACT-M001,A001,residential,electricity,eb,Energie Belgie,variable,Variable,fluvius_antwerpen,Fluvius Antwerpen,2012-01-21 00:00:00,,,false
+541100000002,M001,ACT-M001,A001,residential,gas,eb,Energie Belgie,eb-fossil,EB Fossil,fluvius_kempen,Fluvius Kempen,2012-01-21 00:00:00,2017-12-13 00:00:00,2017-11-01 00:00:00,false
+542700000001,M002,ACT-M002,A002,non_residential,electricity,eb,Energie Belgie,fixed,Fixed,fluvius_west,Fluvius West,2025-02-15 00:00:00,,,false
+543000000001,M003,ACT-M003,A003,non_residential,electricity,eb,Energie Belgie,fixed,Fixed,fluvius_antwerpen,Fluvius Antwerpen,2020-01-01 00:00:00,,,false
+543100000001,M003,ACT-M003,A003,non_residential,gas,eb,Energie Belgie,eb-pro-gas,EB Pro Gas,fluvius_antwerpen,Fluvius Antwerpen,2020-01-01 00:00:00,,,false
+543200000001,M003,ACT-M003,A003,non_residential,electricity,eb,Energie Belgie,variable,Variable,fluvius_antwerpen,Fluvius Antwerpen,2021-01-01 00:00:00,2022-12-31 00:00:00,,true
+544000000001,M004,ACT-M004,A004,residential,electricity,eb,Energie Belgie,fixed,Fixed,fluvius_kempen,Fluvius Kempen,2023-03-10 00:00:00,,,false
+544100000001,M005,ACT-M005,A005,residential,gas,eb,Energie Belgie,eb-basic-gas,EB Basic Gas,fluvius_limburg,Fluvius Limburg,2024-07-05 00:00:00,,,false
+544200000001,M006,ACT-M006,A006,residential,electricity,eb,Energie Belgie,dynamic,Dynamic,fluvius_west,Fluvius West,2025-01-01 00:00:00,,,false
 

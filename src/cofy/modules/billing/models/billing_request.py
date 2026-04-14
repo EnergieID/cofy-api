@@ -1,13 +1,13 @@
 import datetime as dt
-from enum import StrEnum
 from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
 import pandas as pd
 from energy_cost import Contract, Meter, MeterType, PowerDirection, Tariff
 from isodate import Duration
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from cofy.enums import CustomerType
 from cofy.modules.timeseries import ISODuration
 
 
@@ -42,12 +42,6 @@ class MeterInfo(BaseModel):
         )
 
 
-class CustomerType(StrEnum):
-    RESIDENTIAL = "residential"
-    NON_RESIDENTIAL = "non_residential"
-    PROTECTED = "protected"
-
-
 class BillingRequest(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -72,9 +66,19 @@ def make_billing_request_model(
     product_annotation = Literal[*tuple(products.keys())] | None if products else None  # type: ignore[valid-type]  # ty: ignore[invalid-type-form]
 
     class ContractInfo(BaseModel):
+        model_config = ConfigDict(extra="ignore")
         customer_type: CustomerType = CustomerType.RESIDENTIAL
         distributor: distributor_annotation = None  # type: ignore[valid-type]
         product: product_annotation = None  # type: ignore[valid-type]
+
+        @field_validator("distributor", "product", mode="before")
+        @classmethod
+        def _extract_id(cls, v: Any) -> Any:
+            if isinstance(v, dict):
+                return v.get("id", v)
+            if hasattr(v, "id"):
+                return v.id
+            return v
 
         def to_contract(self) -> Contract:
             from energy_cost.data.be import fees, tax_rate
