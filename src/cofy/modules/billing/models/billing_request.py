@@ -1,11 +1,12 @@
 import datetime as dt
 from enum import StrEnum
 from typing import Any, Literal
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from energy_cost import Contract, Meter, MeterType, PowerDirection, Tariff
 from isodate import Duration
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from cofy.modules.timeseries import ISODuration
 
@@ -55,6 +56,12 @@ class BillingRequest(BaseModel):
     meters: list[MeterInfo]
     contract: Any  # narrowed to a ContractInfo subclass by make_billing_request_model
 
+    @model_validator(mode="after")
+    def end_must_be_after_start(self) -> "BillingRequest":
+        if self.start is not None and self.end is not None and self.end <= self.start:
+            raise ValueError(f"'end' ({self.end.isoformat()}) must be after 'start' ({self.start.isoformat()}). ")
+        return self
+
 
 def make_billing_request_model(
     products: dict[str, Tariff],
@@ -85,6 +92,7 @@ def make_billing_request_model(
                 distributor=distributor_tariff,
                 fees=fee_tariffs,
                 tax_rate=tax_rate,
+                timezone=ZoneInfo("Europe/Brussels"),
             )
 
     first_product = next(iter(products), None)
