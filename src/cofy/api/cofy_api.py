@@ -1,3 +1,5 @@
+import tempfile
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -5,6 +7,8 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
 from ..version import get_installed_version
+from .debug_middleware import DebugMiddleware
+from .debug_router import DebugRouter
 from .docs_router import DocsRouter
 from .module import Module
 
@@ -19,11 +23,16 @@ DEFAULT_ARGS: dict[str, Any] = {
 
 
 class CofyAPI(FastAPI):
-    def __init__(self, **kwargs):
+    def __init__(self, *, debug_mode: bool = False, debug_dir: Path | None = None, **kwargs):
         super().__init__(**(DEFAULT_ARGS | kwargs))
         self._modules: list[Module] = []
         self.include_router(DocsRouter(self.openapi))
         self.add_route("/health", self.health_check, methods=["GET"])
+
+        if debug_mode:
+            resolved_debug_dir = debug_dir or Path(tempfile.mkdtemp(prefix="cofy_debug_"))
+            self.add_middleware(DebugMiddleware, debug_dir=resolved_debug_dir)
+            self.include_router(DebugRouter(debug_dir=resolved_debug_dir), include_in_schema=False)
 
     def openapi(self):
         return get_openapi(

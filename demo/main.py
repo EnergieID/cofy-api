@@ -20,7 +20,9 @@ from demo.members.load_from_csv import example_load_members_from_file
 DATA_DIR = Path(__file__).resolve().parent / "data"
 
 # Initialize the Cofy API
-cofy = CofyAPI(dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))])
+cofy = CofyAPI(
+    dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))], debug_mode=True
+)
 
 entsoe = TariffModule(
     source=EntsoeDayAheadTariffSource(
