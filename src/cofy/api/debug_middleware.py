@@ -1,4 +1,6 @@
 import json
+import logging
+import time
 import uuid
 from pathlib import Path
 
@@ -6,6 +8,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.types import ASGIApp
+
+logger = logging.getLogger("uvicorn")
 
 
 class DebugMiddleware(BaseHTTPMiddleware):
@@ -22,6 +26,7 @@ class DebugMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         request_id = str(uuid.uuid4())
+        t_start = time.perf_counter()
         request_dir = self._debug_dir / request_id
         request_dir.mkdir(parents=True, exist_ok=True)
 
@@ -95,6 +100,16 @@ class DebugMiddleware(BaseHTTPMiddleware):
         # Persist to disk
         (request_dir / "request.json").write_text(json.dumps(request_info, indent=2, default=str), encoding="utf-8")
         (request_dir / "response.json").write_text(json.dumps(response_info, indent=2, default=str), encoding="utf-8")
+
+        elapsed_ms = (time.perf_counter() - t_start) * 1000
+        logger.info(
+            "%s %s → %d  id=%s  %.1fms",
+            request_info["method"],
+            request_info["path"],
+            response.status_code,
+            request_id,
+            elapsed_ms,
+        )
 
         debug_url = f"{self._base_url}/{request_id}"
 
