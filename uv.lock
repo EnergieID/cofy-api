@@ -197,8 +197,8 @@ requires-dist = [
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'production'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'tariff'" },
     { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production", "directive", "billing"], marker = "extra == 'all'" },
-    { name = "energy-cost", marker = "extra == 'billing'", specifier = ">=0.2.4" },
-    { name = "energy-cost", marker = "extra == 'tariff'", specifier = ">=0.2.4" },
+    { name = "energy-cost", marker = "extra == 'billing'", git = "https://github.com/EnergieID/energy-cost.git?rev=enhance%2Foptimise" },
+    { name = "energy-cost", marker = "extra == 'tariff'", git = "https://github.com/EnergieID/energy-cost.git?rev=enhance%2Foptimise" },
     { name = "entsoe-py", marker = "extra == 'tariff'", specifier = ">=0.7.10" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.128.0" },
     { name = "isodate", marker = "extra == 'timeseries'", specifier = ">=0.7.2" },
@@ -330,18 +330,14 @@ wheels = [
 
 [[package]]
 name = "energy-cost"
-version = "0.2.4"
-source = { registry = "https://pypi.org/simple" }
+version = "0.1.0"
+source = { git = "https://github.com/EnergieID/energy-cost.git?rev=enhance%2Foptimise#56c9b304f14c14d51544d07bc40672dfc0493406" }
 dependencies = [
     { name = "entsoe-py" },
     { name = "isodate" },
     { name = "pandas" },
     { name = "pydantic" },
     { name = "pyyaml" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/41/86/be5c607f58275be562359e598f0b191f85bc06d3847253f407fd3b7184a6/energy_cost-0.2.4.tar.gz", hash = "sha256:4a061228c8722dbf27b156ce82d42c052e2796949fa6d043f497d8e06a0742ac", size = 37119, upload-time = "2026-04-14T09:08:05.903Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e7/d6/5c196b5ed879994ebe33fdc0221f25deb97cc6c5cfa87c897040545629ce/energy_cost-0.2.4-py3-none-any.whl", hash = "sha256:39a364269fcde9022863666009ffac5e141d94e33ae49e079d28c5c1579cab9b", size = 35210, upload-time = "2026-04-14T09:08:06.92Z" },
 ]
 
 [[package]]

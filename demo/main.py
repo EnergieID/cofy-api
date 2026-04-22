@@ -2,7 +2,7 @@ from os import environ
 from pathlib import Path
 
 from energy_cost import MeterType, Tariff
-from energy_cost.data.be import distributors
+from energy_cost.data.be.flanders import data
 from energy_cost.index import CSVIndex, EntsoeDayAheadIndex, Index
 from fastapi import Depends
 from isodate import Duration
@@ -61,7 +61,7 @@ billing = BillingModule(
         "variable": Tariff.from_yaml(str(DATA_DIR / "variable_tariff.yaml")),
         "dynamic": Tariff.from_yaml(TARIFF_CONFIG_PATH),
     },
-    distributors=distributors,
+    region=data,
 )
 cofy.register_module(billing)
 

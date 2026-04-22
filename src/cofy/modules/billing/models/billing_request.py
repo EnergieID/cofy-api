@@ -4,10 +4,10 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 from energy_cost import Contract, Meter, MeterType, PowerDirection, Tariff
+from energy_cost.data import ConnectionType, CustomerType, RegionalData
 from isodate import Duration
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from cofy.enums import CustomerType
 from cofy.modules.timeseries import ISODuration
 
 
@@ -60,55 +60,50 @@ class BillingRequest(BaseModel):
 
 def make_billing_request_model(
     products: dict[str, Tariff],
-    distributors: dict[str, Tariff],
+    region: dict[ConnectionType, RegionalData],
 ) -> type[BillingRequest]:
-    # Literal types for the known key sets
-    distributor_id_type = Literal[*tuple(distributors.keys())] | None if distributors else None  # type: ignore[valid-type]  # ty: ignore[invalid-type-form]
     product_id_type = Literal[*tuple(products.keys())] | None if products else None  # type: ignore[valid-type]  # ty: ignore[invalid-type-form]
 
     class _DistributorRef(BaseModel):
         model_config = ConfigDict(extra="ignore")
-        id: distributor_id_type  # type: ignore[valid-type]
+        id: str
 
     class _ProductRef(BaseModel):
         model_config = ConfigDict(extra="ignore")
         id: product_id_type  # type: ignore[valid-type]
 
     # Union: bare string id  OR  object with .id  OR  None
-    distributor_annotation = (distributor_id_type | _DistributorRef) if distributors else None  # type: ignore[valid-type]
+    distributor_annotation = str | _DistributorRef | None
     product_annotation = (product_id_type | _ProductRef) if products else None  # type: ignore[valid-type]
 
     class ContractInfo(BaseModel):
         model_config = ConfigDict(extra="ignore")
         customer_type: CustomerType = CustomerType.RESIDENTIAL
+        connection_type: ConnectionType = ConnectionType.ELECTRICITY
         distributor: distributor_annotation = None  # type: ignore[valid-type]
         product: product_annotation = None  # type: ignore[valid-type]
 
         def to_contract(self) -> Contract:
-            from energy_cost.data.be import fees, tax_rate
+            data = region[self.connection_type]
 
-            fee_tariffs = [
-                fees[f"be_{self.customer_type.value}"],
-                fees[f"flanders_{self.customer_type.value}"],
-            ]
             distributor_id = self.distributor.id if isinstance(self.distributor, _DistributorRef) else self.distributor
             product_id = self.product.id if isinstance(self.product, _ProductRef) else self.product
 
             distributor_tariff = (
-                distributors[distributor_id] if distributor_id and distributor_id in distributors else None
+                data.distributors[distributor_id] if distributor_id and distributor_id in data.distributors else None
             )
             product_tariff = products[product_id] if product_id and product_id in products else None
 
             return Contract(
-                provider=product_tariff,
+                supplier=product_tariff,
                 distributor=distributor_tariff,
-                fees=fee_tariffs,
-                tax_rate=tax_rate,
+                fees=data.fees[self.customer_type],
+                taxes=data.taxes,
                 timezone=ZoneInfo("Europe/Brussels"),
             )
 
     first_product = next(iter(products), None)
-    first_distributor = next(iter(distributors), None)
+    first_distributor = next(iter(region[ConnectionType.ELECTRICITY].distributors), None)
 
     _example: dict = {
         "start": "2024-01-01T00:00:00+01:00",
@@ -116,6 +111,7 @@ def make_billing_request_model(
         "resolution": "P1M",
         "contract": {
             "customer_type": "residential",
+            "connection_type": "electricity",
             **(
                 {
                     "distributor": first_distributor,

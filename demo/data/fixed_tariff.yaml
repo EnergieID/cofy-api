@@ -12,7 +12,7 @@
     constant_cost: -15.0
   periodic:
     fixed_fee:
-      period: monthly
+      period: P1M
       constant_cost: 10
 - start: 2026-01-01T00:00:00+01:00
   consumption:
@@ -21,5 +21,5 @@
     constant_cost: -25.0
   periodic:
     fixed_fee:
-      period: monthly
+      period: P1M
       constant_cost: 15
