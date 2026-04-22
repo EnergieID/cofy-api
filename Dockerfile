@@ -8,6 +8,9 @@ WORKDIR /app
 # Copy dependency files first (better layer caching)
 COPY pyproject.toml uv.lock* ./
 
+# install git, to get git dependencies
+RUN apk add --no-cache git
+
 # Install dependencies for the demo app (including optional extras) first for better layer caching
 RUN uv sync --frozen --no-dev --all-extras --no-install-project
 

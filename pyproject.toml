@@ -73,6 +73,11 @@ check = "ty check"
 [tool.poe.tasks.demo]
 cmd = "fastapi dev demo/main.py"
 envfile = ".env.local"
+[tool.poe.tasks.prod]
+shell = """
+docker build -t cofy-api .
+docker run -p 8080:8080 --env-file .env.local cofy-api
+"""
 [tool.poe.tasks.test]
 cmd = "pytest --cov=cofy --cov-report=term-missing --import-mode=importlib"
 [tool.coverage.report]
