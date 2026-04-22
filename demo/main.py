@@ -4,7 +4,7 @@ from pathlib import Path
 from energy_cost import MeterType, Tariff
 from energy_cost.data import ConnectionType
 from energy_cost.data.be.flanders import data
-from energy_cost.index import CSVIndex, EntsoeDayAheadIndex, Index
+from energy_cost.index import CachedEntsoeDayAheadIndex, CSVIndex, Index
 from fastapi import Depends
 from isodate import Duration
 
@@ -47,7 +47,7 @@ kiwatt = TariffModule(
 cofy.register_module(kiwatt)
 
 ## Tariff app with EnergyCost as source
-Index.register("Belpex15min", EntsoeDayAheadIndex("BE", api_key=environ.get("ENTSOE_API_KEY", "")))
+Index.register("Belpex15min", CachedEntsoeDayAheadIndex("BE", api_key=environ.get("ENTSOE_API_KEY", "")))
 TARIFF_CONFIG_PATH = str(DATA_DIR / "dynamic_tariff.yaml")
 dynamic_tariff = TariffModule(
     source=EnergyCostTariffSource(yaml_config=TARIFF_CONFIG_PATH, meter_type=MeterType.SINGLE_RATE),
