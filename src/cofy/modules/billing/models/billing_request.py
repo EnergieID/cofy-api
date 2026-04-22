@@ -30,15 +30,19 @@ class MeterInfo(BaseModel):
     )
 
     def to_meter(self) -> Meter:
+        data = pd.DataFrame(
+            {
+                "timestamp": [dp.timestamp for dp in self.data],
+                "value": [dp.value for dp in self.data],
+            }
+        )
+        # convert kWh to MWh for energy_cost
+        data["value"] = data["value"] / 1000
+
         return Meter(
             direction=self.direction,
             type=self.type,
-            data=pd.DataFrame(
-                {
-                    "timestamp": [dp.timestamp for dp in self.data],
-                    "value": [dp.value for dp in self.data],
-                }
-            ),
+            data=data,
         )
 
 
