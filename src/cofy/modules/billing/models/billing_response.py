@@ -20,7 +20,7 @@ TariffBreakdown = dict[CostGroup, dict[str, float]]
 
 class BillingDataPoint(BaseModel):
     timestamp: dt.datetime
-    provider: TariffBreakdown | None = None
+    supplier: TariffBreakdown | None = None
     distributor: TariffBreakdown | None = None
     fees: TariffBreakdown | None = None
     taxes: TariffBreakdown

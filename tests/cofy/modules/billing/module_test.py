@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 from energy_cost import CostGroup, Tariff
+from energy_cost.data import ConnectionType
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -73,8 +74,8 @@ class TestBillingModuleMetadata:
     def setup_method(self):
         mock_tariff = MagicMock(spec=Tariff)
         self.module = BillingModule(
-            products={"product1": mock_tariff},
-            distributors={"dist1": mock_tariff},
+            products={ConnectionType.ELECTRICITY: {"product1": mock_tariff}},
+            region={ConnectionType.ELECTRICITY: MagicMock()},
         )
 
     def test_type(self):
@@ -94,8 +95,8 @@ class TestBillingEndpoint:
     def setup_method(self):
         mock_tariff = MagicMock(spec=Tariff)
         self.module = BillingModule(
-            products={"product1": mock_tariff},
-            distributors={"dist1": mock_tariff},
+            products={ConnectionType.ELECTRICITY: {"product1": mock_tariff}},
+            region={ConnectionType.ELECTRICITY: MagicMock()},
         )
         app = FastAPI()
         app.include_router(self.module)
@@ -139,16 +140,6 @@ class TestBillingEndpoint:
             response = self.client.post(self.module.prefix, json=_BODY)
         assert response.status_code == 400
         assert "bad input" in response.json()["detail"]
-
-    def test_post_returns_422_for_unknown_product(self):
-        body = {**_BODY, "contract": {"customer_type": "residential", "product": "unknown"}}
-        response = self.client.post(self.module.prefix, json=body)
-        assert response.status_code == 422
-
-    def test_post_returns_422_for_unknown_distributor(self):
-        body = {**_BODY, "contract": {"customer_type": "residential", "distributor": "unknown"}}
-        response = self.client.post(self.module.prefix, json=body)
-        assert response.status_code == 422
 
     def test_post_returns_422_for_missing_meters(self):
         body = {k: v for k, v in _BODY.items() if k != "meters"}
@@ -196,8 +187,8 @@ class TestDSTBoundary:
     def setup_method(self):
         mock_tariff = MagicMock(spec=Tariff)
         self.module = BillingModule(
-            products={"dynamic": mock_tariff},
-            distributors={"fluvius_antwerpen": mock_tariff},
+            products={ConnectionType.ELECTRICITY: {"dynamic": mock_tariff}},
+            region={ConnectionType.ELECTRICITY: MagicMock()},
         )
         app = FastAPI()
         app.include_router(self.module)

@@ -11,8 +11,10 @@ class BillingModule(Module):
     type: str = "billing"
     type_description: str = "Module that computes energy costs based on meter data and contract information."
 
-    def __init__(self, *, products: dict[str, Tariff], region: dict[ConnectionType, RegionalData], **kwargs):
-        self.products: dict[str, Tariff] = products
+    def __init__(
+        self, *, products: dict[ConnectionType, dict[str, Tariff]], region: dict[ConnectionType, RegionalData], **kwargs
+    ):
+        self.products: dict[ConnectionType, dict[str, Tariff]] = products
         self.region: dict[ConnectionType, RegionalData] = region
         super().__init__(**kwargs)
 
@@ -20,7 +22,7 @@ class BillingModule(Module):
         BillingRequestModel = make_billing_request_model(self.products, self.region)
 
         async def calculate_cost(body: BillingRequestModel) -> BillingResponse:  # ty: ignore[invalid-type-form]
-            contract = body.contract.to_contract()
+            contract = body.contract.to_contract(products=self.products, region=self.region)
             meters = [m.to_meter() for m in body.meters]
 
             try:

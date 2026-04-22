@@ -1,5 +1,4 @@
 import datetime as dt
-from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -46,6 +45,55 @@ class MeterInfo(BaseModel):
         )
 
 
+class _Ref(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+
+
+OptionalStrOrRef = str | _Ref | None
+
+
+def str_or_ref_to_str(value: OptionalStrOrRef) -> str | None:
+    if isinstance(value, str):
+        return value
+    elif isinstance(value, _Ref):
+        return value.id
+    else:
+        return None
+
+
+class ContractInfo(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    customer_type: CustomerType = CustomerType.RESIDENTIAL
+    connection_type: ConnectionType = ConnectionType.ELECTRICITY
+    distributor: OptionalStrOrRef = None
+    product: OptionalStrOrRef = None
+
+    def to_contract(
+        self,
+        products: dict[ConnectionType, dict[str, Tariff]],
+        region: dict[ConnectionType, RegionalData],
+    ) -> Contract:
+        data = region[self.connection_type]
+        products_for_ct = products.get(self.connection_type, {})
+
+        distributor = str_or_ref_to_str(self.distributor)
+        product = str_or_ref_to_str(self.product)
+
+        distributor_tariff = (
+            data.distributors[distributor] if distributor and distributor in data.distributors else None
+        )
+        product_tariff = products_for_ct[product] if product and product in products_for_ct else None
+
+        return Contract(
+            supplier=product_tariff,
+            distributor=distributor_tariff,
+            fees=data.fees[self.customer_type],
+            taxes=data.taxes,
+            timezone=ZoneInfo("Europe/Brussels"),
+        )
+
+
 class BillingRequest(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -53,7 +101,7 @@ class BillingRequest(BaseModel):
     end: dt.datetime | None = None
     resolution: ISODuration = Field(default_factory=lambda: Duration(months=1))
     meters: list[MeterInfo] = Field(min_length=1)
-    contract: Any  # narrowed to a ContractInfo subclass by make_billing_request_model
+    contract: ContractInfo
 
     @model_validator(mode="after")
     def end_must_be_after_start(self) -> "BillingRequest":
@@ -63,81 +111,31 @@ class BillingRequest(BaseModel):
 
 
 def make_billing_request_model(
-    products: dict[str, Tariff],
+    products: dict[ConnectionType, dict[str, Tariff]],
     region: dict[ConnectionType, RegionalData],
 ) -> type[BillingRequest]:
-    product_id_type = Literal[*tuple(products.keys())] | None if products else None  # type: ignore[valid-type]  # ty: ignore[invalid-type-form]
-
-    class _DistributorRef(BaseModel):
-        model_config = ConfigDict(extra="ignore")
-        id: str
-
-    class _ProductRef(BaseModel):
-        model_config = ConfigDict(extra="ignore")
-        id: product_id_type  # type: ignore[valid-type]
-
-    # Union: bare string id  OR  object with .id  OR  None
-    distributor_annotation = str | _DistributorRef | None
-    product_annotation = (product_id_type | _ProductRef) if products else None  # type: ignore[valid-type]
-
-    class ContractInfo(BaseModel):
-        model_config = ConfigDict(extra="ignore")
-        customer_type: CustomerType = CustomerType.RESIDENTIAL
-        connection_type: ConnectionType = ConnectionType.ELECTRICITY
-        distributor: distributor_annotation = None  # type: ignore[valid-type]
-        product: product_annotation = None  # type: ignore[valid-type]
-
-        def to_contract(self) -> Contract:
-            data = region[self.connection_type]
-
-            distributor_id = self.distributor.id if isinstance(self.distributor, _DistributorRef) else self.distributor
-            product_id = self.product.id if isinstance(self.product, _ProductRef) else self.product
-
-            distributor_tariff = (
-                data.distributors[distributor_id] if distributor_id and distributor_id in data.distributors else None
-            )
-            product_tariff = products[product_id] if product_id and product_id in products else None
-
-            return Contract(
-                supplier=product_tariff,
-                distributor=distributor_tariff,
-                fees=data.fees[self.customer_type],
-                taxes=data.taxes,
-                timezone=ZoneInfo("Europe/Brussels"),
-            )
-
-    first_product = next(iter(products), None)
-    first_distributor = next(iter(region[ConnectionType.ELECTRICITY].distributors), None)
+    electricity_products = products.get(ConnectionType.ELECTRICITY, {})
+    first_product = next(iter(electricity_products), None)
+    electricity_region = region.get(ConnectionType.ELECTRICITY)
+    first_distributor = next(iter(electricity_region.distributors), None) if electricity_region else None
 
     _example: dict = {
-        "start": "2024-01-01T00:00:00+01:00",
-        "end": "2024-02-01T00:00:00+01:00",
+        "start": "2025-01-01T00:00:00+01:00",
+        "end": "2025-02-01T00:00:00+01:00",
         "resolution": "P1M",
         "contract": {
             "customer_type": "residential",
             "connection_type": "electricity",
-            **(
-                {
-                    "distributor": first_distributor,
-                }
-                if first_distributor
-                else {}
-            ),
-            **(
-                {
-                    "product": first_product,
-                }
-                if first_product
-                else {}
-            ),
+            **({"distributor": first_distributor} if first_distributor else {}),
+            **({"product": first_product} if first_product else {}),
         },
         "meters": [
             {
                 "direction": "consumption",
                 "type": "single_rate",
                 "data": [
-                    {"timestamp": "2024-01-01T00:00:00+01:00", "value": 150.5},
-                    {"timestamp": "2024-01-01T00:15:00+01:00", "value": 75.3},
+                    {"timestamp": "2025-01-01T00:00:00+01:00", "value": 150.5},
+                    {"timestamp": "2025-01-01T00:15:00+01:00", "value": 75.3},
                 ],
             }
         ],
@@ -148,6 +146,5 @@ def make_billing_request_model(
             arbitrary_types_allowed=True,
             json_schema_extra={"examples": [_example]},
         )
-        contract: ContractInfo  # type: ignore[assignment]
 
     return DynamicBillingRequest

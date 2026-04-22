@@ -47,7 +47,7 @@ class TestBillingDataPoint:
             total={CostGroup.TOTAL: {"total": 1.0}},
         )
         assert point.timestamp == ts
-        assert point.provider is None
+        assert point.supplier is None
         assert point.distributor is None
         assert point.fees is None
 
@@ -55,13 +55,13 @@ class TestBillingDataPoint:
         ts = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
         point = BillingDataPoint(
             timestamp=ts,
-            provider={CostGroup.CONSUMPTION: {"energy": 0.5}},
+            supplier={CostGroup.CONSUMPTION: {"energy": 0.5}},
             distributor={CostGroup.FIXED: {"grid": 0.1}},
             fees={CostGroup.FIXED: {"levy": 0.02}},
             taxes={CostGroup.FIXED: {"vat": 0.06}},
             total={CostGroup.TOTAL: {"total": 0.68}},
         )
-        assert point.provider is not None
+        assert point.supplier is not None
         assert point.distributor is not None
         assert point.fees is not None
 
@@ -115,7 +115,7 @@ class TestBillingResponseFromDf:
         df = _make_cost_df(start)
         result = BillingResponse.from_df(df, BillingMetadata())
         point = result.data[0]
-        assert point.provider is None
+        assert point.supplier is None
         assert point.distributor is None
         assert point.fees is None
 
