@@ -1,3 +1,4 @@
+import io
 import logging
 import time
 import uuid
@@ -37,8 +38,14 @@ class DebugMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         yappi.stop()
-        func_stats = yappi.get_func_stats()
-        func_stats.save(str(request_dir / "profile.pstat"), type="pstat")
+        buf = io.StringIO()
+        yappi.get_thread_stats().print_all(out=buf)
+        buf.write("\n")
+        yappi.get_func_stats().print_all(
+            out=buf,
+            columns={0: ("name", 120), 1: ("ncall", 8), 2: ("tsub", 10), 3: ("ttot", 10), 4: ("tavg", 10)},
+        )
+        (request_dir / "profile.txt").write_text(buf.getvalue(), encoding="utf-8")
         yappi.clear_stats()
 
         elapsed_ms = (time.perf_counter() - t_start) * 1000

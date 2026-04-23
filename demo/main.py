@@ -21,7 +21,7 @@ DATA_DIR = Path(__file__).resolve().parent / "data"
 
 # Initialize the Cofy API
 cofy = CofyAPI(
-    dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))], debug_mode=False
+    dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))], debug_mode=True
 )
 
 entsoe = TariffModule(
