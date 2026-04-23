@@ -52,10 +52,7 @@ class DebugMiddleware(BaseHTTPMiddleware):
 
         debug_url = f"{self._base_url}/{request_id}/profile"
 
-        new_headers = dict(response.headers)
-        new_headers["X-Debug-Id"] = request_id
-        new_headers["X-Debug-Url"] = debug_url
+        response.headers["X-Debug-Id"] = request_id
+        response.headers["X-Debug-Url"] = debug_url
 
-        return Response(
-            content=response.body, status_code=response.status_code, headers=new_headers, media_type=response.media_type
-        )
+        return response
