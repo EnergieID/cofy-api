@@ -8,4 +8,6 @@ ean,member_id,activation_code,address_id,customer_type,connection_type,supplier_
 544000000001,M004,ACT-M004,A004,residential,electricity,eb,Energie Belgie,fixed,Fixed,fluvius_kempen,Fluvius Kempen,2023-03-10 00:00:00,,,false
 544100000001,M005,ACT-M005,A005,residential,gas,eb,Energie Belgie,basic,EB Basic Gas,fluvius_limburg,Fluvius Limburg,2024-07-05 00:00:00,,,false
 544200000001,M006,ACT-M006,A006,residential,electricity,eb,Energie Belgie,dynamic,Dynamic,fluvius_west,Fluvius West,2025-01-01 00:00:00,,,false
+541449500000100197,M007,ACT-M007,A007,residential,electricity,eb,Energie Belgie,variable,Variable,fluvius_antwerpen,Fluvius Antwerpen,2012-01-21 00:00:00,,,false
+541449500000100203,M007,ACT-M007,A007,residential,gas,eb,Energie Belgie,basic,EB Basic Gas,fluvius_kempen,Fluvius Kempen,2012-01-21 00:00:00,,,false
 
