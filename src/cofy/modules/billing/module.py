@@ -21,7 +21,7 @@ class BillingModule(Module):
     def init_routes(self):
         BillingRequestModel = make_billing_request_model(self.products, self.region)
 
-        async def calculate_cost(body: BillingRequestModel) -> BillingResponse:  # ty: ignore[invalid-type-form]
+        def calculate_cost(body: BillingRequestModel) -> BillingResponse:  # ty: ignore[invalid-type-form]
             contract = body.contract.to_contract(products=self.products, region=self.region)
             meters = [m.to_meter() for m in body.meters]
 
