@@ -1,12 +1,9 @@
 import json
 import logging
 import time
-import tracemalloc
 import uuid
 from pathlib import Path
 
-import memray
-from pyinstrument import Profiler
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -61,38 +58,27 @@ class DebugMiddleware(BaseHTTPMiddleware):
             "body": body_data,
         }
 
-        # Start memray first so pyinstrument's setprofile sits on top of it.
-        # Teardown must be LIFO: stop pyinstrument before memray exits.
-        memray_output = request_dir / "memory.bin"
-        profiler = Profiler(async_mode="enabled")
-        memray_tracker = memray.Tracker(memray_output)
-        memray_tracker.__enter__()
+        # Profile the request
+        try:
+            from pyinstrument import Profiler  # noqa: PLC0415
 
-        tracemalloc.start()
-        mem_before = tracemalloc.take_snapshot()
-        profiler.start()
+            profiler = Profiler(async_mode="enabled")
+            profiler.start()
+            profiling_available = True
+        except ImportError:
+            profiler = None
+            profiling_available = False
 
         response = await call_next(request)
 
-        profiler.stop()  # must happen before memray exits
-        mem_after = tracemalloc.take_snapshot()
-        tracemalloc.stop()
-        memray_tracker.__exit__(None, None, None)
-
-        profile_html = profiler.output_html()
-        (request_dir / "profile.html").write_text(profile_html, encoding="utf-8")
-
-        peak_mem_kb = sum(s.size for s in mem_after.statistics("lineno")) / 1024
-        mem_stats = mem_after.compare_to(mem_before, "lineno")
-        top_allocs = [
-            {"file": str(s.traceback[0]) if s.traceback else "?", "size_bytes": s.size_diff, "count_diff": s.count_diff}
-            for s in mem_stats[:10]
-            if s.size_diff > 0
-        ]
+        if profiling_available and profiler is not None:
+            profiler.stop()
+            profile_html = profiler.output_html()
+            (request_dir / "profile.html").write_text(profile_html, encoding="utf-8")
 
         # Buffer response body
         response_body_chunks = []
-        async for chunk in response.body_iterator:  # type: ignore[attr-defined]
+        async for chunk in response.body_iterator:
             response_body_chunks.append(chunk if isinstance(chunk, bytes) else chunk.encode("utf-8"))
         response_bytes = b"".join(response_body_chunks)
 
@@ -111,26 +97,18 @@ class DebugMiddleware(BaseHTTPMiddleware):
             "body": response_data,
         }
 
-        memory_info = {
-            "peak_kb": round(peak_mem_kb, 1),
-            "top_allocations": top_allocs,
-            "memray_bin": str(memray_output),
-        }
-
         # Persist to disk
         (request_dir / "request.json").write_text(json.dumps(request_info, indent=2, default=str), encoding="utf-8")
         (request_dir / "response.json").write_text(json.dumps(response_info, indent=2, default=str), encoding="utf-8")
-        (request_dir / "memory.json").write_text(json.dumps(memory_info, indent=2, default=str), encoding="utf-8")
 
         elapsed_ms = (time.perf_counter() - t_start) * 1000
         logger.info(
-            "%s %s → %d  id=%s  %.1fms  mem=%.1fkb",
+            "%s %s → %d  id=%s  %.1fms",
             request_info["method"],
             request_info["path"],
             response.status_code,
             request_id,
             elapsed_ms,
-            peak_mem_kb,
         )
 
         debug_url = f"{self._base_url}/{request_id}"

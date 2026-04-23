@@ -44,7 +44,6 @@ directive = [
     "narwhals>=2.15.0"
 ]
 debug = [
-    "memray>=1.19.3",
     "pyinstrument>=5.0.0",
 ]
 
