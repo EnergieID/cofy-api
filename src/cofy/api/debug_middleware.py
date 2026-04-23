@@ -29,16 +29,17 @@ class DebugMiddleware(BaseHTTPMiddleware):
         request_dir = self._debug_dir / request_id
         request_dir.mkdir(parents=True, exist_ok=True)
 
-        from pyinstrument import Profiler  # noqa: PLC0415
+        import yappi  # noqa: PLC0415
 
-        profiler = Profiler(async_mode="enabled")
-        profiler.start()
+        yappi.set_clock_type("wall")
+        yappi.start(builtins=False)
 
         response = await call_next(request)
 
-        profiler.stop()
-        profile_html = profiler.output_html()
-        (request_dir / "profile.html").write_text(profile_html, encoding="utf-8")
+        yappi.stop()
+        func_stats = yappi.get_func_stats()
+        func_stats.save(str(request_dir / "profile.pstat"), type="pstat")
+        yappi.clear_stats()
 
         elapsed_ms = (time.perf_counter() - t_start) * 1000
         logger.info(

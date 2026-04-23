@@ -44,7 +44,7 @@ directive = [
     "narwhals>=2.15.0"
 ]
 debug = [
-    "pyinstrument>=5.0.0",
+    "yappi>=1.7.6",
 ]
 
 # Convenience extras

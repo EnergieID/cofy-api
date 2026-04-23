@@ -1,9 +1,11 @@
+import io
 import json
+import pstats
 from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import PlainTextResponse
 
 
 class DebugRouter(APIRouter):
@@ -25,12 +27,16 @@ class DebugRouter(APIRouter):
             return None
         return json.loads(path.read_text(encoding="utf-8"))
 
-    async def _get_profile(self, request_id: str) -> HTMLResponse:
+    async def _get_profile(self, request_id: str) -> PlainTextResponse:
         request_dir = self._request_dir(request_id)
-        profile_path = request_dir / "profile.html"
+        profile_path = request_dir / "profile.pstat"
         if not profile_path.exists():
             raise HTTPException(
                 status_code=404,
-                detail="No profile data available. Install pyinstrument to enable profiling.",
+                detail="No profile data available. Install yappi to enable profiling.",
             )
-        return HTMLResponse(profile_path.read_text(encoding="utf-8"))
+        buf = io.StringIO()
+        stats = pstats.Stats(str(profile_path), stream=buf)
+        stats.sort_stats(pstats.SortKey.CUMULATIVE)
+        stats.print_stats()
+        return PlainTextResponse(buf.getvalue())
