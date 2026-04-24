@@ -37,6 +37,8 @@ class MeterInfo(BaseModel):
         )
         # convert kWh to MWh for energy_cost
         data["value"] = data["value"] / 1000
+        # convert iso strings to datetime
+        data["timestamp"] = pd.to_datetime(data["timestamp"], format="ISO8601", utc=True)
 
         return Meter(
             direction=self.direction,
