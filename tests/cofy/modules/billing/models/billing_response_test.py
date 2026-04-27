@@ -124,6 +124,7 @@ class TestBillingResponseFromDf:
         df = _make_cost_df(start)
         result = BillingResponse.from_df(df, BillingMetadata())
         point = result.data[0]
+        assert point.taxes is not None
         assert CostGroup.FIXED in point.taxes
         assert "vat" in point.taxes[CostGroup.FIXED]
         assert point.taxes[CostGroup.FIXED]["vat"] == pytest.approx(0.06)
