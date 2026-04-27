@@ -23,7 +23,7 @@ class BillingDataPoint(BaseModel):
     supplier: TariffBreakdown | None = None
     distributor: TariffBreakdown | None = None
     fees: TariffBreakdown | None = None
-    taxes: TariffBreakdown
+    taxes: TariffBreakdown | None = None
     total: TariffBreakdown
 
 
