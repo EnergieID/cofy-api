@@ -1,20 +1,9 @@
 from datetime import datetime
-from enum import StrEnum
 from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-
-class CustomerType(StrEnum):
-    RESIDENTIAL = "residential"
-    NON_RESIDENTIAL = "non_residential"
-    PROTECTED = "protected"
-
-
-class ConnectionType(StrEnum):
-    ELECTRICITY = "electricity"
-    GAS = "gas"
-    WATER = "water"
+from cofy.enums import ConnectionType, CustomerType
 
 
 class NamedIdentifier(BaseModel):

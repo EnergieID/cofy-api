@@ -59,7 +59,7 @@ class TestDocsRouter:
                 return await call_next(request)
 
         # ty can't handle this type properly, see https://github.com/Kludex/starlette/discussions/2451 and https://github.com/astral-sh/ty/issues/903
-        self.app.add_middleware(CustomMiddleware)  # ty: ignore[invalid-argument-type]
+        self.app.add_middleware(CustomMiddleware)
         response = self.client.get("/docs")
         assert response.status_code == 200
         assert 'ui.preauthorizeApiKey("bar", "bearer foo")' in response.text

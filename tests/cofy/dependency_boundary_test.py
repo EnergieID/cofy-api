@@ -33,9 +33,11 @@ IMPORT_OVERRIDES: dict[str, set[str]] = {
 EXTRA_ZONES: dict[str, set[str]] = {
     "timeseries": {"modules/timeseries/"},
     "tariff": {"modules/tariff/"},
+    "billing": {"modules/billing/"},
     "production": {"modules/production/"},
     "members": {"modules/members/"},
     "directive": {"modules/directive/"},
+    "debug": {"api/debug_"},
 }
 
 # Zones that are always accessible (no extra required).
@@ -222,3 +224,24 @@ def test_imports_respect_dependency_boundaries(relpath: str, filepath: Path):
             f"(via cofy.{imp.replace('/', '.')}) which is not accessible. "
             f"Accessible zones: {zones}."
         )
+
+
+def test_cofy_api_no_top_level_debug_imports():
+    """cofy_api.py must not import debug modules at module top level.
+
+    This guarantees CofyAPI works in production deployments where the debug
+    extra (e.g. yappi) is not installed, as long as debug_mode=False.
+    """
+    with resources.as_file(resources.files("cofy").joinpath("api/cofy_api.py")) as f:
+        source = f.read_text()
+
+    tree = ast.parse(source)
+
+    # Only inspect direct children of the Module node (top-level statements)
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.ImportFrom) and node.module:
+            assert "debug" not in node.module, (
+                f"cofy_api.py has a top-level import of '{node.module}' which belongs to the "
+                "debug extra. Move debug imports inside the `if debug_mode:` block so they are "
+                "never executed when debug_mode=False."
+            )

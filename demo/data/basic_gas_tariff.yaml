@@ -1,0 +1,16 @@
+# Basic gas tariff - higher per-unit consumption cost, lower monthly standing charge
+# See https://github.com/EnergieID/energy-cost for the format reference
+- start: 2024-01-01T00:00:00+01:00
+  consumption:
+    constant_cost: 75.0
+  periodic:
+    fixed_fee:
+      period: P1M
+      constant_cost: 8
+- start: 2026-01-01T00:00:00+01:00
+  consumption:
+    constant_cost: 80.0
+  periodic:
+    fixed_fee:
+      period: P1M
+      constant_cost: 9

@@ -29,7 +29,7 @@ async def test_fetch_timeseries(mock_tariff):
     end = dt.datetime(2026, 1, 2, tzinfo=dt.UTC)
     resolution = dt.timedelta(hours=1)
 
-    mock_tariff.get_cost.return_value = pd.DataFrame(
+    mock_tariff.get_energy_cost.return_value = pd.DataFrame(
         {
             "timestamp": [start, start + resolution],
             "total": [10.0, 20.0],
@@ -42,7 +42,7 @@ async def test_fetch_timeseries(mock_tariff):
 
     assert result.metadata["unit"] == "EUR/MWh"
     assert len(result.frame) == 2
-    mock_tariff.get_cost.assert_called_once_with(
+    mock_tariff.get_energy_cost.assert_called_once_with(
         start=start,
         end=end,
         resolution=resolution,
@@ -78,6 +78,20 @@ async def test_fetch_timeseries_raises_for_missing_meter_type_and_direction(mock
             dt.datetime(2026, 1, 2, tzinfo=dt.UTC),
             resolution=dt.timedelta(hours=1),
             meter_type=MeterType.SINGLE_RATE,
+        )
+
+
+@pytest.mark.asyncio
+async def test_fetch_timeseries_raises_when_series_is_none(mock_tariff):
+    src = EnergyCostTariffSource("some_yaml_config")
+    mock_tariff.get_energy_cost.return_value = None
+    with pytest.raises(ValueError, match="No tariff data available"):
+        await src.fetch_timeseries(
+            dt.datetime(2026, 1, 1, tzinfo=dt.UTC),
+            dt.datetime(2026, 1, 2, tzinfo=dt.UTC),
+            resolution=dt.timedelta(hours=1),
+            meter_type=MeterType.SINGLE_RATE,
+            direction=PowerDirection.CONSUMPTION,
         )
 
 

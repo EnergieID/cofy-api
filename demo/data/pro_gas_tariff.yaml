@@ -1,0 +1,16 @@
+# Pro gas tariff - lower per-unit consumption cost, higher monthly standing charge
+# See https://github.com/EnergieID/energy-cost for the format reference
+- start: 2024-01-01T00:00:00+01:00
+  consumption:
+    constant_cost: 55.0
+  periodic:
+    fixed_fee:
+      period: P1M
+      constant_cost: 14
+- start: 2026-01-01T00:00:00+01:00
+  consumption:
+    constant_cost: 58.0
+  periodic:
+    fixed_fee:
+      period: P1M
+      constant_cost: 15

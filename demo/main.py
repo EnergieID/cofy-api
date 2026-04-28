@@ -1,12 +1,16 @@
 from os import environ
 from pathlib import Path
 
-from energy_cost.index import EntsoeDayAheadIndex, Index
-from energy_cost.tariff import MeterType
+from energy_cost import MeterType, Tariff
+from energy_cost.data import ConnectionType
+from energy_cost.data.be.flanders import data
+from energy_cost.index import CachedEntsoeDayAheadIndex, CSVIndex, Index
 from fastapi import Depends
+from isodate import Duration
 
 from cofy import CofyAPI
 from cofy.api import token_verifier
+from cofy.modules.billing.module import BillingModule
 from cofy.modules.directive import DirectiveModule, DirectiveSource
 from cofy.modules.members import MembersFileSource, MembersModule
 from cofy.modules.production import EnergyIDProduction, ProductionModule
@@ -16,7 +20,9 @@ from demo.members.load_from_csv import example_load_members_from_file
 DATA_DIR = Path(__file__).resolve().parent / "data"
 
 # Initialize the Cofy API
-cofy = CofyAPI(dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))])
+cofy = CofyAPI(
+    dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))], debug_mode=True
+)
 
 entsoe = TariffModule(
     source=EntsoeDayAheadTariffSource(
@@ -41,14 +47,32 @@ kiwatt = TariffModule(
 cofy.register_module(kiwatt)
 
 ## Tariff app with EnergyCost as source
-Index.register("Belpex15min", EntsoeDayAheadIndex("BE", api_key=environ.get("ENTSOE_API_KEY", "")))
-TARIFF_CONFIG_PATH = str(DATA_DIR / "energy_cost_tariff.yaml")
+Index.register("Belpex15min", CachedEntsoeDayAheadIndex("BE", api_key=environ.get("ENTSOE_API_KEY", "")))
+TARIFF_CONFIG_PATH = str(DATA_DIR / "dynamic_tariff.yaml")
 dynamic_tariff = TariffModule(
     source=EnergyCostTariffSource(yaml_config=TARIFF_CONFIG_PATH, meter_type=MeterType.SINGLE_RATE),
     name="dynamic",
     description="Our dynamic tariff tracking the Belpex.",
 )
 cofy.register_module(dynamic_tariff)
+
+## Billing app for our tariff
+Index.register("BelMonthly", CSVIndex(str(DATA_DIR / "monthly_index.csv"), resolution=Duration(months=1)))
+billing = BillingModule(
+    products={
+        ConnectionType.ELECTRICITY: {
+            "fixed": Tariff.from_yaml(str(DATA_DIR / "fixed_tariff.yaml")),
+            "variable": Tariff.from_yaml(str(DATA_DIR / "variable_tariff.yaml")),
+            "dynamic": Tariff.from_yaml(TARIFF_CONFIG_PATH),
+        },
+        ConnectionType.GAS: {
+            "basic": Tariff.from_yaml(str(DATA_DIR / "basic_gas_tariff.yaml")),
+            "pro": Tariff.from_yaml(str(DATA_DIR / "pro_gas_tariff.yaml")),
+        },
+    },
+    region=data,
+)
+cofy.register_module(billing)
 
 ## Production app with EnergyID as source
 wind = ProductionModule(
