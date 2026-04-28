@@ -1,6 +1,4 @@
-import json
 from pathlib import Path
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import PlainTextResponse
@@ -20,17 +18,12 @@ class DebugRouter(APIRouter):
             raise HTTPException(status_code=404, detail=f"No debug data found for request '{request_id}'")
         return path
 
-    def _read_json(self, path: Path) -> Any:
-        if not path.exists():
-            return None
-        return json.loads(path.read_text(encoding="utf-8"))
-
     async def _get_profile(self, request_id: str) -> PlainTextResponse:
         request_dir = self._request_dir(request_id)
         profile_path = request_dir / "profile.txt"
         if not profile_path.exists():
             raise HTTPException(
                 status_code=404,
-                detail="No profile data available. Install yappi to enable profiling.",
+                detail="No profile data available.",
             )
         return PlainTextResponse(profile_path.read_text(encoding="utf-8"))

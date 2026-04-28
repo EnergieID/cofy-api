@@ -13,6 +13,31 @@ def test_cofy_initialization():
     assert cofy.description == "Test desc"
 
 
+def test_debug_mode_registers_debug_routes(tmp_path):
+    """CofyAPI with debug_mode=True must register the /debug/* endpoints."""
+    cofy = CofyAPI(debug_mode=True, debug_dir=tmp_path)
+    route_paths = [r.path for r in cofy.routes if hasattr(r, "path")]
+    assert any("/debug/" in str(p) for p in route_paths)
+
+
+def test_debug_mode_uses_tempdir_when_no_dir_given():
+    """CofyAPI with debug_mode=True and no debug_dir must not raise."""
+    cofy = CofyAPI(debug_mode=True)
+    client = TestClient(cofy)
+    response = client.get("/health")
+    assert response.status_code == 200
+
+
+def test_debug_mode_adds_profiling_headers(tmp_path):
+    """Requests through a debug-enabled CofyAPI must carry profiling headers."""
+    cofy = CofyAPI(debug_mode=True, debug_dir=tmp_path)
+    client = TestClient(cofy)
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert "X-Debug-Id" in response.headers
+    assert "X-Debug-Url" in response.headers
+
+
 class TestCofyAPIModuleRegistration:
     def setup_method(self):
         self.cofy = CofyAPI()
