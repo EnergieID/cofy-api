@@ -1,6 +1,6 @@
 import asyncio
 import datetime as dt
-from typing import Annotated
+from typing import Annotated, cast
 
 import pandas as pd
 from entsoe import EntsoePandasClient
@@ -39,8 +39,8 @@ class EntsoeDayAheadTariffSource(TimeseriesSource):
             series = await asyncio.to_thread(
                 self.client.query_day_ahead_prices,
                 country_code=country_code,
-                start=pd.Timestamp(start),
-                end=pd.Timestamp(end),
+                start=cast(pd.Timestamp, pd.Timestamp(start)),
+                end=cast(pd.Timestamp, pd.Timestamp(end)),
             )
             # older dates may return hourly data, so we need to resample to 15-minute intervals
             series = series.resample("15min").ffill()
