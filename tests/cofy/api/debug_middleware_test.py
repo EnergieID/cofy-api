@@ -1,8 +1,10 @@
+import asyncio
 from pathlib import Path
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 
 from cofy.api.debug_middleware import DebugMiddleware
 
@@ -57,3 +59,28 @@ def test_middleware_debug_url_contains_request_id(app: FastAPI) -> None:
     debug_url = response.headers["X-Debug-Url"]
     assert request_id in debug_url
     assert debug_url.startswith("/debug/")
+
+
+@pytest.mark.asyncio
+async def test_concurrent_requests_produce_separate_profiles(debug_dir: Path) -> None:
+    """Two overlapping requests must each get their own clean profile file."""
+    _app = FastAPI()
+    _app.add_middleware(DebugMiddleware, debug_dir=debug_dir)
+
+    @_app.get("/slow")
+    async def slow():
+        await asyncio.sleep(0.05)
+        return {"message": "slow"}
+
+    async with AsyncClient(transport=ASGITransport(app=_app), base_url="http://test") as client:
+        r1, r2 = await asyncio.gather(client.get("/slow"), client.get("/slow"))
+
+    assert r1.status_code == 200
+    assert r2.status_code == 200
+
+    id1 = r1.headers["X-Debug-Id"]
+    id2 = r2.headers["X-Debug-Id"]
+    assert id1 != id2
+
+    assert (debug_dir / id1 / "profile.txt").exists()
+    assert (debug_dir / id2 / "profile.txt").exists()
