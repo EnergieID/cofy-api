@@ -43,6 +43,12 @@ class DynamicBoundaryDirectiveSource(TimeseriesSource):
             self.boundary_source.fetch_timeseries(start, end, resolution, **kwargs),
         )
 
+        invalid = boundary_ts.frame.filter(
+            (nw.col("b0") > nw.col("b1")) | (nw.col("b1") > nw.col("b2")) | (nw.col("b2") > nw.col("b3"))
+        )
+        if len(invalid) > 0:
+            raise ValueError("Boundary columns must be in ascending order (b0 ≤ b1 ≤ b2 ≤ b3). ")
+
         combined = signal_ts.frame.join(boundary_ts.frame, on="timestamp", how="inner")
 
         steps = DIRECTIVE_STEPS if not self.reverse else list(reversed(DIRECTIVE_STEPS))

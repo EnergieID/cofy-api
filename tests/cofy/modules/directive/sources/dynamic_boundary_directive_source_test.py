@@ -96,6 +96,24 @@ async def test_fetch_timeseries_reversed():
 
 
 @pytest.mark.asyncio
+async def test_raises_value_error_when_boundaries_are_not_ascending():
+    boundary_source = DummyBoundarySource(
+        boundaries=[
+            (5, 15, 25, 35),  # valid
+            (5, 25, 15, 35),  # b1 > b2: invalid
+        ]
+    )
+    source = DynamicBoundaryDirectiveSource(DummyTimeseriesSource(), boundary_source)
+
+    with pytest.raises(ValueError, match="ascending order"):
+        await source.fetch_timeseries(
+            dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
+            dt.datetime(2026, 1, 1, 2, 0, tzinfo=dt.UTC),
+            dt.timedelta(hours=1),
+        )
+
+
+@pytest.mark.asyncio
 async def test_missing_timestamp_on_boundary_side_is_excluded():
     # If a timestamp is missing in boundary_source it should not appear in the result
     class SparseBoundarySource(TimeseriesSource):
