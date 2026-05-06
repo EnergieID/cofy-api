@@ -1,9 +1,7 @@
 from os import environ
 from pathlib import Path
 
-from energy_cost import MeterType, Tariff
-from energy_cost.data import ConnectionType
-from energy_cost.data.be.flanders import data
+from energy_cost import MeterType, Supplier, Tariff
 from energy_cost.index import CachedEntsoeDayAheadIndex, CSVIndex, Index
 from fastapi import Depends
 from isodate import Duration
@@ -58,21 +56,19 @@ cofy.register_module(dynamic_tariff)
 
 ## Billing app for our tariff
 Index.register("BelMonthly", CSVIndex(str(DATA_DIR / "monthly_index.csv"), resolution=Duration(months=1)))
-billing = BillingModule(
-    products={
-        ConnectionType.ELECTRICITY: {
+Supplier.register(
+    "eb",
+    Supplier(
+        products={
             "fixed": Tariff.from_yaml(str(DATA_DIR / "fixed_tariff.yaml")),
             "variable": Tariff.from_yaml(str(DATA_DIR / "variable_tariff.yaml")),
             "dynamic": Tariff.from_yaml(TARIFF_CONFIG_PATH),
-        },
-        ConnectionType.GAS: {
             "basic": Tariff.from_yaml(str(DATA_DIR / "basic_gas_tariff.yaml")),
             "pro": Tariff.from_yaml(str(DATA_DIR / "pro_gas_tariff.yaml")),
-        },
-    },
-    region=data,
+        }
+    ),
 )
-cofy.register_module(billing)
+cofy.register_module(BillingModule())
 
 ## Production app with EnergyID as source
 wind = ProductionModule(

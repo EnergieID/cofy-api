@@ -71,6 +71,10 @@ def example_load_members_from_file(file_path: Path) -> dict[str, Member]:
                     if row[CSVColumns.LAST_INVOICE_DATE]
                     else None,
                     is_green=row[CSVColumns.IS_GREEN].strip().lower() == "true",
+                    region=NamedIdentifier(
+                        id="be_flanders",
+                        name="Flanders",
+                    ),
                 )
 
                 address_id = row[CSVColumns.ADDRESS_ID]

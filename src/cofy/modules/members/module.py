@@ -1,5 +1,6 @@
 from typing import Any
 
+from energy_cost import ContractHistory
 from fastapi import HTTPException
 
 from cofy import Module
@@ -40,6 +41,14 @@ class MembersModule(Module):
             response_model=self.source.response_model,
             responses={404: {"description": "Member not found"}},
         )
+        self.add_api_route(
+            "/{member_id}/contracts/{ean}",
+            self.get_contract_history,
+            methods=["GET"],
+            summary="Get contract history for a specific meter (identified by EAN) belonging to a member",
+            response_model=ContractHistory,
+            responses={404: {"description": "Member or contract not found"}},
+        )
 
     def get_by_id(self, member_id: str) -> Any:
         member = self.source.get(member_id)
@@ -52,3 +61,12 @@ class MembersModule(Module):
         if member is None:
             raise HTTPException(status_code=404, detail="Member not found")
         return member
+
+    def get_contract_history(self, member_id: str, ean: str) -> ContractHistory:
+        member = self.source.get(member_id)
+        if member is None:
+            raise HTTPException(status_code=404, detail="Member not found")
+        history = member.get_contract_history_for_ean(ean)
+        if history is not None:
+            return history
+        raise HTTPException(status_code=404, detail="No contract history found for the specified EAN")
