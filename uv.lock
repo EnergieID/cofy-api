@@ -342,7 +342,7 @@ wheels = [
 [[package]]
 name = "energy-cost"
 version = "0.1.0"
-source = { git = "https://github.com/EnergieID/energy-cost.git?branch=enhance%2Fserialize#dba0dc873f520532e4100fe3670980f5d19fa680" }
+source = { git = "https://github.com/EnergieID/energy-cost.git?branch=enhance%2Fserialize#220d3ac6ad9dad9c008f3ee3bc8462e9b4aa52c9" }
 dependencies = [
     { name = "entsoe-py" },
     { name = "isodate" },

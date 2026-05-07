@@ -1,11 +1,11 @@
 from typing import Any
 
-from energy_cost import ContractHistory
+from energy_cost import Contract
 from fastapi import HTTPException
 
 from cofy import Module
 
-from .model import VerifyMemberRequest
+from .model import ECContractResponse, VerifyMemberRequest
 from .source import MemberSource
 
 
@@ -46,7 +46,7 @@ class MembersModule(Module):
             self.get_contract_history,
             methods=["GET"],
             summary="Get contract history for a specific meter (identified by EAN) belonging to a member",
-            response_model=ContractHistory,
+            response_model=list[ECContractResponse],
             responses={404: {"description": "Member or contract not found"}},
         )
 
@@ -62,7 +62,7 @@ class MembersModule(Module):
             raise HTTPException(status_code=404, detail="Member not found")
         return member
 
-    def get_contract_history(self, member_id: str, ean: str) -> ContractHistory:
+    def get_contract_history(self, member_id: str, ean: str) -> list[Contract]:
         member = self.source.get(member_id)
         if member is None:
             raise HTTPException(status_code=404, detail="Member not found")

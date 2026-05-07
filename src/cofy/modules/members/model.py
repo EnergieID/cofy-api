@@ -25,22 +25,32 @@ class Contract(BaseModel):
     is_green: Annotated[bool, Field(..., description="Indicates if the contract guarantees green energy")]
 
 
-def _build_contract_history(contracts: list[Contract]) -> ec.ContractHistory:
-    return ec.ContractHistory(
-        versions=[
-            ec.Contract(
-                start=c.start_date,
-                end=c.end_date,
-                region=c.region.id,
-                connection_type=c.connection_type,
-                customer_type=c.customer_type,
-                distributor_key=c.distributor.id,
-                supplier_key=c.supplier.id,
-                product_key=c.product.id,
-            )
-            for c in contracts
-        ]
-    )
+def _build_contract_history(contracts: list[Contract]) -> list[ec.Contract]:
+    return [
+        ec.Contract(
+            start=c.start_date,
+            end=c.end_date,
+            region=c.region.id,
+            connection_type=c.connection_type,
+            customer_type=c.customer_type,
+            distributor_key=c.distributor.id,
+            supplier_key=c.supplier.id,
+            product_key=c.product.id,
+        )
+        for c in contracts
+    ]
+
+
+class ECContractResponse(BaseModel):
+    customer_type: CustomerType
+    connection_type: ConnectionType
+    region: str
+    distributor_key: str
+    supplier_key: str | None = None
+    product_key: str | None = None
+    start: datetime
+    end: datetime | None
+    supplier: ec.Tariff | list[ec.Tariff] | None = None
 
 
 class Address(BaseModel):
@@ -52,7 +62,7 @@ class Member(BaseModel):
     activation_code: Annotated[str | None, Field(None, description="Activation code used to verify membership")] = None
     addresses: list[Address] = Field(default_factory=list)
 
-    def get_contract_history_for_ean(self, ean: str) -> ec.ContractHistory | None:
+    def get_contract_history_for_ean(self, ean: str) -> list[ec.Contract] | None:
         contracts = [contract for address in self.addresses for contract in address.contracts if contract.ean == ean]
         if not contracts:
             return None
