@@ -26,7 +26,7 @@ class BillingModule(Module):
             meters = [m.to_meter() for m in body.meters]
 
             try:
-                df = contract.calculate_cost(
+                df = contract.apply(
                     meters=meters,
                     start=body.start,
                     end=body.end,

@@ -121,14 +121,14 @@ class TestBillingEndpoint:
     def test_post_response_data_has_one_entry_per_row(self):
         start = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
         with patch("cofy.modules.billing.models.billing_request.Contract") as MockContract:
-            MockContract.return_value.calculate_cost.return_value = _make_cost_df(start)
+            MockContract.return_value.apply.return_value = _make_cost_df(start)
             response = self.client.post(self.module.prefix, json=_BODY)
         assert len(response.json()["data"]) == 1
 
     def test_post_response_metadata_reflects_request(self):
         start = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
         with patch("cofy.modules.billing.models.billing_request.Contract") as MockContract:
-            MockContract.return_value.calculate_cost.return_value = _make_cost_df(start)
+            MockContract.return_value.apply.return_value = _make_cost_df(start)
             response = self.client.post(self.module.prefix, json=_BODY)
         meta = response.json()["metadata"]
         assert meta["start"] is not None
@@ -136,7 +136,7 @@ class TestBillingEndpoint:
 
     def test_post_returns_400_when_calculate_raises_value_error(self):
         with patch("cofy.modules.billing.models.billing_request.Contract") as MockContract:
-            MockContract.return_value.calculate_cost.side_effect = ValueError("bad input")
+            MockContract.return_value.apply.side_effect = ValueError("bad input")
             response = self.client.post(self.module.prefix, json=_BODY)
         assert response.status_code == 400
         assert "bad input" in response.json()["detail"]
@@ -165,17 +165,17 @@ class TestBillingEndpoint:
         start = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
         body = {k: v for k, v in _BODY.items() if k not in ("start", "end")}
         with patch("cofy.modules.billing.models.billing_request.Contract") as MockContract:
-            MockContract.return_value.calculate_cost.return_value = _make_cost_df(start)
+            MockContract.return_value.apply.return_value = _make_cost_df(start)
             response = self.client.post(self.module.prefix, json=body)
         assert response.status_code == 200
 
-    def test_post_passes_correct_args_to_calculate_cost(self):
+    def test_post_passes_correct_args_to_apply(self):
         start = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
         with patch("cofy.modules.billing.models.billing_request.Contract") as MockContract:
             mock_contract = MockContract.return_value
-            mock_contract.calculate_cost.return_value = _make_cost_df(start)
+            mock_contract.apply.return_value = _make_cost_df(start)
             self.client.post(self.module.prefix, json=_BODY)
-        call_kwargs = mock_contract.calculate_cost.call_args.kwargs
+        call_kwargs = mock_contract.apply.call_args.kwargs
         assert "meters" in call_kwargs
         assert len(call_kwargs["meters"]) == 1
 
