@@ -1,4 +1,4 @@
-from .models.billing_request import BillingRequest, CustomerType, MeterInfo
+from .models.billing_request import BillingRequest, MeterInfo
 from .models.billing_response import BillingDataPoint, BillingMetadata, BillingResponse
 from .module import BillingModule
 
@@ -8,6 +8,5 @@ __all__ = [
     "BillingModule",
     "BillingRequest",
     "BillingResponse",
-    "CustomerType",
     "MeterInfo",
 ]
