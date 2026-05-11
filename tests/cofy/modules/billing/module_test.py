@@ -2,8 +2,8 @@ import datetime as dt
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-from energy_cost import CostGroup, Tariff
-from energy_cost.data import ConnectionType
+from energy_cost import CostGroup, Supplier, Tariff
+from energy_cost.data import ConnectionType, RegionalData
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -73,10 +73,9 @@ _DST_BODY = {
 class TestBillingModuleMetadata:
     def setup_method(self):
         mock_tariff = MagicMock(spec=Tariff)
-        self.module = BillingModule(
-            products={ConnectionType.ELECTRICITY: {"product1": mock_tariff}},
-            region={ConnectionType.ELECTRICITY: MagicMock()},
-        )
+        Supplier.register("mock_supplier", Supplier(products={"product1": mock_tariff}))
+        RegionalData.register(("mock_region", ConnectionType.ELECTRICITY), MagicMock())
+        self.module = BillingModule(default_region="mock_region", default_supplier="mock_supplier")
 
     def test_type(self):
         assert self.module.type == "billing"
@@ -94,10 +93,9 @@ class TestBillingModuleMetadata:
 class TestBillingEndpoint:
     def setup_method(self):
         mock_tariff = MagicMock(spec=Tariff)
-        self.module = BillingModule(
-            products={ConnectionType.ELECTRICITY: {"product1": mock_tariff}},
-            region={ConnectionType.ELECTRICITY: MagicMock()},
-        )
+        Supplier.register("mock_supplier", Supplier(products={"product1": mock_tariff}))
+        RegionalData.register(("mock_region", ConnectionType.ELECTRICITY), MagicMock())
+        self.module = BillingModule(default_region="mock_region", default_supplier="mock_supplier")
         app = FastAPI()
         app.include_router(self.module)
         self.client = TestClient(app, raise_server_exceptions=False)
@@ -121,14 +119,14 @@ class TestBillingEndpoint:
     def test_post_response_data_has_one_entry_per_row(self):
         start = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
         with patch("cofy.modules.billing.models.billing_request.Contract") as MockContract:
-            MockContract.return_value.calculate_cost.return_value = _make_cost_df(start)
+            MockContract.return_value.apply.return_value = _make_cost_df(start)
             response = self.client.post(self.module.prefix, json=_BODY)
         assert len(response.json()["data"]) == 1
 
     def test_post_response_metadata_reflects_request(self):
         start = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
         with patch("cofy.modules.billing.models.billing_request.Contract") as MockContract:
-            MockContract.return_value.calculate_cost.return_value = _make_cost_df(start)
+            MockContract.return_value.apply.return_value = _make_cost_df(start)
             response = self.client.post(self.module.prefix, json=_BODY)
         meta = response.json()["metadata"]
         assert meta["start"] is not None
@@ -136,7 +134,7 @@ class TestBillingEndpoint:
 
     def test_post_returns_400_when_calculate_raises_value_error(self):
         with patch("cofy.modules.billing.models.billing_request.Contract") as MockContract:
-            MockContract.return_value.calculate_cost.side_effect = ValueError("bad input")
+            MockContract.return_value.apply.side_effect = ValueError("bad input")
             response = self.client.post(self.module.prefix, json=_BODY)
         assert response.status_code == 400
         assert "bad input" in response.json()["detail"]
@@ -165,17 +163,17 @@ class TestBillingEndpoint:
         start = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
         body = {k: v for k, v in _BODY.items() if k not in ("start", "end")}
         with patch("cofy.modules.billing.models.billing_request.Contract") as MockContract:
-            MockContract.return_value.calculate_cost.return_value = _make_cost_df(start)
+            MockContract.return_value.apply.return_value = _make_cost_df(start)
             response = self.client.post(self.module.prefix, json=body)
         assert response.status_code == 200
 
-    def test_post_passes_correct_args_to_calculate_cost(self):
+    def test_post_passes_correct_args_to_apply(self):
         start = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
         with patch("cofy.modules.billing.models.billing_request.Contract") as MockContract:
             mock_contract = MockContract.return_value
-            mock_contract.calculate_cost.return_value = _make_cost_df(start)
+            mock_contract.apply.return_value = _make_cost_df(start)
             self.client.post(self.module.prefix, json=_BODY)
-        call_kwargs = mock_contract.calculate_cost.call_args.kwargs
+        call_kwargs = mock_contract.apply.call_args.kwargs
         assert "meters" in call_kwargs
         assert len(call_kwargs["meters"]) == 1
 
@@ -186,10 +184,9 @@ class TestBillingEndpoint:
 class TestDSTBoundary:
     def setup_method(self):
         mock_tariff = MagicMock(spec=Tariff)
-        self.module = BillingModule(
-            products={ConnectionType.ELECTRICITY: {"dynamic": mock_tariff}},
-            region={ConnectionType.ELECTRICITY: MagicMock()},
-        )
+        Supplier.register("mock_supplier", Supplier(products={"product1": mock_tariff}))
+        RegionalData.register(("mock_region", ConnectionType.ELECTRICITY), MagicMock())
+        self.module = BillingModule(default_region="mock_region", default_supplier="mock_supplier")
         app = FastAPI()
         app.include_router(self.module)
         self.client = TestClient(app, raise_server_exceptions=False)

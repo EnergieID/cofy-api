@@ -202,8 +202,8 @@ requires-dist = [
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'production'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'tariff'" },
     { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production", "directive", "billing", "debug"], marker = "extra == 'all'" },
-    { name = "energy-cost", marker = "extra == 'billing'", specifier = ">=0.3.0" },
-    { name = "energy-cost", marker = "extra == 'tariff'", specifier = ">=0.3.0" },
+    { name = "energy-cost", marker = "extra == 'billing'", specifier = ">=0.4.1" },
+    { name = "energy-cost", marker = "extra == 'tariff'", specifier = ">=0.4.1" },
     { name = "entsoe-py", marker = "extra == 'tariff'", specifier = ">=0.7.10" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.128.0" },
     { name = "isodate", marker = "extra == 'timeseries'", specifier = ">=0.7.2" },
@@ -337,7 +337,7 @@ wheels = [
 
 [[package]]
 name = "energy-cost"
-version = "0.3.0"
+version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "entsoe-py" },
@@ -346,9 +346,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2e/74/48729dfc9699902828ed9fd6a5b61cae5a5d30247af69e01b8052f323d31/energy_cost-0.3.0.tar.gz", hash = "sha256:0cb9d390fd2bc21db6a0dc9a9465e6c58f33931f5bf7226be892803b6c7b8cc7", size = 53889, upload-time = "2026-04-28T09:02:35.135Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3a/52/4e8478e42b2a61f21af2c30fc174e5b6d20e5cb9249fa46c0acf39f0d025/energy_cost-0.4.1.tar.gz", hash = "sha256:f0d85b76898af664a1bc90a5927f223fd9f5cf67e2e0ef9bd216d00fc4fa604b", size = 59612, upload-time = "2026-05-11T11:07:12.082Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/ae/6b3832108aa8a1e8791d2726a0a08a69b7cbd317e955249abee2c1b1f53c/energy_cost-0.3.0-py3-none-any.whl", hash = "sha256:b583863b723934252b850d338524fdc8760c7441dfdf2bca5751b0e3e0856c5e", size = 54651, upload-time = "2026-04-28T09:02:36.331Z" },
+    { url = "https://files.pythonhosted.org/packages/29/9b/a31e771c8b160f0db14f759a95205e62456e234d115a89aafe88f06f67dd/energy_cost-0.4.1-py3-none-any.whl", hash = "sha256:87707161560b07cb1f6031f726558f84dc20b8e2dd71e17a608847c0192c2392", size = 56920, upload-time = "2026-05-11T11:07:13.447Z" },
 ]
 
 [[package]]
