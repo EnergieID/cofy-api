@@ -1,9 +1,8 @@
 import datetime as dt
-from zoneinfo import ZoneInfo
 
 import pandas as pd
-from energy_cost import Contract, Meter, MeterType, PowerDirection, Tariff
-from energy_cost.data import ConnectionType, CustomerType, RegionalData
+from energy_cost import Contract, Meter, MeterType, PowerDirection
+from energy_cost.data import ConnectionType, CustomerType
 from isodate import Duration
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -55,13 +54,13 @@ class _Ref(BaseModel):
 OptionalStrOrRef = str | _Ref | None
 
 
-def str_or_ref_to_str(value: OptionalStrOrRef) -> str | None:
+def str_or_ref_to_str(value: OptionalStrOrRef, default: str | None = None) -> str | None:
     if isinstance(value, str):
         return value
     elif isinstance(value, _Ref):
         return value.id
     else:
-        return None
+        return default
 
 
 class ContractInfo(BaseModel):
@@ -70,34 +69,48 @@ class ContractInfo(BaseModel):
     connection_type: ConnectionType = ConnectionType.ELECTRICITY
     distributor: OptionalStrOrRef = None
     product: OptionalStrOrRef = None
+    supplier: OptionalStrOrRef = None
+    region: OptionalStrOrRef = None
 
-    def to_contract(
-        self,
-        products: dict[ConnectionType, dict[str, Tariff]],
-        region: dict[ConnectionType, RegionalData],
-    ) -> Contract:
-        data = region[self.connection_type]
-        products_for_ct = products.get(self.connection_type, {})
-
-        distributor = str_or_ref_to_str(self.distributor)
-        product = str_or_ref_to_str(self.product)
-
-        distributor_tariff = (
-            data.distributors[distributor] if distributor and distributor in data.distributors else None
-        )
-        product_tariff = products_for_ct[product] if product and product in products_for_ct else None
-
+    def to_contract(self, default_region: str = "be_flanders", default_supplier: str | None = None) -> Contract:
         return Contract(
-            supplier=product_tariff,
-            distributor=distributor_tariff,
-            fees=data.fees[self.customer_type],
-            taxes=data.taxes,
-            timezone=ZoneInfo("Europe/Brussels"),
+            supplier_key=str_or_ref_to_str(self.supplier, default_supplier),
+            distributor_key=str_or_ref_to_str(self.distributor),
+            product_key=str_or_ref_to_str(self.product),
+            region=str_or_ref_to_str(self.region, default_region),
         )
 
 
 class BillingRequest(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "start": "2025-01-01T00:00:00+01:00",
+                    "end": "2025-02-01T00:00:00+01:00",
+                    "resolution": "P1M",
+                    "contract": {
+                        "customer_type": "residential",
+                        "connection_type": "electricity",
+                        "distributor": "dist1",
+                        "supplier": "sup1",
+                        "product": "product1",
+                    },
+                    "meters": [
+                        {
+                            "direction": "consumption",
+                            "type": "single_rate",
+                            "data": [
+                                {"timestamp": "2025-01-01T00:00:00+01:00", "value": 150.5},
+                                {"timestamp": "2025-01-01T00:15:00+01:00", "value": 75.3},
+                            ],
+                        }
+                    ],
+                }
+            ]
+        },
+    )
 
     start: dt.datetime | None = None
     end: dt.datetime | None = None
@@ -110,43 +123,3 @@ class BillingRequest(BaseModel):
         if self.start is not None and self.end is not None and self.end <= self.start:
             raise ValueError(f"'end' ({self.end.isoformat()}) must be after 'start' ({self.start.isoformat()}). ")
         return self
-
-
-def make_billing_request_model(
-    products: dict[ConnectionType, dict[str, Tariff]],
-    region: dict[ConnectionType, RegionalData],
-) -> type[BillingRequest]:
-    electricity_products = products.get(ConnectionType.ELECTRICITY, {})
-    first_product = next(iter(electricity_products), None)
-    electricity_region = region.get(ConnectionType.ELECTRICITY)
-    first_distributor = next(iter(electricity_region.distributors), None) if electricity_region else None
-
-    _example: dict = {
-        "start": "2025-01-01T00:00:00+01:00",
-        "end": "2025-02-01T00:00:00+01:00",
-        "resolution": "P1M",
-        "contract": {
-            "customer_type": "residential",
-            "connection_type": "electricity",
-            **({"distributor": first_distributor} if first_distributor else {}),
-            **({"product": first_product} if first_product else {}),
-        },
-        "meters": [
-            {
-                "direction": "consumption",
-                "type": "single_rate",
-                "data": [
-                    {"timestamp": "2025-01-01T00:00:00+01:00", "value": 150.5},
-                    {"timestamp": "2025-01-01T00:15:00+01:00", "value": 75.3},
-                ],
-            }
-        ],
-    }
-
-    class DynamicBillingRequest(BillingRequest):
-        model_config = ConfigDict(
-            arbitrary_types_allowed=True,
-            json_schema_extra={"examples": [_example]},
-        )
-
-    return DynamicBillingRequest
