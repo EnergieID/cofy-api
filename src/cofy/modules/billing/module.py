@@ -14,7 +14,7 @@ class BillingModule(Module):
         super().__init__(**kwargs)
 
     def init_routes(self):
-        def calculate_cost(body: BillingRequest) -> BillingResponse:  # ty: ignore[invalid-type-form]
+        def calculate_cost(body: BillingRequest) -> BillingResponse:
             contract = body.contract.to_contract(
                 default_region=self.default_region, default_supplier=self.default_supplier
             )

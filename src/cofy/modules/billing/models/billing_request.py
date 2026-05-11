@@ -78,6 +78,8 @@ class ContractInfo(BaseModel):
             distributor_key=str_or_ref_to_str(self.distributor),
             product_key=str_or_ref_to_str(self.product),
             region=str_or_ref_to_str(self.region, default_region),
+            connection_type=self.connection_type,
+            customer_type=self.customer_type,
         )
 
 

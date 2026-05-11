@@ -2,8 +2,8 @@ import datetime as dt
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-from energy_cost import CostGroup, Tariff
-from energy_cost.data import ConnectionType
+from energy_cost import CostGroup, Supplier, Tariff
+from energy_cost.data import ConnectionType, RegionalData
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -73,10 +73,9 @@ _DST_BODY = {
 class TestBillingModuleMetadata:
     def setup_method(self):
         mock_tariff = MagicMock(spec=Tariff)
-        self.module = BillingModule(
-            products={ConnectionType.ELECTRICITY: {"product1": mock_tariff}},
-            region={ConnectionType.ELECTRICITY: MagicMock()},
-        )
+        Supplier.register("mock_supplier", Supplier(products={"product1": mock_tariff}))
+        RegionalData.register(("mock_region", ConnectionType.ELECTRICITY), MagicMock())
+        self.module = BillingModule(default_region="mock_region", default_supplier="mock_supplier")
 
     def test_type(self):
         assert self.module.type == "billing"
@@ -94,10 +93,9 @@ class TestBillingModuleMetadata:
 class TestBillingEndpoint:
     def setup_method(self):
         mock_tariff = MagicMock(spec=Tariff)
-        self.module = BillingModule(
-            products={ConnectionType.ELECTRICITY: {"product1": mock_tariff}},
-            region={ConnectionType.ELECTRICITY: MagicMock()},
-        )
+        Supplier.register("mock_supplier", Supplier(products={"product1": mock_tariff}))
+        RegionalData.register(("mock_region", ConnectionType.ELECTRICITY), MagicMock())
+        self.module = BillingModule(default_region="mock_region", default_supplier="mock_supplier")
         app = FastAPI()
         app.include_router(self.module)
         self.client = TestClient(app, raise_server_exceptions=False)
@@ -186,10 +184,9 @@ class TestBillingEndpoint:
 class TestDSTBoundary:
     def setup_method(self):
         mock_tariff = MagicMock(spec=Tariff)
-        self.module = BillingModule(
-            products={ConnectionType.ELECTRICITY: {"dynamic": mock_tariff}},
-            region={ConnectionType.ELECTRICITY: MagicMock()},
-        )
+        Supplier.register("mock_supplier", Supplier(products={"product1": mock_tariff}))
+        RegionalData.register(("mock_region", ConnectionType.ELECTRICITY), MagicMock())
+        self.module = BillingModule(default_region="mock_region", default_supplier="mock_supplier")
         app = FastAPI()
         app.include_router(self.module)
         self.client = TestClient(app, raise_server_exceptions=False)
