@@ -337,7 +337,7 @@ wheels = [
 
 [[package]]
 name = "energy-cost"
-version = "0.3.0"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "entsoe-py" },
@@ -346,9 +346,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2e/74/48729dfc9699902828ed9fd6a5b61cae5a5d30247af69e01b8052f323d31/energy_cost-0.3.0.tar.gz", hash = "sha256:0cb9d390fd2bc21db6a0dc9a9465e6c58f33931f5bf7226be892803b6c7b8cc7", size = 53889, upload-time = "2026-04-28T09:02:35.135Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/46/9dc4a1355611e8b05a5435a7bd77916e1ff72424bfb330a205b94d48892a/energy_cost-0.4.0.tar.gz", hash = "sha256:69b1d6619e5e9a949f8f2bdebf55e57e7be323d1e3bcfd2cdaf0d44779b8c81e", size = 58181, upload-time = "2026-05-05T09:25:35.82Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/ae/6b3832108aa8a1e8791d2726a0a08a69b7cbd317e955249abee2c1b1f53c/energy_cost-0.3.0-py3-none-any.whl", hash = "sha256:b583863b723934252b850d338524fdc8760c7441dfdf2bca5751b0e3e0856c5e", size = 54651, upload-time = "2026-04-28T09:02:36.331Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/b6/94e1098fc2ee6cce7238d7a0735b9b04a8873b2b9a5bd34cf0dfb80843b0/energy_cost-0.4.0-py3-none-any.whl", hash = "sha256:f319187d2fa5ee701b9e0f7981a589092eae5a662583efc9af30bc05517cc844", size = 56485, upload-time = "2026-05-05T09:25:34.705Z" },
 ]
 
 [[package]]
