@@ -15,6 +15,10 @@ dependencies = [
     "starlette>=0.41.0",
 ]
 
+[project.urls]
+Source = "https://github.com/EnergieID/cofy-api"
+Changelog = "https://github.com/EnergieID/cofy-api/releases"
+
 [project.optional-dependencies]
 
 # Module extras
