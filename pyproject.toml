@@ -15,10 +15,6 @@ dependencies = [
     "starlette>=0.41.0",
 ]
 
-[project.urls]
-Source = "https://github.com/EnergieID/cofy-api"
-Changelog = "https://github.com/EnergieID/cofy-api/releases"
-
 [project.optional-dependencies]
 
 # Module extras
@@ -53,6 +49,10 @@ debug = [
 
 # Convenience extras
 all = ["cofy-api[timeseries,tariff,members,production,directive,billing,debug]"]
+
+[project.urls]
+Source = "https://github.com/EnergieID/cofy-api"
+Changelog = "https://github.com/EnergieID/cofy-api/releases"
 [build-system]
 requires = ["setuptools>=75.0", "wheel"]
 build-backend = "setuptools.build_meta"
