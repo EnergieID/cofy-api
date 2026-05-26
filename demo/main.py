@@ -61,6 +61,7 @@ Supplier.register(
     Supplier(
         products={
             "fixed": Tariff.from_yaml(str(DATA_DIR / "fixed_tariff.yaml")),
+            "fixed_day_night_07": Tariff.from_yaml(str(DATA_DIR / "fixed_day_night_07.yaml")),
             "variable": Tariff.from_yaml(str(DATA_DIR / "variable_tariff.yaml")),
             "dynamic": Tariff.from_yaml(TARIFF_CONFIG_PATH),
             "basic": Tariff.from_yaml(str(DATA_DIR / "basic_gas_tariff.yaml")),
