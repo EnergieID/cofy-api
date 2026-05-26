@@ -51,9 +51,9 @@ class BillingRequest(BaseModel):
         json_schema_extra={
             "examples": [
                 {
-                    "start": "2024-01-01T00:00:00+01:00",
-                    "end": "2024-01-31T23:59:59+01:00",
-                    "resolution": "P1D",
+                    "start": "2025-01-01T00:00:00+01:00",
+                    "end": "2025-02-01T00:00:00+01:00",
+                    "resolution": "P1M",
                     "meters": [
                         {
                             "direction": "consumption",
@@ -86,6 +86,7 @@ class BillingRequest(BaseModel):
             ]
         },
     )
+
     start: dt.datetime | None = None
     end: dt.datetime | None = None
     resolution: ISODuration = Field(default_factory=lambda: Duration(months=1))

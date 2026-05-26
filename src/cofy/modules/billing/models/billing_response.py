@@ -15,7 +15,7 @@ class BillingMetadata(BaseModel):
     resolution: ISODuration | None = None
 
 
-TariffBreakdown = dict[CostGroup, dict[str, float]]
+TariffBreakdown = dict[CostGroup, dict[str, float | None]]
 
 
 class BillingDataPoint(BaseModel):

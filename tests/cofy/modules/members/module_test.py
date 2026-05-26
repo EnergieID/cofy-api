@@ -23,7 +23,7 @@ _PRODUCT_KEY = "test_product"
 if _SUPPLIER_KEY not in dict(ec.Supplier.items()):
     from energy_cost import Tariff
 
-    ec.Supplier.register(_SUPPLIER_KEY, ec.Supplier(products={_PRODUCT_KEY: Tariff(versions=[])}))
+    ec.Supplier.register(_SUPPLIER_KEY, ec.Supplier(products={_PRODUCT_KEY: Tariff(root=[])}))
 
 
 def _make_contract(ean: str, start: dt.datetime, end: dt.datetime | None = None) -> Contract:
