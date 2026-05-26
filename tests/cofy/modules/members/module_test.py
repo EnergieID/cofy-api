@@ -136,15 +136,15 @@ class TestGetContractHistory:
         response = self.client.get(self.prefix + "/1/contracts/EAN123")
         assert response.status_code == 200
 
-    def test_response_contains_versions(self):
+    def test_response_is_list(self):
         response = self.client.get(self.prefix + "/1/contracts/EAN123")
         body = response.json()
-        assert "versions" in body
-        assert len(body["versions"]) == 2
+        assert isinstance(body, list)
+        assert len(body) == 2
 
     def test_versions_have_start_date(self):
         response = self.client.get(self.prefix + "/1/contracts/EAN123")
-        versions = response.json()["versions"]
+        versions = response.json()
         assert versions[0]["start"] is not None
         assert versions[1]["start"] is not None
 

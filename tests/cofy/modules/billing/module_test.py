@@ -38,11 +38,11 @@ _BODY = {
     "end": _END,
     "resolution": "P1M",
     "meters": [_METER],
-    "contract": {"versions": [{"start": _START}]},
+    "contract": [{"start": _START}],
 }
 
 _DST_BODY = {
-    "contract": {"versions": [{"start": "2024-03-31T00:00:00+01:00"}]},
+    "contract": [{"start": "2024-03-31T00:00:00+01:00"}],
     # end is 2024-03-30T22:04:00Z — BEFORE start (2024-03-30T23:00:00Z) in UTC
     "end": "2024-03-31T00:04:00+02:00",
     "meters": [
@@ -120,6 +120,12 @@ class TestBillingEndpoint:
             response = self.client.post(self.module.prefix, json=_BODY)
         assert response.status_code == 400
         assert "bad input" in response.json()["detail"]
+
+    def test_post_returns_400_when_apply_returns_none(self):
+        with patch.object(EnergyContractHistory, "apply", return_value=None):
+            response = self.client.post(self.module.prefix, json=_BODY)
+        assert response.status_code == 400
+        assert "No cost data" in response.json()["detail"]
 
     def test_post_returns_422_for_missing_meters(self):
         body = {k: v for k, v in _BODY.items() if k != "meters"}

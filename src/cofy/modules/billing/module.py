@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+
 from cofy.api.module import Module
 
 from .models.billing_request import BillingRequest
@@ -20,13 +22,9 @@ class BillingModule(Module):
                     resolution=body.resolution,
                 )
             except ValueError as e:
-                from fastapi import HTTPException
-
                 raise HTTPException(status_code=400, detail=str(e)) from e
 
             if df is None:
-                from fastapi import HTTPException
-
                 raise HTTPException(status_code=400, detail="No cost data could be calculated for the given period.")
 
             return BillingResponse.from_df(
