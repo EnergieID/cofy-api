@@ -23,6 +23,7 @@ class TimeseriesInfo(BaseModel):
                 {"timestamp": "2024-01-15T00:00:00+01:00", "value": 7.3},
             ]
         ],
+        min_length=1,
     )
     resolution: ISODuration = Field(default_factory=lambda: Duration(months=1), examples=["P1M"])
 

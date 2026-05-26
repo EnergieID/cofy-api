@@ -43,7 +43,7 @@ async def test_fetch_timeseries(mock_tariff):
     mock_tariff.get_values.assert_called_once_with(
         start=start,
         end=end,
-        resolution=resolution,
+        output_resolution=resolution,
         cost_group=CostGroup.CONSUMPTION,
     )
 

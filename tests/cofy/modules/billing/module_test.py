@@ -25,36 +25,38 @@ def _make_cost_df(start: dt.datetime) -> pd.DataFrame:
 _START = "2024-01-01T00:00:00+00:00"
 _END = "2024-02-01T00:00:00+00:00"
 _METER: dict = {
-    "direction": "consumption",
     "type": "single_rate",
-    "data": [
-        {"timestamp": _START, "value": 150.5},
-        {"timestamp": "2024-01-15T00:00:00+00:00", "value": 75.3},
-    ],
+    "power": {
+        "values": [
+            {"timestamp": _START, "value": 150.5},
+            {"timestamp": "2024-01-15T00:00:00+00:00", "value": 75.3},
+        ],
+        "resolution": "P15D",
+    },
 }
 # Contract as ContractHistory (list of versions)
 _BODY = {
     "start": _START,
     "end": _END,
     "resolution": "P1M",
-    "meters": [_METER],
-    "contract": [{"start": _START}],
+    "consumption": _METER,
+    "contract": [{"start": _START, "supplier": [{"consumption": {"energy": {"constant_cost": 100}}, "start": _START}]}],
 }
 
 _DST_BODY = {
     "contract": [{"start": "2024-03-31T00:00:00+01:00"}],
     # end is 2024-03-30T22:04:00Z — BEFORE start (2024-03-30T23:00:00Z) in UTC
     "end": "2024-03-31T00:04:00+02:00",
-    "meters": [
-        {
-            "data": [
+    "consumption": {
+        "power": {
+            "values": [
                 {"timestamp": "2024-03-31T01:45:00+01:00", "value": 150.5},
                 {"timestamp": "2024-03-31T03:00:00+02:00", "value": 75.3},
             ],
-            "direction": "consumption",
-            "type": "single_rate",
-        }
-    ],
+            "resolution": "PT15M",
+        },
+        "type": "single_rate",
+    },
     "resolution": "P1M",
     "start": "2024-03-31T00:00:00+01:00",
 }
@@ -127,25 +129,26 @@ class TestBillingEndpoint:
         assert response.status_code == 400
         assert "No cost data" in response.json()["detail"]
 
-    def test_post_returns_422_for_missing_meters(self):
-        body = {k: v for k, v in _BODY.items() if k != "meters"}
-        response = self.client.post(self.module.prefix, json=body)
-        assert response.status_code == 422
-
-    def test_post_returns_422_for_empty_meters_list(self):
-        body = {**_BODY, "meters": []}
+    def test_post_returns_422_for_missing_consumption(self):
+        body = {k: v for k, v in _BODY.items() if k != "consumption"}
         response = self.client.post(self.module.prefix, json=body)
         assert response.status_code == 422
 
     def test_post_returns_422_for_empty_meter_data(self):
-        body = {**_BODY, "meters": [{**_METER, "data": []}]}
+        body = {**_BODY, "consumption": {"type": "single_rate", "power": {"values": [], "resolution": "PT15M"}}}
         response = self.client.post(self.module.prefix, json=body)
         assert response.status_code == 422
 
-    def test_post_returns_422_for_single_datapoint(self):
-        body = {**_BODY, "meters": [{**_METER, "data": [{"timestamp": _START, "value": 100.0}]}]}
+    def test_post_returns_200_for_single_datapoint(self):
+        body = {
+            **_BODY,
+            "consumption": {
+                "type": "single_rate",
+                "power": {"values": [{"timestamp": _START, "value": 100.0}], "resolution": "PT15M"},
+            },
+        }
         response = self.client.post(self.module.prefix, json=body)
-        assert response.status_code == 422
+        assert response.status_code == 200
 
     def test_post_works_without_start_and_end(self):
         start = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
@@ -153,14 +156,6 @@ class TestBillingEndpoint:
         with patch.object(EnergyContractHistory, "apply", return_value=_make_cost_df(start)):
             response = self.client.post(self.module.prefix, json=body)
         assert response.status_code == 200
-
-    def test_post_passes_correct_args_to_apply(self):
-        start = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
-        with patch.object(EnergyContractHistory, "apply", return_value=_make_cost_df(start)) as mock_apply:
-            self.client.post(self.module.prefix, json=_BODY)
-        call_kwargs = mock_apply.call_args.kwargs
-        assert "meters" in call_kwargs
-        assert len(call_kwargs["meters"]) == 1
 
 
 # ── DST boundary regression ───────────────────────────────────────────────
