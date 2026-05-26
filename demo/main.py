@@ -1,7 +1,7 @@
 from os import environ
 from pathlib import Path
 
-from energy_cost import MeterType, Supplier, Tariff
+from energy_cost import Supplier, Tariff
 from energy_cost.index import CachedEntsoeDayAheadIndex, CSVIndex, Index
 from fastapi import Depends
 from isodate import Duration
@@ -48,7 +48,7 @@ cofy.register_module(kiwatt)
 Index.register("Belpex15min", CachedEntsoeDayAheadIndex("BE", api_key=environ.get("ENTSOE_API_KEY", "")))
 TARIFF_CONFIG_PATH = str(DATA_DIR / "dynamic_tariff.yaml")
 dynamic_tariff = TariffModule(
-    source=EnergyCostTariffSource(yaml_config=TARIFF_CONFIG_PATH, meter_type=MeterType.SINGLE_RATE),
+    source=EnergyCostTariffSource(yaml_config=TARIFF_CONFIG_PATH),
     name="dynamic",
     description="Our dynamic tariff tracking the Belpex.",
 )

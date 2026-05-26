@@ -16,7 +16,7 @@ def _make_cost_df(start: dt.datetime) -> pd.DataFrame:
         [
             ("timestamp", "", ""),
             ("taxes", CostGroup.FIXED, "vat"),
-            ("total", CostGroup.TOTAL, "total"),
+            ("total", "total", "total"),
         ]
     )
     return pd.DataFrame([[start, 0.06, 1.0]], columns=cols)

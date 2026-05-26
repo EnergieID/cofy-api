@@ -1,3 +1,4 @@
+from energy_cost import PowerDirection
 from fastapi import HTTPException
 
 from cofy.api.module import Module
@@ -12,14 +13,13 @@ class BillingModule(Module):
 
     def init_routes(self):
         def calculate_cost(body: BillingRequest) -> BillingResponse:
-            meters = [m.to_meter() for m in body.meters]
-
             try:
                 df = body.contract.apply(
-                    meters=meters,
+                    consumption=body.consumption.to_meter(PowerDirection.CONSUMPTION),
+                    injection=body.injection.to_meter(PowerDirection.INJECTION) if body.injection is not None else None,
                     start=body.start,
                     end=body.end,
-                    resolution=body.resolution,
+                    output_resolution=body.resolution,
                 )
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e)) from e
@@ -43,3 +43,7 @@ class BillingModule(Module):
             response_model=BillingResponse,
             summary="Calculate energy cost",
         )
+
+    @property
+    def version(self) -> str:
+        return "v2"

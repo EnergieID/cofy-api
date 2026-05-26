@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from energy_cost.tariff import MeterType, PowerDirection
+from energy_cost import CostGroup
 from isodate import Duration
 
 from cofy.modules.tariff.sources.energy_cost import EnergyCostTariffSource
@@ -29,25 +29,22 @@ async def test_fetch_timeseries(mock_tariff):
     end = dt.datetime(2026, 1, 2, tzinfo=dt.UTC)
     resolution = dt.timedelta(hours=1)
 
-    mock_tariff.get_energy_cost.return_value = pd.DataFrame(
+    mock_tariff.get_values.return_value = pd.DataFrame(
         {
             "timestamp": [start, start + resolution],
             "total": [10.0, 20.0],
         }
     )
 
-    result = await src.fetch_timeseries(
-        start, end, resolution=resolution, meter_type=MeterType.SINGLE_RATE, direction=PowerDirection.CONSUMPTION
-    )
+    result = await src.fetch_timeseries(start, end, resolution=resolution, cost_group=CostGroup.CONSUMPTION)
 
     assert result.metadata["unit"] == "EUR/MWh"
     assert len(result.frame) == 2
-    mock_tariff.get_energy_cost.assert_called_once_with(
+    mock_tariff.get_values.assert_called_once_with(
         start=start,
         end=end,
         resolution=resolution,
-        meter_type=MeterType.SINGLE_RATE,
-        direction=PowerDirection.CONSUMPTION,
+        cost_group=CostGroup.CONSUMPTION,
     )
 
 
@@ -63,35 +60,26 @@ async def test_fetch_timeseries_raises_for_duration(mock_tariff):
 
 
 @pytest.mark.asyncio
-async def test_fetch_timeseries_raises_for_missing_meter_type_and_direction(mock_tariff):
+async def test_fetch_timeseries_raises_for_missing_cost_group(mock_tariff):
     src = EnergyCostTariffSource("some_yaml_config")
-    with pytest.raises(ValueError, match="meter_type must be provided."):
+    with pytest.raises(ValueError, match="Cost group must be provided."):
         await src.fetch_timeseries(
             dt.datetime(2026, 1, 1, tzinfo=dt.UTC),
             dt.datetime(2026, 1, 2, tzinfo=dt.UTC),
             resolution=dt.timedelta(hours=1),
-            direction=PowerDirection.CONSUMPTION,
-        )
-    with pytest.raises(ValueError, match="direction must be provided."):
-        await src.fetch_timeseries(
-            dt.datetime(2026, 1, 1, tzinfo=dt.UTC),
-            dt.datetime(2026, 1, 2, tzinfo=dt.UTC),
-            resolution=dt.timedelta(hours=1),
-            meter_type=MeterType.SINGLE_RATE,
         )
 
 
 @pytest.mark.asyncio
 async def test_fetch_timeseries_raises_when_series_is_none(mock_tariff):
     src = EnergyCostTariffSource("some_yaml_config")
-    mock_tariff.get_energy_cost.return_value = None
+    mock_tariff.get_values.return_value = None
     with pytest.raises(ValueError, match="No tariff data available"):
         await src.fetch_timeseries(
             dt.datetime(2026, 1, 1, tzinfo=dt.UTC),
             dt.datetime(2026, 1, 2, tzinfo=dt.UTC),
             resolution=dt.timedelta(hours=1),
-            meter_type=MeterType.SINGLE_RATE,
-            direction=PowerDirection.CONSUMPTION,
+            cost_group=CostGroup.CONSUMPTION,
         )
 
 
@@ -103,5 +91,4 @@ def test_supported_resolutions(mock_tariff):
 def test_extra_args(mock_tariff):
     src = EnergyCostTariffSource("some_yaml_config")
     args = src.extra_args
-    assert "meter_type" in args
-    assert "direction" in args
+    assert "cost_group" in args
