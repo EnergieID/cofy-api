@@ -25,13 +25,26 @@ if _SUPPLIER_KEY not in dict(ec.Supplier.items()):
 
     ec.Supplier.register(_SUPPLIER_KEY, ec.Supplier(products={_PRODUCT_KEY: Tariff(root=[])}))
 
+# A second supplier that has a day_night_07 variant of the product.
+_SUPPLIER_VARIANT_KEY = "test_supplier_variant"
+_PRODUCT_VARIANT_KEY = f"{_PRODUCT_KEY}_day_night_07"
+if _SUPPLIER_VARIANT_KEY not in dict(ec.Supplier.items()):
+    from energy_cost import Tariff
 
-def _make_contract(ean: str, start: dt.datetime, end: dt.datetime | None = None) -> Contract:
+    ec.Supplier.register(
+        _SUPPLIER_VARIANT_KEY,
+        ec.Supplier(products={_PRODUCT_KEY: Tariff(root=[]), _PRODUCT_VARIANT_KEY: Tariff(root=[])}),
+    )
+
+
+def _make_contract(
+    ean: str, start: dt.datetime, end: dt.datetime | None = None, supplier_key: str = _SUPPLIER_KEY
+) -> Contract:
     return Contract(
         ean=ean,
         customer_type=CustomerType.RESIDENTIAL,
         connection_type=ConnectionType.ELECTRICITY,
-        supplier=NamedIdentifier(name="Test Supplier", id=_SUPPLIER_KEY),
+        supplier=NamedIdentifier(name="Test Supplier", id=supplier_key),
         product=NamedIdentifier(name="Test Product", id=_PRODUCT_KEY),
         distributor=NamedIdentifier(name="Fluvius Imewo", id="fluvius_imewo"),
         region=NamedIdentifier(name="Flanders", id="be_flanders"),
@@ -159,3 +172,30 @@ class TestGetContractHistory:
     def test_returns_404_for_unknown_member(self):
         response = self.client.get(self.prefix + "/nonexistent/contracts/EAN123")
         assert response.status_code == 404
+
+    def test_meter_type_without_variant_uses_base_product_key(self):
+        """meter_type supplied but the supplier has no variant → product_key stays as-is."""
+        response = self.client.get(self.prefix + "/1/contracts/EAN123?meter_type=day_night_06")
+        assert response.status_code == 200
+        for contract in response.json():
+            assert contract["product_key"] == _PRODUCT_KEY
+
+    def test_meter_type_with_variant_uses_variant_product_key(self):
+        """meter_type supplied and the supplier has a matching variant → variant product_key is used."""
+        source = DummyMemberSource()
+        # Override contracts to use the variant supplier
+        variant_contract = _make_contract(
+            "EAN456",
+            start=dt.datetime(2024, 1, 1, tzinfo=dt.UTC),
+            supplier_key=_SUPPLIER_VARIANT_KEY,
+        )
+        source.members[0].addresses[0].contracts = [variant_contract]
+
+        app = FastAPI()
+        module = MembersModule(source=source, name="variant")
+        app.include_router(module)
+        client = TestClient(app)
+
+        response = client.get(module.prefix + "/1/contracts/EAN456?meter_type=day_night_07")
+        assert response.status_code == 200
+        assert all(c["product_key"] == _PRODUCT_VARIANT_KEY for c in response.json())
