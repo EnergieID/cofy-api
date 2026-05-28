@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Request
-from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
 from ..version import get_installed_version
@@ -36,12 +35,8 @@ class CofyAPI(FastAPI):
             self.include_router(DebugRouter(debug_dir=resolved_debug_dir), include_in_schema=False)
 
     def openapi(self):
-        return get_openapi(
-            title=self.title,
-            version=self.version,
-            routes=self.routes,
-            tags=self.tags_metadata,
-        )
+        self.openapi_tags = self.tags_metadata
+        return super().openapi()
 
     def register_module(self, module: Module):
         self._modules.append(module)
