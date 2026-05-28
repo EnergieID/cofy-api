@@ -17,7 +17,7 @@ def _make_cost_df(start: dt.datetime) -> pd.DataFrame:
         [
             ("timestamp", "", ""),
             ("taxes", CostGroup.FIXED, "vat"),
-            ("total", CostGroup.TOTAL, "total"),
+            ("total", "total", "total"),
         ]
     )
     return pd.DataFrame([[start, 0.06, 1.0]], columns=cols)
@@ -44,7 +44,7 @@ class TestBillingDataPoint:
         point = BillingDataPoint(
             timestamp=ts,
             taxes={CostGroup.FIXED: {"vat": 0.06}},
-            total={CostGroup.TOTAL: {"total": 1.0}},
+            total={"total": {"total": 1.0}},
         )
         assert point.timestamp == ts
         assert point.supplier is None
@@ -59,7 +59,7 @@ class TestBillingDataPoint:
             distributor={CostGroup.FIXED: {"grid": 0.1}},
             fees={CostGroup.FIXED: {"levy": 0.02}},
             taxes={CostGroup.FIXED: {"vat": 0.06}},
-            total={CostGroup.TOTAL: {"total": 0.68}},
+            total={"total": {"total": 0.68}},
         )
         assert point.supplier is not None
         assert point.distributor is not None
@@ -90,7 +90,7 @@ class TestBillingResponseFromDf:
             [
                 ("timestamp", "", ""),
                 ("taxes", CostGroup.FIXED, "vat"),
-                ("total", CostGroup.TOTAL, "total"),
+                ("total", "total", "total"),
             ]
         )
         df = pd.DataFrame(

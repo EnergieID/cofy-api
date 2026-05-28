@@ -1,0 +1,13 @@
+- start: 2024-01-01T00:00:00+01:00
+  consumption:
+    schedule:
+      - when: 
+          - days: [monday, tuesday, wednesday, thursday, friday]
+            start: "07:00:00"
+            end: "22:00:00"
+        formula:
+          constant_cost: 300.0
+      - formula:
+          constant_cost: 100.0
+  injection:
+    constant_cost: -20.0

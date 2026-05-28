@@ -1,4 +1,5 @@
 import datetime as dt
+from typing import Literal
 
 import pandas as pd
 from energy_cost import CostGroup
@@ -15,7 +16,7 @@ class BillingMetadata(BaseModel):
     resolution: ISODuration | None = None
 
 
-TariffBreakdown = dict[CostGroup, dict[str, float | None]]
+TariffBreakdown = dict[CostGroup | Literal["total"], dict[str, float | None]]
 
 
 class BillingDataPoint(BaseModel):

@@ -1,3 +1,6 @@
+from energy_cost import PowerDirection
+from fastapi import HTTPException
+
 from cofy.api.module import Module
 
 from .models.billing_request import BillingRequest
@@ -8,29 +11,21 @@ class BillingModule(Module):
     type: str = "billing"
     type_description: str = "Module that computes energy costs based on meter data and contract information."
 
-    def __init__(self, *, default_region: str = "be_flanders", default_supplier: str | None = None, **kwargs):
-        self.default_region = default_region
-        self.default_supplier = default_supplier
-        super().__init__(**kwargs)
-
     def init_routes(self):
         def calculate_cost(body: BillingRequest) -> BillingResponse:
-            contract = body.contract.to_contract(
-                default_region=self.default_region, default_supplier=self.default_supplier
-            )
-            meters = [m.to_meter() for m in body.meters]
-
             try:
-                df = contract.apply(
-                    meters=meters,
+                df = body.contract.apply(
+                    consumption=body.consumption.to_meter(PowerDirection.CONSUMPTION),
+                    injection=body.injection.to_meter(PowerDirection.INJECTION) if body.injection is not None else None,
                     start=body.start,
                     end=body.end,
-                    resolution=body.resolution,
+                    output_resolution=body.resolution,
                 )
             except ValueError as e:
-                from fastapi import HTTPException
-
                 raise HTTPException(status_code=400, detail=str(e)) from e
+
+            if df is None:
+                raise HTTPException(status_code=400, detail="No cost data could be calculated for the given period.")
 
             return BillingResponse.from_df(
                 df,
@@ -48,3 +43,7 @@ class BillingModule(Module):
             response_model=BillingResponse,
             summary="Calculate energy cost",
         )
+
+    @property
+    def version(self) -> str:
+        return "v2"
