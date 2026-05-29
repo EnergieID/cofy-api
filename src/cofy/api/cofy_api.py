@@ -36,7 +36,13 @@ class CofyAPI(FastAPI):
 
     def openapi(self):
         self.openapi_tags = self.tags_metadata
-        return super().openapi()
+        schema = super().openapi()
+        if self.root_path:
+            root_path = self.root_path.rstrip("/")
+            server_urls = {s.get("url") for s in schema.get("servers", [])}
+            if root_path not in server_urls:
+                schema["servers"] = [{"url": root_path}] + schema.get("servers", [])
+        return schema
 
     def register_module(self, module: Module):
         self._modules.append(module)

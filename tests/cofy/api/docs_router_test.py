@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.testclient import TestClient
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from cofy.api import DocsRouter
+from cofy.api.token_auth import token_verifier
 
 
 class TestDocsRouter:
@@ -63,3 +64,20 @@ class TestDocsRouter:
         response = self.client.get("/docs")
         assert response.status_code == 200
         assert 'ui.preauthorizeApiKey("bar", "bearer foo")' in response.text
+
+    def test_openapi_requires_security_when_token_and_auth_scheme_present(self):
+        app = FastAPI(
+            dependencies=[Depends(token_verifier({"foo": {"name": "Demo User"}}))],
+            docs_url=None,
+            redoc_url=None,
+            openapi_url=None,
+        )
+
+        app.include_router(self.docs_router)
+        client = TestClient(app)
+
+        response = client.get("/openapi.json")
+        assert response.status_code == 401
+
+        response = client.get("/openapi.json?token=foo")
+        assert response.status_code == 200

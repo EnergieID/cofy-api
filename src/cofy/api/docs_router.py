@@ -6,6 +6,10 @@ from fastapi.responses import HTMLResponse
 
 
 class DocsRouter(APIRouter):
+    """
+    Overrides default FastAPI docs behavior to include security.
+    """
+
     def __init__(self, get_openapi: Callable[[], dict]):
         super().__init__()
         self.get_openapi = get_openapi
@@ -14,7 +18,11 @@ class DocsRouter(APIRouter):
             self.get_swagger_ui_html,
             include_in_schema=False,
         )
-        self.add_api_route("/openapi.json", self.get_openapi, include_in_schema=False)
+        self.add_api_route(
+            "/openapi.json",
+            self.get_openapi,
+            include_in_schema=False,
+        )
 
     async def get_swagger_ui_html(self, request: Request):
         response = get_swagger_ui_html(
