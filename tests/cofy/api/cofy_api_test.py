@@ -102,3 +102,21 @@ class TestCofyAPIModuleRegistration:
         response = self.client.get("/health")
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
+
+    def test_root_path_updates_paths_in_openapi(self):
+        parent = FastAPI()
+        cofy = CofyAPI(root_path="/api/v1")
+        parent.mount("/api/v1", cofy)
+        cofy.register_module(self.module)
+        client = TestClient(parent)
+        response = client.get("/api/v1/openapi.json")
+        assert response.status_code == 200
+        data = response.json()
+        # Paths are relative per the OpenAPI spec; the mount prefix appears in servers.
+        assert f"{self.module.prefix}/hello" in data["paths"]
+        servers = [s["url"] for s in data.get("servers", [])]
+        assert "/api/v1" in servers
+
+        response = client.get(f"/api/v1{self.module.prefix}/hello")
+        assert response.status_code == 200
+        assert response.text == '"Hello from DummyModule test_module"'
