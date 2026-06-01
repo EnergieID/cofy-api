@@ -1,10 +1,13 @@
 import builtins
 from abc import ABC, abstractmethod
+from typing import Generic, TypeVar
 
 from .model import Member
 
+T = TypeVar("T")
 
-class MemberSource[T](ABC):
+
+class MemberSource(ABC, Generic[T]):
     @abstractmethod
     def list(
         self,
