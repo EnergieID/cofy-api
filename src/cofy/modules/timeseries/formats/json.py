@@ -1,9 +1,13 @@
 import datetime as dt
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
 from ..format import TimeseriesFormat
 from ..model import ISODuration, Timeseries
+
+DataType = TypeVar("DataType", bound=BaseModel)
+MetadataType = TypeVar("MetadataType", bound=BaseModel)
 
 
 class DefaultDataType(BaseModel):
@@ -20,12 +24,12 @@ class DefaultMetadataType(BaseModel):
     unit: str | None = None
 
 
-class ResponseModel[DataType: BaseModel, MetadataType: BaseModel](BaseModel):
+class ResponseModel(BaseModel, Generic[DataType, MetadataType]):
     metadata: MetadataType
     data: list[DataType]
 
 
-class JSONFormat[DataType: BaseModel, MetadataType: BaseModel](TimeseriesFormat):
+class JSONFormat(TimeseriesFormat, Generic[DataType, MetadataType]):
     """Timeseries format for JSON."""
 
     name = "json"
