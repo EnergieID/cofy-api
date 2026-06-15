@@ -193,6 +193,6 @@ def test_members_file_source_no_double_reload_under_lock(tmp_path):
         inner_call = True
         return sig
 
-    source._get_file_signature = patched_get_sig  # type: ignore[method-assign]
+    source._get_file_signature = patched_get_sig  # ty: ignore[invalid-assignment]
     source.list()
     assert call_count == 1  # loader was not called a second time
