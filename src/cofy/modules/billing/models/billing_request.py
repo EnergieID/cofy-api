@@ -44,14 +44,14 @@ class TimeseriesInfo(BaseModel):
 
 class MeterInfo(BaseModel):
     type: MeterType = Field(default=MeterType.SINGLE_RATE, examples=["single_rate"])
-    power: TimeseriesInfo
+    measurements: TimeseriesInfo
     capacity: TimeseriesInfo | None = None
 
     def to_meter(self, direction: PowerDirection) -> Meter:
         return Meter(
             direction=direction,
             type=self.type,
-            power=self.power.to_timeseries(),
+            measurements=self.measurements.to_timeseries(),
             capacity=self.capacity.to_timeseries() if self.capacity is not None else None,
         )
 
@@ -67,7 +67,7 @@ class BillingRequest(BaseModel):
                     "resolution": "P1M",
                     "consumption": {
                         "type": "single_rate",
-                        "power": {
+                        "measurements": {
                             "values": [
                                 {"timestamp": "2024-01-01T00:00:00+01:00", "value": 5.5},
                                 {"timestamp": "2024-01-01T00:15:00+01:00", "value": 7.3},
