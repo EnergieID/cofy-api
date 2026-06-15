@@ -26,7 +26,7 @@ _START = "2024-01-01T00:00:00+00:00"
 _END = "2024-02-01T00:00:00+00:00"
 _METER: dict = {
     "type": "single_rate",
-    "power": {
+    "measurements": {
         "values": [
             {"timestamp": _START, "value": 150.5},
             {"timestamp": "2024-01-15T00:00:00+00:00", "value": 75.3},
@@ -48,7 +48,7 @@ _DST_BODY = {
     # end is 2024-03-30T22:04:00Z — BEFORE start (2024-03-30T23:00:00Z) in UTC
     "end": "2024-03-31T00:04:00+02:00",
     "consumption": {
-        "power": {
+        "measurements": {
             "values": [
                 {"timestamp": "2024-03-31T01:45:00+01:00", "value": 150.5},
                 {"timestamp": "2024-03-31T03:00:00+02:00", "value": 75.3},
@@ -135,7 +135,7 @@ class TestBillingEndpoint:
         assert response.status_code == 422
 
     def test_post_returns_422_for_empty_meter_data(self):
-        body = {**_BODY, "consumption": {"type": "single_rate", "power": {"values": [], "resolution": "PT15M"}}}
+        body = {**_BODY, "consumption": {"type": "single_rate", "measurements": {"values": [], "resolution": "PT15M"}}}
         response = self.client.post(self.module.prefix, json=body)
         assert response.status_code == 422
 
@@ -144,7 +144,7 @@ class TestBillingEndpoint:
             **_BODY,
             "consumption": {
                 "type": "single_rate",
-                "power": {"values": [{"timestamp": _START, "value": 100.0}], "resolution": "PT15M"},
+                "measurements": {"values": [{"timestamp": _START, "value": 100.0}], "resolution": "PT15M"},
             },
         }
         response = self.client.post(self.module.prefix, json=body)
