@@ -27,7 +27,7 @@ class TimeseriesInfo(BaseModel):
     )
     resolution: ISODuration = Field(default_factory=lambda: Duration(months=1), examples=["P1M"])
 
-    def to_timeseries(self) -> TimeseriesFrame:
+    def to_timeseries(self, factor) -> TimeseriesFrame:
         data = TimeseriesFrame(
             {
                 "timestamp": [dp.timestamp for dp in self.values],
@@ -35,8 +35,8 @@ class TimeseriesInfo(BaseModel):
             },
             resolution=self.resolution,
         )
-        # convert kW(h) to MW(h) for energy_cost
-        data["value"] = data["value"] / 1000
+        # convert, eg kWh to MWh for energy_cost, or W to MW
+        data["value"] = data["value"] / factor
         # convert iso strings to datetime
         data["timestamp"] = pd.to_datetime(data["timestamp"], format="ISO8601", utc=True)
         return data
@@ -51,8 +51,8 @@ class MeterInfo(BaseModel):
         return Meter(
             direction=direction,
             type=self.type,
-            measurements=self.measurements.to_timeseries(),
-            capacity=self.capacity.to_timeseries() if self.capacity is not None else None,
+            measurements=self.measurements.to_timeseries(1000),
+            capacity=self.capacity.to_timeseries(1000000) if self.capacity is not None else None,
         )
 
 
