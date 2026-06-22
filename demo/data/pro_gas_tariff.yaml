@@ -3,14 +3,14 @@
 - start: 2024-01-01T00:00:00+01:00
   consumption:
     constant_cost: 55.0
-  periodic:
+  fixed:
     fixed_fee:
       period: P1M
       constant_cost: 14
 - start: 2026-01-01T00:00:00+01:00
   consumption:
     constant_cost: 58.0
-  periodic:
+  fixed:
     fixed_fee:
       period: P1M
       constant_cost: 15

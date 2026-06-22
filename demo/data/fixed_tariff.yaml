@@ -10,7 +10,7 @@
     constant_cost: 90.0
   injection:
     constant_cost: -15.0
-  periodic:
+  fixed:
     fixed_fee:
       period: P1M
       constant_cost: 10
@@ -19,7 +19,7 @@
     constant_cost: 120.0
   injection:
     constant_cost: -25.0
-  periodic:
+  fixed:
     fixed_fee:
       period: P1M
       constant_cost: 15
