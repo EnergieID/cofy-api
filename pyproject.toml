@@ -24,7 +24,7 @@ timeseries = [
 ]
 tariff = [
     "cofy-api[timeseries]",
-    "energy-cost>=0.6.1",
+    "energy-cost>=0.7.0",
     "entsoe-py>=0.7.10",
     "pandas>=3.0.0"
 ]
