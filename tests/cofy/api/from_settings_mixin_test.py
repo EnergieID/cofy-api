@@ -1,0 +1,146 @@
+import pytest
+
+from cofy.api.from_settings_mixin import BaseSettingsModel, FromSettingsMixin
+
+
+def test_classes_register_as_tree():
+    class ASettings(BaseSettingsModel):
+        type: str = "a"
+
+    class A(FromSettingsMixin, settings=ASettings):
+        pass
+
+    class BSettings(BaseSettingsModel):
+        type: str = "b"
+
+    class B(A, settings=BSettings):
+        pass
+
+    class CSettings(BaseSettingsModel):
+        type: str = "c"
+
+    class C(A, settings=CSettings):
+        pass
+
+    assert A._registry == {"a": ASettings, "b": BSettings, "c": CSettings}
+    assert B._registry == {"b": BSettings}
+    assert C._registry == {"c": CSettings}
+
+    a = A.create({"type": "a"})
+    b = A.create({"type": "b"})
+    c = A.create({"type": "c"})
+
+    assert isinstance(a, A)
+    assert isinstance(b, B)
+    assert isinstance(c, C)
+
+
+def test_can_use_differing_settings():
+    class ASettings(BaseSettingsModel):
+        type: str = "a"
+        foo: str
+
+    class A(FromSettingsMixin, settings=ASettings):
+        def __init__(self, foo: str):
+            self.foo = foo
+
+    class BSettings(ASettings):
+        type: str = "b"
+        bar: int
+
+    class B(A, settings=BSettings):
+        def __init__(self, foo: str, bar: int):
+            super().__init__(foo)
+            self.bar = bar * 2
+
+    class CSettings(BaseSettingsModel):
+        type: str = "c"
+        bar: int
+
+    class C(A, settings=CSettings):
+        def __init__(self, bar: int):
+            super().__init__("C-foo")
+            self.bar = bar * 2
+
+    a = A.create({"type": "a", "foo": "hello"})
+    b = A.create({"type": "b", "foo": "world", "bar": 21})
+    c = A.create({"type": "c", "bar": 21})
+
+    assert isinstance(a, A)
+    assert isinstance(b, B)
+    assert isinstance(c, C)
+    assert a.foo == "hello"
+    assert b.foo == "world"
+    assert b.bar == 42
+    assert c.foo == "C-foo"
+    assert c.bar == 42
+
+
+def test_no_overlap_in_different_registries():
+    class ASettings(BaseSettingsModel):
+        type: str = "a"
+
+    class A(FromSettingsMixin, settings=ASettings):
+        pass
+
+    class BSettings(BaseSettingsModel):
+        type: str = "b"
+
+    class B(FromSettingsMixin, settings=BSettings):
+        pass
+
+    assert A._registry == {"a": ASettings}
+    assert B._registry == {"b": BSettings}
+
+    pytest.raises(ValueError, lambda: A.create({"type": "b"}))
+    pytest.raises(ValueError, lambda: B.create({"type": "a"}))
+
+
+def test_settings_can_contain_settings():
+    class InnerSettings(BaseSettingsModel):
+        type: str = "inner"
+        value: int
+
+    class Inner(FromSettingsMixin, settings=InnerSettings):
+        def __init__(self, value: int):
+            self.value = value
+
+    class OuterSettings(BaseSettingsModel):
+        type: str = "outer"
+        inner: InnerSettings
+
+    class Outer(FromSettingsMixin, settings=OuterSettings):
+        def __init__(self, inner: InnerSettings):
+            self.inner = inner
+
+    outer = Outer.create({"type": "outer", "inner": {"type": "inner", "value": 42}})
+    assert isinstance(outer, Outer)
+    assert isinstance(outer.inner, Inner)
+    assert outer.inner.value == 42
+
+
+def test_recursion_in_inner_settings():
+    class ASettings(BaseSettingsModel):
+        type: str = "a"
+        foo: int
+
+    class A(FromSettingsMixin, settings=ASettings):
+        def __init__(self, foo: int):
+            self.foo = foo
+
+    class BSettings(ASettings):
+        type: str = "b"
+        a: ASettings
+
+    class B(A, settings=BSettings):
+        def __init__(self, a: A, foo: int):
+            self.a = a
+            super().__init__(foo)
+
+    b = B.create({"type": "b", "foo": 10, "a": {"type": "b", "foo": 20, "a": {"type": "a", "foo": 30}}})
+    assert isinstance(b, B)
+    assert isinstance(b.a, B)
+    assert isinstance(b.a.a, A)
+    assert b.foo == 10
+    assert b.a.foo == 20
+    assert b.a.a.foo == 30
