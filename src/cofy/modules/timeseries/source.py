@@ -1,10 +1,16 @@
 import datetime as dt
 from abc import ABC, abstractmethod
 
+from cofy.api.from_settings_mixin import BaseSettingsModel, FromSettingsMixin
+
 from .model import ISODuration, Timeseries
 
 
-class TimeseriesSource(ABC):
+class TimeseriesSourceSettings(BaseSettingsModel):
+    type: str = "timeseries_source"
+
+
+class TimeseriesSource(FromSettingsMixin, ABC, settings=TimeseriesSourceSettings):
     @abstractmethod
     async def fetch_timeseries(
         self,

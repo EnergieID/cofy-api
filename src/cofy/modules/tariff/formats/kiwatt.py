@@ -1,8 +1,8 @@
 from datetime import UTC, datetime, timedelta
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesFormat
+from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesFormat, TimeseriesFormatSettings
 
 
 def to_utc_timestring(dt: datetime | str) -> str:
@@ -26,7 +26,12 @@ class ResponseModel(BaseModel):
     prices: list[PriceRecordModel]
 
 
-class KiwattFormat(TimeseriesFormat):
+class KiwattFormatSettings(TimeseriesFormatSettings):
+    type: str = "kiwatt_format"
+    source: str = Field(default="Cofy-API-Demo")
+
+
+class KiwattFormat(TimeseriesFormat, settings=KiwattFormatSettings):
     """Timeseries format for Kiwatt."""
 
     name = "kiwatt"

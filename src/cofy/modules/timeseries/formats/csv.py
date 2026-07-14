@@ -1,11 +1,15 @@
 from fastapi.responses import StreamingResponse
 
-from ..format import TimeseriesFormat
+from ..format import TimeseriesFormat, TimeseriesFormatSettings
 from ..model import Timeseries
 from .json import DefaultMetadataType
 
 
-class CSVFormat(TimeseriesFormat):
+class CSVFormatSettings(TimeseriesFormatSettings):
+    type: str = "csv_timeseries_format"
+
+
+class CSVFormat(TimeseriesFormat, settings=CSVFormatSettings):
     """Timeseries format for CSV."""
 
     name = "csv"

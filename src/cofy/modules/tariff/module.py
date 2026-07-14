@@ -2,7 +2,12 @@ import datetime as dt
 
 from cofy.modules.timeseries import (
     TimeseriesModule,
+    TimeseriesModuleSettings,
 )
+
+
+class TariffModuleSettings(TimeseriesModuleSettings):
+    type: str = "tariff"
 
 
 def floor_datetime(dt_obj: dt.datetime, delta: dt.timedelta) -> dt.datetime:
@@ -12,7 +17,7 @@ def floor_datetime(dt_obj: dt.datetime, delta: dt.timedelta) -> dt.datetime:
     return dt.datetime.min.replace(tzinfo=dt_obj.tzinfo) + dt.timedelta(seconds=floored_seconds)
 
 
-class TariffModule(TimeseriesModule):
+class TariffModule(TimeseriesModule, settings=TariffModuleSettings):
     type: str = "tariff"
     type_description: str = "Module providing tariff data as time series."
 

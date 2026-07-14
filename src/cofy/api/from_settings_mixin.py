@@ -43,16 +43,16 @@ class BaseSettingsModel(BaseModel):
 
 
 class FromSettingsMixin:
-    _registry: ClassVar[dict[str, type[BaseSettingsModel]]] = {}
-
     def __init_subclass__(
         cls: type[FromSettingsMixin],
         settings: type[BaseSettingsModel] | None = None,
         **kwargs,
     ):
         super().__init_subclass__(**kwargs)
+        # Not every subclass needs to be creatable from settings (e.g. test doubles).
+        # If no settings model is provided, skip registration.
         if settings is None:
-            raise TypeError(f"{cls.__name__} must specify a settings model to register automatically")
+            return
 
         if "_registry" not in cls.__dict__:
             cls._registry = {}

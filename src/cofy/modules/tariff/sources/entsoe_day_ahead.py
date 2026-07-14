@@ -6,12 +6,18 @@ import pandas as pd
 from entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
 from fastapi.params import Query
-from pydantic import Field
+from pydantic import Field, SecretStr
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
+from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 
-class EntsoeDayAheadTariffSource(TimeseriesSource):
+class EntsoeDayAheadTariffSourceSettings(TimeseriesSourceSettings):
+    type: str = "entsoe_day_ahead"
+    api_key: SecretStr
+    country_code: str | None = None
+
+
+class EntsoeDayAheadTariffSource(TimeseriesSource, settings=EntsoeDayAheadTariffSourceSettings):
     def __init__(self, api_key: str, country_code: str | None = None):
         super().__init__()
         if not api_key:

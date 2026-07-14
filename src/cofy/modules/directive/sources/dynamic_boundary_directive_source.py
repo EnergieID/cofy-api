@@ -2,15 +2,23 @@ import asyncio
 import datetime as dt
 
 import narwhals as nw
+from pydantic import Field
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
+from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 from ..formats.directive import DIRECTIVE_STEPS
 
 BOUNDARY_COLUMNS = ("b0", "b1", "b2", "b3")
 
 
-class DynamicBoundaryDirectiveSource(TimeseriesSource):
+class DynamicBoundaryDirectiveSourceSettings(TimeseriesSourceSettings):
+    type: str = "dynamic_boundary_directive"
+    signal_source: TimeseriesSourceSettings
+    boundary_source: TimeseriesSourceSettings
+    reverse: bool = Field(default=False)
+
+
+class DynamicBoundaryDirectiveSource(TimeseriesSource, settings=DynamicBoundaryDirectiveSourceSettings):
     def __init__(
         self,
         signal_source: TimeseriesSource,

@@ -3,10 +3,16 @@ from abc import ABC, abstractmethod
 from fastapi import Response
 from fastapi.responses import JSONResponse
 
+from cofy.api.from_settings_mixin import BaseSettingsModel, FromSettingsMixin
+
 from .model import Timeseries
 
 
-class TimeseriesFormat(ABC):
+class TimeseriesFormatSettings(BaseSettingsModel):
+    type: str = "timeseries_format"
+
+
+class TimeseriesFormat(FromSettingsMixin, ABC, settings=TimeseriesFormatSettings):
     @abstractmethod
     def format(self, timeseries: Timeseries) -> object:
         """Format the timeseries data into a Response object."""

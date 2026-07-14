@@ -1,13 +1,17 @@
 from energy_cost import PowerDirection
 from fastapi import HTTPException
 
-from cofy.api.module import Module
+from cofy.api.module import Module, ModuleSettings
 
 from .models.billing_request import BillingRequest
 from .models.billing_response import BillingMetadata, BillingResponse
 
 
-class BillingModule(Module):
+class BillingModuleSettings(ModuleSettings):
+    type: str = "billing"
+
+
+class BillingModule(Module, settings=BillingModuleSettings):
     type: str = "billing"
     type_description: str = "Module that computes energy costs based on meter data and contract information."
 

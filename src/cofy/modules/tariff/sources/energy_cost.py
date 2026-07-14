@@ -6,11 +6,18 @@ import pandas as pd
 from energy_cost import CostGroup, Tariff
 from fastapi import Query
 from isodate import Duration
+from pydantic import Field
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
+from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 
-class EnergyCostTariffSource(TimeseriesSource):
+class EnergyCostTariffSourceSettings(TimeseriesSourceSettings):
+    type: str = "energy_cost"
+    yaml_config: str = Field(description="Path to the YAML tariff configuration file")
+    cost_group: CostGroup | None = None
+
+
+class EnergyCostTariffSource(TimeseriesSource, settings=EnergyCostTariffSourceSettings):
     def __init__(self, yaml_config: str, cost_group: CostGroup | None = None):
         super().__init__()
         self.tariff = Tariff.from_yaml(yaml_config)

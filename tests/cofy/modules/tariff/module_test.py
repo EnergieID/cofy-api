@@ -4,6 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from cofy.api.module import Module
 from cofy.modules.tariff import EntsoeDayAheadTariffSource, TariffModule
 from tests.cofy.modules.tariff.dummy_source import DummySource
 
@@ -62,3 +63,21 @@ class TestTariffModule:
         for i, entry in enumerate(data):
             assert entry["value"] == i * 10.0
             assert dt.datetime.fromisoformat(entry["timestamp"]) == self.start + dt.timedelta(minutes=15 * i)
+
+
+def test_can_create_from_settings():
+    module = Module.create(
+        {
+            "type": "tariff",
+            "source": {
+                "type": "energy_cost",
+                "yaml_config": "demo/data/fixed_tariff.yaml",
+                "cost_group": "consumption",
+            },
+            "formats": [
+                {"type": "json_timeseries_format"},
+            ],
+        }
+    )
+
+    assert isinstance(module, TariffModule)
