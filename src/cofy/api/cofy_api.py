@@ -2,8 +2,10 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
+
+from cofy.api.token_auth import Auth, AuthSettings
 
 from ..version import get_installed_version
 from .docs_router import DocsRouter
@@ -27,12 +29,24 @@ class CofyAPISettings(BaseSettingsModel):
     debug_mode: bool = False
     debug_dir: Path | None = None
     modules: list[ModuleSettings] | None = None
+    auth: AuthSettings | None = None
 
 
 class CofyAPI(FastAPI, FromSettingsMixin, settings=CofyAPISettings):
     def __init__(
-        self, *, debug_mode: bool = False, debug_dir: Path | None = None, modules: list[Module] | None = None, **kwargs
+        self,
+        *,
+        auth: Auth | None = None,
+        debug_mode: bool = False,
+        debug_dir: Path | None = None,
+        modules: list[Module] | None = None,
+        **kwargs,
     ):
+        if auth is not None:
+            if "dependencies" in kwargs:
+                kwargs["dependencies"].append(Depends(auth.verify))
+            else:
+                kwargs["dependencies"] = [Depends(auth.verify)]
         super().__init__(**(DEFAULT_ARGS | kwargs))
         self._modules: list[Module] = []
         self.include_router(DocsRouter(self.openapi))

@@ -8,6 +8,7 @@ from isodate import Duration
 from cofy import CofyAPI
 
 # Import concrete modules/sources/formats so they register for FromSettingsMixin.create.
+from cofy.api import TokenAuth  # noqa: F401
 from cofy.modules.billing import BillingModule  # noqa: F401
 from cofy.modules.directive import DirectiveFormat, DirectiveModule, DirectiveSource  # noqa: F401
 from cofy.modules.production import EnergyIDProduction, ProductionModule  # noqa: F401
@@ -30,6 +31,14 @@ cofy = CofyAPI.create(
     {
         "type": "cofy_api",
         "debug_mode": True,
+        "auth": {
+            "type": "token",
+            "tokens": {
+                environ.get("COFY_API_TOKEN", ""): {
+                    "name": "Demo User",
+                }
+            },
+        },
         "modules": [
             {
                 "type": "tariff",

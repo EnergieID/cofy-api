@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from cofy.api import DocsRouter
-from cofy.api.token_auth import token_verifier
+from cofy.api.token_auth import TokenAuth, TokenInfo
 
 
 class TestDocsRouter:
@@ -67,7 +67,7 @@ class TestDocsRouter:
 
     def test_openapi_requires_security_when_token_and_auth_scheme_present(self):
         app = FastAPI(
-            dependencies=[Depends(token_verifier({"foo": {"name": "Demo User"}}))],
+            dependencies=[Depends(TokenAuth({"foo": TokenInfo(name="Demo User")}).verify)],
             docs_url=None,
             redoc_url=None,
             openapi_url=None,

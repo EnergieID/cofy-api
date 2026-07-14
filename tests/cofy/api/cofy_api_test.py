@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from cofy import CofyAPI
+from cofy.api.token_auth import TokenAuth, TokenInfo
 from tests.mocks.dummy_module import DummyModule
 
 
@@ -66,6 +67,27 @@ def test_creation_from_settings():
     assert len(cofy.modules) == 1
     assert isinstance(cofy.modules[0], DummyModule)
     assert cofy.modules[0].name == "foo"
+
+
+def test_auth_adds_dependency_when_no_dependencies_provided():
+    cofy = CofyAPI(auth=TokenAuth({"token": TokenInfo(name="Demo")}))
+    client = TestClient(cofy)
+
+    response = client.get("/health", params={"token": "token"})
+
+    assert response.status_code == 200
+
+
+def test_auth_appends_dependency_when_dependencies_already_provided():
+    cofy = CofyAPI(
+        auth=TokenAuth({"token": TokenInfo(name="Demo")}),
+        dependencies=[],
+    )
+    client = TestClient(cofy)
+
+    response = client.get("/health", params={"token": "token"})
+
+    assert response.status_code == 200
 
 
 class TestCofyAPIModuleRegistration:

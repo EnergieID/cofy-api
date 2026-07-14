@@ -14,7 +14,7 @@ def _resolve(value: Any) -> Any:
     if isinstance(value, list):
         return [_resolve(v) for v in value]
     if isinstance(value, dict):
-        return {k: _resolve(v) for k, v in value.items()}
+        return {_resolve(k): _resolve(v) for k, v in value.items()}
     return value
 
 
