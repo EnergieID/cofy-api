@@ -7,7 +7,7 @@ from .model import ISODuration, Timeseries
 
 
 class TimeseriesSourceSettings(BaseSettingsModel):
-    type: str = "timeseries_source"
+    type: str = "timeseries"
 
 
 class TimeseriesSource(FromSettingsMixin, ABC, settings=TimeseriesSourceSettings):

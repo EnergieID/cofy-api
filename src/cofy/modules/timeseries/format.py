@@ -9,7 +9,7 @@ from .model import Timeseries
 
 
 class TimeseriesFormatSettings(BaseSettingsModel):
-    type: str = "timeseries_format"
+    type: str = "timeseries"
 
 
 class TimeseriesFormat(FromSettingsMixin, ABC, settings=TimeseriesFormatSettings):

@@ -82,7 +82,7 @@ def test_can_create_from_settings():
                 "cost_group": "consumption",
             },
             "formats": [
-                {"type": "json_timeseries_format"},
+                {"type": "json"},
             ],
         }
     )

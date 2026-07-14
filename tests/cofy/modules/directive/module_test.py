@@ -49,7 +49,7 @@ def test_api_endpoint_returns_directives():
 def test_can_create_from_settings():
     module = Module.create(
         {
-            "type": "directive_module",
+            "type": "directive",
             "source": {
                 "type": "directive",
                 "source": {"type": "dummy_timeseries_source"},

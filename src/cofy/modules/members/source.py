@@ -10,7 +10,7 @@ T = TypeVar("T")
 
 
 class MemberSourceSettings(BaseSettingsModel):
-    type: str = "member_source"
+    type: str = "member"
 
 
 class MemberSource(FromSettingsMixin, ABC, Generic[T], settings=MemberSourceSettings):

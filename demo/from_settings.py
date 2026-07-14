@@ -49,7 +49,7 @@ cofy = CofyAPI.create(
                 },
                 "formats": [
                     {
-                        "type": "kiwatt_format",
+                        "type": "kiwatt",
                     }
                 ],
             },
@@ -75,7 +75,7 @@ cofy = CofyAPI.create(
                 },
             },
             {
-                "type": "directive_module",
+                "type": "directive",
                 "name": "entsoe",
                 "description": "A directive module based on the entsoe day-ahead prices, with custom boundaries.",
                 "source": {
@@ -89,7 +89,7 @@ cofy = CofyAPI.create(
                 },
                 "formats": [
                     {
-                        "type": "directive_format",
+                        "type": "directive",
                     }
                 ],
             },

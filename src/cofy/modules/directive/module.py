@@ -9,7 +9,7 @@ from .formats.directive import DirectiveFormat
 
 
 class DirectiveModuleSettings(TimeseriesModuleSettings):
-    type: str = "directive_module"
+    type: str = "directive"
 
 
 class DirectiveModule(TimeseriesModule, settings=DirectiveModuleSettings):

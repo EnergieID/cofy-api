@@ -6,7 +6,7 @@ from .json import DefaultMetadataType
 
 
 class CSVFormatSettings(TimeseriesFormatSettings):
-    type: str = "csv_timeseries_format"
+    type: str = "csv"
 
 
 class CSVFormat(TimeseriesFormat, settings=CSVFormatSettings):

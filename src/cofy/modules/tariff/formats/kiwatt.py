@@ -27,7 +27,7 @@ class ResponseModel(BaseModel):
 
 
 class KiwattFormatSettings(TimeseriesFormatSettings):
-    type: str = "kiwatt_format"
+    type: str = "kiwatt"
     source: str = Field(default="Cofy-API-Demo")
 
 

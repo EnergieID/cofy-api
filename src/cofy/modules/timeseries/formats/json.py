@@ -30,7 +30,7 @@ class ResponseModel(BaseModel, Generic[DataType, MetadataType]):
 
 
 class JSONFormatSettings(TimeseriesFormatSettings):
-    type: str = "json_timeseries_format"
+    type: str = "json"
 
 
 class JSONFormat(TimeseriesFormat, Generic[DataType, MetadataType], settings=JSONFormatSettings):
