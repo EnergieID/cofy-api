@@ -48,6 +48,7 @@ class EnergyCostTariffSource(TimeseriesSource, settings=EnergyCostTariffSourceSe
         if series is None:
             raise ValueError("No tariff data available for the given parameters.")
         df = series.rename(columns={"total": "value"})
+        df = df[df["value"].notna()].copy()
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         return Timeseries(frame=df, metadata={"unit": "EUR/MWh"})
 
