@@ -3,13 +3,18 @@ from typing import Any
 from energy_cost import Contract
 from fastapi import HTTPException
 
-from cofy import Module
+from cofy import Module, ModuleSettings
 
 from .model import ECContractResponse, MeterType, VerifyMemberRequest
-from .source import MemberSource
+from .source import MemberSource, MemberSourceSettings
 
 
-class MembersModule(Module):
+class MembersModuleSettings(ModuleSettings):
+    type: str = "members"
+    source: MemberSourceSettings
+
+
+class MembersModule(Module, settings=MembersModuleSettings):
     type: str = "members"
     type_description: str = "Module for member-related functionalities"
 

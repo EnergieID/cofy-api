@@ -1,9 +1,18 @@
-from cofy.modules.timeseries import TimeseriesFormat, TimeseriesModule, TimeseriesSource
+from cofy.modules.timeseries import (
+    TimeseriesFormat,
+    TimeseriesModule,
+    TimeseriesModuleSettings,
+    TimeseriesSource,
+)
 
 from .formats.directive import DirectiveFormat
 
 
-class DirectiveModule(TimeseriesModule):
+class DirectiveModuleSettings(TimeseriesModuleSettings):
+    type: str = "directive"
+
+
+class DirectiveModule(TimeseriesModule, settings=DirectiveModuleSettings):
     type: str = "directive"
     type_description: str = "Module providing directives as time series."
 

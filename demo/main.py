@@ -3,11 +3,10 @@ from pathlib import Path
 
 from energy_cost import Supplier, Tariff
 from energy_cost.index import CachedEntsoeDayAheadIndex, CSVIndex, Index
-from fastapi import Depends
 from isodate import Duration
 
 from cofy import CofyAPI
-from cofy.api import token_verifier
+from cofy.api import TokenAuth, TokenInfo
 from cofy.modules.billing.module import BillingModule
 from cofy.modules.directive import DirectiveModule, DirectiveSource
 from cofy.modules.members import MembersFileSource, MembersModule
@@ -18,9 +17,7 @@ from demo.members.load_from_csv import example_load_members_from_file
 DATA_DIR = Path(__file__).resolve().parent / "data"
 
 # Initialize the Cofy API
-cofy = CofyAPI(
-    dependencies=[Depends(token_verifier({environ.get("COFY_API_TOKEN"): {"name": "Demo User"}}))], debug_mode=True
-)
+cofy = CofyAPI(auth=TokenAuth({environ.get("COFY_API_TOKEN", ""): TokenInfo(name="Demo User")}), debug_mode=True)
 
 entsoe = TariffModule(
     source=EntsoeDayAheadTariffSource(
@@ -48,7 +45,7 @@ cofy.register_module(kiwatt)
 Index.register("Belpex15min", CachedEntsoeDayAheadIndex("BE", api_key=environ.get("ENTSOE_API_KEY", "")))
 TARIFF_CONFIG_PATH = str(DATA_DIR / "dynamic_tariff.yaml")
 dynamic_tariff = TariffModule(
-    source=EnergyCostTariffSource(yaml_config=TARIFF_CONFIG_PATH),
+    source=EnergyCostTariffSource(Tariff.from_yaml(TARIFF_CONFIG_PATH)),
     name="dynamic",
     description="Our dynamic tariff tracking the Belpex.",
 )

@@ -4,9 +4,15 @@ import datetime as dt
 import polars as pl
 import requests
 from isodate import strftime
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
+from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
+
+
+class EnergyIDProductionSettings(TimeseriesSourceSettings):
+    type: str = "energyid_production"
+    api_key: SecretStr
+    record_id: str
 
 
 class EnergyIDDataPoint(BaseModel):
@@ -23,7 +29,7 @@ class EnergyIDResponse(BaseModel):
     value: list[EnergyIDValueEntry]
 
 
-class EnergyIDProduction(TimeseriesSource):
+class EnergyIDProduction(TimeseriesSource, settings=EnergyIDProductionSettings):
     SUPPORTED_RESOLUTIONS: list[str] = ["PT5M", "PT15M", "PT1H", "P1D", "P7D", "P1M", "P1Y"]
 
     def __init__(self, api_key: str, record_id: str) -> None:

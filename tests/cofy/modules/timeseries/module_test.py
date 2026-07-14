@@ -6,6 +6,7 @@ from fastapi import FastAPI, Query
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
+from cofy.api.module import Module
 from cofy.modules.timeseries import CSVFormat, DefaultDataType, JSONFormat, TimeseriesModule
 from tests.cofy.modules.timeseries.dummy_source import DummyTimeseriesSource
 
@@ -406,3 +407,17 @@ class TestTimeseriesModule:
         assert "data" in result
         data = result.get("data")
         assert len(data) == 10  # 3 hours before end date, but limit is 10, so we return 10 entries
+
+
+def test_can_create_from_settings():
+    module = Module.create(
+        {
+            "type": "timeseries",
+            "source": {
+                "type": "dummy_timeseries_source",
+            },
+        }
+    )
+
+    assert isinstance(module, TimeseriesModule)
+    assert isinstance(module.source, DummyTimeseriesSource)

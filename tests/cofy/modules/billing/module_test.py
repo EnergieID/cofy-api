@@ -7,6 +7,7 @@ from energy_cost.contract import ContractHistory as EnergyContractHistory
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from cofy.api.module import Module
 from cofy.modules.billing import BillingModule
 
 
@@ -177,3 +178,12 @@ class TestDSTBoundary:
         """The DST edge case must not cause an unhandled 500 error."""
         response = self.client.post(self.module.prefix, json=_DST_BODY)
         assert response.status_code != 500
+
+
+# -------------------------------------------
+
+
+def test_create_from_settings():
+    module = Module.create({"type": "billing"})
+
+    assert isinstance(module, BillingModule)

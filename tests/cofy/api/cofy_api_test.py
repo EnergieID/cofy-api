@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from cofy import CofyAPI
+from cofy.api.token_auth import TokenAuth, TokenInfo
 from tests.mocks.dummy_module import DummyModule
 
 
@@ -36,6 +37,57 @@ def test_debug_mode_adds_profiling_headers(tmp_path):
     assert response.status_code == 200
     assert "X-Debug-Id" in response.headers
     assert "X-Debug-Url" in response.headers
+
+
+def test_constructor_registers_provided_modules():
+    module = DummyModule("test_module")
+    cofy = CofyAPI(modules=[module])
+    client = TestClient(cofy)
+
+    assert cofy.modules == (module,)
+    response = client.get(f"{module.prefix}/hello")
+    assert response.status_code == 200
+    assert response.text == '"Hello from DummyModule test_module"'
+
+
+def test_creation_from_settings():
+    settings = {
+        "type": "cofy_api",
+        "debug_mode": True,
+        "modules": [
+            {
+                "type": "dummy",
+                "name": "foo",
+                "description": "bar",
+            }
+        ],
+    }
+    cofy = CofyAPI.create(settings)
+    assert isinstance(cofy, CofyAPI)
+    assert len(cofy.modules) == 1
+    assert isinstance(cofy.modules[0], DummyModule)
+    assert cofy.modules[0].name == "foo"
+
+
+def test_auth_adds_dependency_when_no_dependencies_provided():
+    cofy = CofyAPI(auth=TokenAuth({"token": TokenInfo(name="Demo")}))
+    client = TestClient(cofy)
+
+    response = client.get("/health", params={"token": "token"})
+
+    assert response.status_code == 200
+
+
+def test_auth_appends_dependency_when_dependencies_already_provided():
+    cofy = CofyAPI(
+        auth=TokenAuth({"token": TokenInfo(name="Demo")}),
+        dependencies=[],
+    )
+    client = TestClient(cofy)
+
+    response = client.get("/health", params={"token": "token"})
+
+    assert response.status_code == 200
 
 
 class TestCofyAPIModuleRegistration:

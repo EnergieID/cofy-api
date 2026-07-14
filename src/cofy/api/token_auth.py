@@ -1,39 +1,48 @@
+from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import APIKeyHeader, APIKeyQuery
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 from starlette.status import HTTP_401_UNAUTHORIZED
+
+from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
+
+
+class AuthSettings(BaseSettingsModel):
+    type: str = "auth"
+
+
+class Auth(FromSettingsMixin, ABC, settings=AuthSettings):
+    @abstractmethod
+    def verify(self, request: Request, *args, **kwargs):
+        """Verify the request."""
 
 
 class TokenInfo(BaseModel):
     name: str
-    expires: str | None = None
-
-    def __init__(self, info: dict):
-        if "name" not in info or not info["name"]:
-            raise ValueError("Token info must include a name")
-        if "expires" in info and info["expires"] is not None:
-            try:
-                datetime.fromisoformat(info["expires"])
-            except Exception:
-                raise ValueError("Token expires must be in ISO8601 format") from None
-        super().__init__(**info)
+    expires: datetime | None = None
 
     def is_expired(self) -> bool:
         if self.expires:
-            expires_dt = datetime.fromisoformat(self.expires)
-            if expires_dt.tzinfo is None:
-                expires_dt = expires_dt.replace(tzinfo=UTC)
+            if self.expires.tzinfo is None:
+                self.expires = self.expires.replace(tzinfo=UTC)
 
-            return datetime.now(UTC) > expires_dt
+            return datetime.now(UTC) > self.expires
         return False
 
 
-def token_verifier(tokens: dict):
-    tokens = {token: TokenInfo(info) for token, info in tokens.items()}
+class TokenAuthSettings(AuthSettings):
+    type: str = "token"
+    tokens: dict[SecretStr, TokenInfo] = {}
+
+
+class TokenAuth(Auth, settings=TokenAuthSettings):
+    def __init__(self, tokens: dict[str, TokenInfo]):
+        self.tokens = tokens
 
     def verify(
+        self,
         request: Request,
         header_token: str = Depends(APIKeyHeader(name="Authorization", auto_error=False, scheme_name="header")),
         query_token: str = Depends(APIKeyQuery(name="token", auto_error=False, scheme_name="query")),
@@ -58,7 +67,7 @@ def token_verifier(tokens: dict):
 
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Missing token")
 
-        token_info = tokens.get(token)
+        token_info = self.tokens.get(token)
         if not token_info:
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
@@ -66,5 +75,3 @@ def token_verifier(tokens: dict):
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Token expired")
         request.state.token = token
         request.state.auth_info = auth_info
-
-    return verify

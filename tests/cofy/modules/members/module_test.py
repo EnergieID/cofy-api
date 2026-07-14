@@ -15,6 +15,7 @@ from cofy.modules.members import (
     MemberSource,
     NamedIdentifier,
 )
+from cofy.modules.members.source import MemberSourceSettings
 
 # Register a lightweight supplier so _build_contract_history can resolve supplier_key + product_key.
 # This is done at import time so it is available for all tests in this module.
@@ -55,7 +56,11 @@ def _make_contract(
     )
 
 
-class DummyMemberSource(MemberSource[Member]):
+class DummyMemberSourceSettings(MemberSourceSettings):
+    type: str = "dummy_member_source"
+
+
+class DummyMemberSource(MemberSource[Member], settings=DummyMemberSourceSettings):
     response_model = Member
 
     def __init__(self):
@@ -199,3 +204,18 @@ class TestGetContractHistory:
         response = client.get(module.prefix + "/1/contracts/EAN456?meter_type=day_night_07")
         assert response.status_code == 200
         assert all(c["product_key"] == _PRODUCT_VARIANT_KEY for c in response.json())
+
+
+def test_can_create_from_settings():
+    module = MembersModule.create(
+        {
+            "type": "members",
+            "source": {
+                "type": "dummy_member_source",
+            },
+        }
+    )
+
+    assert isinstance(module, MembersModule)
+    assert isinstance(module.source, DummyMemberSource)
+    assert len(module.source.list()) == 2

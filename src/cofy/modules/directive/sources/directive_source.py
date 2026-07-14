@@ -1,13 +1,21 @@
 import datetime as dt
 
 import narwhals as nw
+from pydantic import Field
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
+from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 from ..formats.directive import DIRECTIVE_STEPS
 
 
-class DirectiveSource(TimeseriesSource):
+class DirectiveSourceSettings(TimeseriesSourceSettings):
+    type: str = "directive"
+    source: TimeseriesSourceSettings
+    boundaries: tuple[float, float, float, float]
+    reverse: bool = Field(default=False)
+
+
+class DirectiveSource(TimeseriesSource, settings=DirectiveSourceSettings):
     def __init__(self, source: TimeseriesSource, boundaries: tuple[float, float, float, float], reverse: bool = False):
         """A TimeseriesSource that maps numeric values to directive steps based on provided boundaries.
 

@@ -1,12 +1,16 @@
-from cofy import Module
+from cofy import Module, ModuleSettings
 
 
-class DummyModule(Module):
+class DummyModuleSettings(ModuleSettings):
+    type: str = "dummy"
+
+
+class DummyModule(Module, settings=DummyModuleSettings):
     type: str = "dummy"
     type_description: str = "Dummy module for testing."
 
-    def __init__(self, name: str):
-        super().__init__(name=name)
+    def __init__(self, name: str, **kwargs):
+        super().__init__(name=name, **kwargs)
 
     def init_routes(self):
         self.add_api_route("/hello", self.hello, methods=["GET"])
