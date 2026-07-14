@@ -13,14 +13,14 @@ from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, T
 
 class EnergyCostTariffSourceSettings(TimeseriesSourceSettings):
     type: str = "energy_cost"
-    yaml_config: str = Field(description="Path to the YAML tariff configuration file")
+    tariff: Tariff = Field(description="Energy cost tariff instance")
     cost_group: CostGroup | None = None
 
 
 class EnergyCostTariffSource(TimeseriesSource, settings=EnergyCostTariffSourceSettings):
-    def __init__(self, yaml_config: str, cost_group: CostGroup | None = None):
+    def __init__(self, tariff: Tariff, cost_group: CostGroup | None = None):
         super().__init__()
-        self.tariff = Tariff.from_yaml(yaml_config)
+        self.tariff = tariff
         self.cost_group = cost_group
 
     async def fetch_timeseries(

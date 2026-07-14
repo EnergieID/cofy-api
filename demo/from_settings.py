@@ -1,7 +1,7 @@
 from os import environ
 from pathlib import Path
 
-from energy_cost import Supplier, Tariff
+from energy_cost import Tariff
 from energy_cost.index import CachedEntsoeDayAheadIndex, CSVIndex, Index
 from isodate import Duration
 
@@ -20,23 +20,11 @@ from cofy.modules.tariff import (  # noqa: F401
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 
-# Pre-register indexes/suppliers used by tariff and billing flows.
+# Pre-register indexes used by tariff and billing flows.
 Index.register("Belpex15min", CachedEntsoeDayAheadIndex("BE", api_key=environ.get("ENTSOE_API_KEY", "")))
-TARIFF_CONFIG_PATH = str(DATA_DIR / "dynamic_tariff.yaml")
 Index.register("BelMonthly", CSVIndex(str(DATA_DIR / "monthly_index.csv"), resolution=Duration(months=1)))
-Supplier.register(
-    "eb",
-    Supplier(
-        products={
-            "fixed": Tariff.from_yaml(str(DATA_DIR / "fixed_tariff.yaml")),
-            "fixed_day_night_07": Tariff.from_yaml(str(DATA_DIR / "fixed_day_night_07.yaml")),
-            "variable": Tariff.from_yaml(str(DATA_DIR / "variable_tariff.yaml")),
-            "dynamic": Tariff.from_yaml(TARIFF_CONFIG_PATH),
-            "basic": Tariff.from_yaml(str(DATA_DIR / "basic_gas_tariff.yaml")),
-            "pro": Tariff.from_yaml(str(DATA_DIR / "pro_gas_tariff.yaml")),
-        }
-    ),
-)
+TARIFF_CONFIG_PATH = str(DATA_DIR / "dynamic_tariff.yaml")
+
 
 cofy = CofyAPI.create(
     {
@@ -71,7 +59,7 @@ cofy = CofyAPI.create(
                 "description": "Our dynamic tariff tracking the Belpex.",
                 "source": {
                     "type": "energy_cost",
-                    "yaml_config": TARIFF_CONFIG_PATH,
+                    "tariff": Tariff.from_yaml(TARIFF_CONFIG_PATH),
                 },
             },
             {

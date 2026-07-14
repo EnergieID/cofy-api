@@ -71,7 +71,14 @@ def test_can_create_from_settings():
             "type": "tariff",
             "source": {
                 "type": "energy_cost",
-                "yaml_config": "demo/data/fixed_tariff.yaml",
+                "tariff": [
+                    {
+                        "start": "2026-01-01T00:00:00Z",
+                        "consumption": {
+                            "constant_cost": 0.1,
+                        },
+                    }
+                ],
                 "cost_group": "consumption",
             },
             "formats": [
