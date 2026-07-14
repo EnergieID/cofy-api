@@ -61,7 +61,7 @@ def test_can_use_differing_settings():
     class C(A, settings=CSettings):
         def __init__(self, bar: int):
             super().__init__("C-foo")
-            self.bar = bar * 2
+            self.bar = bar * 3
 
     a = A.create({"type": "a", "foo": "hello"})
     b = A.create({"type": "b", "foo": "world", "bar": 21})
@@ -74,7 +74,7 @@ def test_can_use_differing_settings():
     assert b.foo == "world"
     assert b.bar == 42
     assert c.foo == "C-foo"
-    assert c.bar == 42
+    assert c.bar == 63
 
 
 def test_no_overlap_in_different_registries():
