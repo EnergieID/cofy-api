@@ -7,7 +7,8 @@ from fastapi.responses import JSONResponse
 
 from ..version import get_installed_version
 from .docs_router import DocsRouter
-from .module import Module
+from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
+from .module import Module, ModuleSettings
 
 DEFAULT_ARGS: dict[str, Any] = {
     "title": "Cofy API",
@@ -19,8 +20,19 @@ DEFAULT_ARGS: dict[str, Any] = {
 }
 
 
-class CofyAPI(FastAPI):
-    def __init__(self, *, debug_mode: bool = False, debug_dir: Path | None = None, **kwargs):
+class CofyAPISettings(BaseSettingsModel):
+    type: str = "cofy_api"
+    title: str = DEFAULT_ARGS["title"]
+    description: str = DEFAULT_ARGS["description"]
+    debug_mode: bool = False
+    debug_dir: Path | None = None
+    modules: list[ModuleSettings] | None = None
+
+
+class CofyAPI(FastAPI, FromSettingsMixin, settings=CofyAPISettings):
+    def __init__(
+        self, *, debug_mode: bool = False, debug_dir: Path | None = None, modules: list[Module] | None = None, **kwargs
+    ):
         super().__init__(**(DEFAULT_ARGS | kwargs))
         self._modules: list[Module] = []
         self.include_router(DocsRouter(self.openapi))
@@ -33,6 +45,10 @@ class CofyAPI(FastAPI):
             resolved_debug_dir = debug_dir or Path(tempfile.mkdtemp(prefix="cofy_debug_"))
             self.add_middleware(DebugMiddleware, debug_dir=resolved_debug_dir)
             self.include_router(DebugRouter(debug_dir=resolved_debug_dir), include_in_schema=False)
+
+        if modules is not None:
+            for module in modules:
+                self.register_module(module)
 
     def openapi(self):
         self.openapi_tags = self.tags_metadata

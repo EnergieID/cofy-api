@@ -1,4 +1,5 @@
 import pytest
+from pydantic import SecretStr
 
 from cofy.api.from_settings_mixin import BaseSettingsModel, FromSettingsMixin
 
@@ -144,3 +145,18 @@ def test_recursion_in_inner_settings():
     assert b.foo == 10
     assert b.a.foo == 20
     assert b.a.a.foo == 30
+
+
+def test_secret_values_are_unwrapped():
+    class SecretSettings(BaseSettingsModel):
+        type: str = "secret"
+        token: SecretStr
+
+    class SecretConsumer(FromSettingsMixin, settings=SecretSettings):
+        def __init__(self, token: str):
+            self.token = token
+
+    consumer = SecretConsumer.create({"type": "secret", "token": "super-secret"})
+    assert isinstance(consumer, SecretConsumer)
+    assert isinstance(consumer.token, str)
+    assert consumer.token == "super-secret"
