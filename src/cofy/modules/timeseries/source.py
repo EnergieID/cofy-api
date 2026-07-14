@@ -1,7 +1,7 @@
 import datetime as dt
 from abc import ABC, abstractmethod
 
-from cofy.api.from_settings_mixin import BaseSettingsModel, FromSettingsMixin
+from cofy.api import BaseSettingsModel, FromSettingsMixin
 
 from .model import ISODuration, Timeseries
 

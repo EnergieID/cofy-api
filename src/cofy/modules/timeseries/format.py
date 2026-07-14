@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from fastapi import Response
 from fastapi.responses import JSONResponse
 
-from cofy.api.from_settings_mixin import BaseSettingsModel, FromSettingsMixin
+from cofy.api import BaseSettingsModel, FromSettingsMixin
 
 from .model import Timeseries
 

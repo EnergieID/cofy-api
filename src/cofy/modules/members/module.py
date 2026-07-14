@@ -3,8 +3,7 @@ from typing import Any
 from energy_cost import Contract
 from fastapi import HTTPException
 
-from cofy import Module
-from cofy.api.module import ModuleSettings
+from cofy import Module, ModuleSettings
 
 from .model import ECContractResponse, MeterType, VerifyMemberRequest
 from .source import MemberSource, MemberSourceSettings

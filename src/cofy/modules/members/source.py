@@ -2,7 +2,7 @@ import builtins
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from cofy.api.from_settings_mixin import BaseSettingsModel, FromSettingsMixin
+from cofy.api import BaseSettingsModel, FromSettingsMixin
 
 from .model import Member
 

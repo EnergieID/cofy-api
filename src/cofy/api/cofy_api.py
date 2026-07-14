@@ -5,12 +5,11 @@ from typing import Any
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from cofy.api.token_auth import Auth, AuthSettings
-
 from ..version import get_installed_version
 from .docs_router import DocsRouter
 from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
 from .module import Module, ModuleSettings
+from .token_auth import Auth, AuthSettings
 
 DEFAULT_ARGS: dict[str, Any] = {
     "title": "Cofy API",

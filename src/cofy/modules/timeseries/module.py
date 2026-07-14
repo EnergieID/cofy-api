@@ -6,8 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from isodate import ISO8601Error, parse_duration
 from pydantic import create_model
 
-from cofy import Module
-from cofy.api.module import ModuleSettings
+from cofy import Module, ModuleSettings
 
 from .format import TimeseriesFormat, TimeseriesFormatSettings
 from .formats.csv import CSVFormat

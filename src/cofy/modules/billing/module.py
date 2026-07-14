@@ -1,7 +1,7 @@
 from energy_cost import PowerDirection
 from fastapi import HTTPException
 
-from cofy.api.module import Module, ModuleSettings
+from cofy.api import Module, ModuleSettings
 
 from .models.billing_request import BillingRequest
 from .models.billing_response import BillingMetadata, BillingResponse
