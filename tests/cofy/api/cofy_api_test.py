@@ -38,6 +38,36 @@ def test_debug_mode_adds_profiling_headers(tmp_path):
     assert "X-Debug-Url" in response.headers
 
 
+def test_constructor_registers_provided_modules():
+    module = DummyModule("test_module")
+    cofy = CofyAPI(modules=[module])
+    client = TestClient(cofy)
+
+    assert cofy.modules == (module,)
+    response = client.get(f"{module.prefix}/hello")
+    assert response.status_code == 200
+    assert response.text == '"Hello from DummyModule test_module"'
+
+
+def test_creation_from_settings():
+    settings = {
+        "type": "cofy_api",
+        "debug_mode": True,
+        "modules": [
+            {
+                "type": "dummy",
+                "name": "foo",
+                "description": "bar",
+            }
+        ],
+    }
+    cofy = CofyAPI.create(settings)
+    assert isinstance(cofy, CofyAPI)
+    assert len(cofy.modules) == 1
+    assert isinstance(cofy.modules[0], DummyModule)
+    assert cofy.modules[0].name == "foo"
+
+
 class TestCofyAPIModuleRegistration:
     def setup_method(self):
         self.cofy = CofyAPI()

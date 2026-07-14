@@ -160,3 +160,140 @@ def test_secret_values_are_unwrapped():
     assert isinstance(consumer, SecretConsumer)
     assert isinstance(consumer.token, str)
     assert consumer.token == "super-secret"
+
+
+def test_settings_dispatch_accepts_existing_settings_instance():
+    class ChildSettings(BaseSettingsModel):
+        type: str = "child"
+        value: int
+
+    class Child(FromSettingsMixin, settings=ChildSettings):
+        def __init__(self, value: int):
+            self.value = value
+
+    class ParentSettings(BaseSettingsModel):
+        type: str = "parent"
+        child: ChildSettings
+
+    class Parent(FromSettingsMixin, settings=ParentSettings):
+        def __init__(self, child: Child):
+            self.child = child
+
+    child_settings = ChildSettings(value=42)
+    parent = Parent.create({"type": "parent", "child": child_settings})
+
+    assert isinstance(parent, Parent)
+    assert isinstance(parent.child, Child)
+    assert parent.child.value == 42
+
+
+def test_settings_convert_recurses_into_lists_and_dicts():
+    class ChildSettings(BaseSettingsModel):
+        type: str = "child"
+        value: int
+
+    class Child(FromSettingsMixin, settings=ChildSettings):
+        def __init__(self, value: int):
+            self.value = value
+
+    class ParentSettings(BaseSettingsModel):
+        type: str = "parent"
+        items: list[ChildSettings]
+        mapping: dict[str, ChildSettings]
+
+    class Parent(FromSettingsMixin, settings=ParentSettings):
+        def __init__(self, items: list[Child], mapping: dict[str, Child]):
+            self.items = items
+            self.mapping = mapping
+
+    parent = Parent.create(
+        {
+            "type": "parent",
+            "items": [{"type": "child", "value": 1}, {"type": "child", "value": 2}],
+            "mapping": {"left": {"type": "child", "value": 3}},
+        }
+    )
+
+    assert [item.value for item in parent.items] == [1, 2]
+    assert parent.mapping["left"].value == 3
+
+
+def test_settings_dispatch_falls_back_for_non_dict_values():
+    class NumberSettings(BaseSettingsModel):
+        type: str = "number"
+        value: int
+
+    parsed = NumberSettings.model_validate({"type": "number", "value": 7})
+
+    assert parsed.value == 7
+
+
+def test_create_requires_string_type():
+    class ASettings(BaseSettingsModel):
+        type: str = "a"
+
+    class A(FromSettingsMixin, settings=ASettings):
+        pass
+
+    with pytest.raises(ValueError, match="Missing or invalid 'type'"):
+        A.create({})
+
+    with pytest.raises(ValueError, match="Missing or invalid 'type'"):
+        A.create({"type": 1})
+
+
+def test_unknown_type_error_lists_available_types():
+    class ASettings(BaseSettingsModel):
+        type: str = "a"
+
+    class A(FromSettingsMixin, settings=ASettings):
+        pass
+
+    class BSettings(BaseSettingsModel):
+        type: str = "b"
+
+    class B(A, settings=BSettings):
+        pass
+
+    with pytest.raises(ValueError, match=r"Unknown type"):
+        A.create({"type": "missing"})
+
+
+def test_subclass_without_settings_is_not_registered():
+    class ASettings(BaseSettingsModel):
+        type: str = "a"
+
+    class A(FromSettingsMixin, settings=ASettings):
+        pass
+
+    class Unregistered(A):
+        pass
+
+    assert A._registry == {"a": ASettings}
+    assert "_registry" not in Unregistered.__dict__
+
+
+def test_rejects_empty_type_default():
+    with pytest.raises(TypeError, match="non-empty string default value"):
+
+        class EmptyTypeSettings(BaseSettingsModel):
+            type: str = ""
+
+        class EmptyTypeConsumer(FromSettingsMixin, settings=EmptyTypeSettings):
+            pass
+
+
+def test_rejects_duplicate_type_registration():
+    class ASettings(BaseSettingsModel):
+        type: str = "a"
+
+    class A(FromSettingsMixin, settings=ASettings):
+        pass
+
+    with pytest.raises(TypeError, match="Duplicate registration for type 'a'"):
+
+        class DuplicateASettings(BaseSettingsModel):
+            type: str = "a"
+
+        class DuplicateA(A, settings=DuplicateASettings):
+            pass
