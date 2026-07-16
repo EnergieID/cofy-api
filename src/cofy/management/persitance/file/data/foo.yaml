@@ -1,0 +1,49 @@
+{
+        "type": "cofy_api",
+        "title": "foo",
+        "debug_mode": True,
+        "auth": {
+            "type": "token",
+            "tokens": {
+                "foo": {
+                    "name": "Demo User",
+                }
+            },
+        },
+        "modules": [
+            {
+                "type": "tariff",
+                "name": "entsoe",
+                "source": {
+                    "type": "entsoe_day_ahead",
+                    "api_key": "***",
+                },
+            },
+            {
+                "type": "tariff",
+                "name": "kiwatt",
+                "source": {
+                    "type": "entsoe_day_ahead",
+                    "country_code": "NL",
+                    "api_key": "***",
+                },
+                "formats": [
+                    {
+                        "type": "kiwatt",
+                    }
+                ],
+            },
+            {
+                "type": "tariff",
+                "name": "dynamic",
+                "description": "Our dynamic tariff tracking the Belpex.",
+                "source": {
+                    "type": "energy_cost",
+                    "tariff": {"consumption": {"constant_cost": 1}, "start": "2026-01-01:00:00:00Z"},
+                },
+            },
+            {
+                "type": "billing",
+            },
+        ],
+    }

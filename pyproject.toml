@@ -87,6 +87,8 @@ envfile = ".env.local"
 [tool.poe.tasks.from_settings]
 cmd = "fastapi dev demo/from_settings.py"
 envfile = ".env.local"
+[tool.poe.tasks.management]
+cmd = "uvicorn cofy.management.main:app --reload"
 [tool.poe.tasks.prod]
 shell = """
 docker build -t cofy-api .

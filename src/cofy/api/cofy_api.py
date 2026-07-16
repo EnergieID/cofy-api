@@ -27,7 +27,7 @@ class CofyAPISettings(BaseSettingsModel):
     description: str = DEFAULT_ARGS["description"]
     debug_mode: bool = False
     debug_dir: Path | None = None
-    modules: list[ModuleSettings] | None = None
+    modules: list[ModuleSettings] = []
     auth: AuthSettings | None = None
 
 
