@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Annotated, Any, ClassVar
+from types import UnionType
+from typing import Annotated, Any, ClassVar, Union, get_args, get_origin
 
-from pydantic import BaseModel, Discriminator, Tag, model_validator
+from pydantic import BaseModel, Discriminator, Tag, create_model, model_validator
 
 
 def _resolve(value: Any) -> Any:
@@ -43,13 +44,124 @@ class BaseSettingsModel(BaseModel):
         return self._model(**kwargs)
 
     @classmethod
-    def union_type(cls):
-        """Return a union type of registered settings models."""
+    def union_type(cls) -> Any:
+        """Return a discriminated union type of registered settings models.
+        Nested `BaseSettingsModel`-typed fields are expanded to their own discriminated unions
+        """
         registry = getattr(cls._model, "_registry", {})
-        models = tuple(Annotated[model, Tag(key)] for key, model in registry.items())
-        return Annotated[
-            models, Discriminator(lambda x: x.get("type") if isinstance(x, dict) else getattr(x, "type", None))  # ty: ignore[invalid-type-form]
-        ]  # noqa: UP007
+        if not registry:
+            return cls
+
+        response_cache: dict[type[BaseSettingsModel], type[BaseSettingsModel]] = {}
+        stack: set[type[BaseSettingsModel]] = set()
+
+        tagged_models: list[Any] = []
+        for key, model in registry.items():
+            resolved_model = _build_recursive_response_model(model, response_cache, stack)
+            tagged_models.append(Annotated[resolved_model, Tag(key)])  # ty: ignore[invalid-type-form]
+
+        union = _build_union_type(tagged_models)
+        return Annotated[union, Discriminator(_discriminator_type)]
+
+
+def _discriminator_type(value: Any) -> Any:
+    if isinstance(value, dict):
+        return value.get("type")
+    return getattr(value, "type", None)
+
+
+def _build_union_type(models: list[Any]) -> Any:
+    if not models:
+        return Any
+
+    union = models[0]
+    for model in models[1:]:
+        union = union | model
+    return union
+
+
+def _build_recursive_response_model(
+    model: type[BaseSettingsModel],
+    cache: dict[type[BaseSettingsModel], type[BaseSettingsModel]],
+    stack: set[type[BaseSettingsModel]],
+) -> type[BaseSettingsModel]:
+    if model in cache:
+        return cache[model]
+
+    if model in stack:
+        # Break circular references by falling back to the current model.
+        return model
+
+    stack.add(model)
+    overrides: dict[str, tuple[Any, Any]] = {}
+
+    for field_name, field in model.model_fields.items():
+        new_annotation = _transform_annotation(field.annotation, cache, stack)
+        if new_annotation is field.annotation:
+            continue
+
+        default = ... if field.is_required() else field.default
+        overrides[field_name] = (new_annotation, default)
+        default = ... if field.is_required() else field.default
+        overrides[field_name] = (new_annotation, default)
+
+    stack.remove(model)
+
+    if not overrides:
+        cache[model] = model
+        return model
+
+    recursive_model = create_model(
+        f"{model.__name__}Response",
+        __base__=model,
+        __module__=model.__module__,
+        **overrides,
+    )  # ty: ignore[no-matching-overload]
+    cache[model] = recursive_model
+    return recursive_model
+
+
+def _transform_annotation(
+    annotation: Any,
+    cache: dict[type[BaseSettingsModel], type[BaseSettingsModel]],
+    stack: set[type[BaseSettingsModel]],
+) -> Any:
+    if isinstance(annotation, type) and issubclass(annotation, BaseSettingsModel):
+        model_cls = getattr(annotation, "_model", None)
+        if model_cls is None:
+            return annotation
+        return annotation.union_type()
+
+    origin = get_origin(annotation)
+    if origin is None:
+        return annotation
+
+    args = get_args(annotation)
+    if not args:
+        return annotation
+
+    if origin is Annotated:
+        transformed = _transform_annotation(args[0], cache, stack)
+        if transformed is args[0]:
+            return annotation
+        return Annotated[transformed, *args[1:]]
+
+    transformed_args = tuple(_transform_annotation(arg, cache, stack) for arg in args)
+    if transformed_args == args:
+        return annotation
+
+    if origin in (Union, UnionType):
+        union = transformed_args[0]
+        for arg in transformed_args[1:]:
+            union = union | arg
+        return union
+
+    try:
+        if len(transformed_args) == 1:
+            return origin[transformed_args[0]]
+        return origin[transformed_args]
+    except Exception:
+        return annotation
 
 
 class FromSettingsMixin:

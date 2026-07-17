@@ -3,12 +3,31 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Path
+from pydantic import TypeAdapter
 
 from cofy.api.module import ModuleSettings
+from cofy.modules.billing import BillingModuleSettings  # noqa: F401
+from cofy.modules.tariff import (  # noqa: F401
+    EnergyCostTariffSourceSettings,
+    EntsoeDayAheadTariffSourceSettings,
+    TariffModuleSettings,
+)
+from cofy.modules.timeseries import TimeseriesModuleSettings, TimeseriesSourceSettings  # noqa: F401
 
 from ..persitance.modules import ModulesPersistence
 
 MODULE_SETTINGS_TYPE = ModuleSettings.union_type()
+
+# polymorphic serialisation is not supported by fastapi, see https://github.com/fastapi/fastapi/discussions/15498
+# we monkey patch it in by turning it on by default for all TypeAdapter.dump_json calls, but still allow it to be turned off if needed
+original_dump_json = TypeAdapter.dump_json
+
+
+def monkey_patched_dump_json(self: TypeAdapter, *args, polymorphic_serialization: bool = True, **kwargs):
+    return original_dump_json(self, *args, polymorphic_serialization=polymorphic_serialization, **kwargs)
+
+
+TypeAdapter.dump_json = monkey_patched_dump_json
 
 
 class ModulesRouter:
@@ -30,6 +49,7 @@ class ModulesRouter:
         slug: Annotated[str, Path(description="Community slug, currently one of: foo, bar")],
     ) -> list[MODULE_SETTINGS_TYPE]:
         return self.persistence.all(slug)
+        # return JSONResponse(content=[m.model_dump(polymorphic_serialization=True) for m in self.persistence.all(slug)])
 
     def get(
         self,
