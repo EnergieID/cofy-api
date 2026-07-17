@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Annotated, Any, ClassVar
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Discriminator, Tag, model_validator
 
 
 def _resolve(value: Any) -> Any:
@@ -19,7 +19,6 @@ def _resolve(value: Any) -> Any:
 
 
 class BaseSettingsModel(BaseModel):
-    type: str = Field(..., description="Registry discriminator.")
     _model: ClassVar[Any]  # wired automatically on registration
 
     @model_validator(mode="wrap")
@@ -42,6 +41,15 @@ class BaseSettingsModel(BaseModel):
     def convert(self) -> Any:
         kwargs = {name: _resolve(getattr(self, name)) for name in self.__class__.model_fields if name != "type"}
         return self._model(**kwargs)
+
+    @classmethod
+    def union_type(cls):
+        """Return a union type of registered settings models."""
+        registry = getattr(cls._model, "_registry", {})
+        models = tuple(Annotated[model, Tag(key)] for key, model in registry.items())
+        return Annotated[
+            models, Discriminator(lambda x: x.get("type") if isinstance(x, dict) else getattr(x, "type", None))  # ty: ignore[invalid-type-form]
+        ]  # noqa: UP007
 
 
 class FromSettingsMixin:

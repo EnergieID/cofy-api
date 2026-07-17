@@ -297,3 +297,112 @@ def test_rejects_duplicate_type_registration():
 
         class DuplicateA(A, settings=DuplicateASettings):
             pass
+
+
+def test_settings_classes_correctly_validate_subclasses():
+    class ASettings(BaseSettingsModel):
+        type: str = "a"
+        value: int
+
+    class A(FromSettingsMixin, settings=ASettings):
+        def __init__(self, value: int):
+            self.value = value
+
+    class BSettings(ASettings):
+        type: str = "b"
+        extra: str
+
+    class B(A, settings=BSettings):
+        def __init__(self, value: int, extra: str):
+            super().__init__(value)
+            self.extra = extra
+
+    b = ASettings.model_validate({"type": "b", "value": 10, "extra": "hello"})
+    assert isinstance(b, BSettings)
+    assert b.value == 10
+    assert b.extra == "hello"
+
+
+def test_settings_classes_correctly_validate_param_subclasses():
+    class ASettings(BaseSettingsModel):
+        type: str = "a"
+        value: int
+
+    class A(FromSettingsMixin, settings=ASettings):
+        def __init__(self, value: int):
+            self.value = value
+
+    class BSettings(ASettings):
+        type: str = "b"
+        extra: str
+
+    class B(A, settings=BSettings):
+        def __init__(self, value: int, extra: str):
+            super().__init__(value)
+            self.extra = extra
+
+    class CSettings(BaseSettingsModel):
+        type: str = "c"
+        a: ASettings
+
+    class C(FromSettingsMixin, settings=CSettings):
+        def __init__(self, a: A):
+            self.a = a
+
+    c = CSettings.model_validate({"type": "c", "a": {"type": "b", "value": 10, "extra": "hello"}})
+    assert isinstance(c, CSettings)
+    assert isinstance(c.a, BSettings)
+    assert c.a.value == 10
+    assert c.a.extra == "hello"
+
+    c = CSettings.model_validate({"type": "c", "a": {"type": "a", "value": 5}})
+    assert isinstance(c, CSettings)
+    assert isinstance(c.a, ASettings)
+    assert c.a.value == 5
+
+
+def test_union_type_returns_correct_union():
+    class ASettings(BaseSettingsModel):
+        type: str = "a"
+        value: int
+
+    class A(FromSettingsMixin, settings=ASettings):
+        def __init__(self, value: int):
+            self.value = value
+
+    class BSettings(ASettings):
+        type: str = "b"
+        extra: str
+
+    class B(A, settings=BSettings):
+        def __init__(self, value: int, extra: str):
+            super().__init__(value)
+            self.extra = extra
+
+    class CSettings(BaseSettingsModel):
+        type: str = "c"
+        a: ASettings
+
+    class C(FromSettingsMixin, settings=CSettings):
+        def __init__(self, a: A):
+            self.a = a
+
+    union_type = CSettings.union_type()
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    app = FastAPI()
+
+    @app.get("/test", response_model=union_type)
+    def test_endpoint():
+        return {"type": "c", "a": {"type": "b", "value": 10, "extra": "hello"}}
+
+    client = TestClient(app)
+    response = client.get("/test")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["type"] == "c"
+    assert data["a"]["type"] == "b"
+    assert data["a"]["value"] == 10
+    assert data["a"]["extra"] == "hello"
