@@ -5,7 +5,10 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Path
 
 from cofy.api.module import ModuleSettings
-from cofy.management.persitance.modules import ModulesPersistence
+
+from ..persitance.modules import ModulesPersistence
+
+MODULE_SETTINGS_TYPE = ModuleSettings.union_type()
 
 
 class ModulesRouter:
@@ -25,7 +28,7 @@ class ModulesRouter:
     def all(
         self,
         slug: Annotated[str, Path(description="Community slug, currently one of: foo, bar")],
-    ) -> list[ModuleSettings]:
+    ) -> list[MODULE_SETTINGS_TYPE]:
         return self.persistence.all(slug)
 
     def get(
@@ -33,14 +36,14 @@ class ModulesRouter:
         slug: str,
         module_type: str,
         name: str,
-    ) -> ModuleSettings:
+    ) -> MODULE_SETTINGS_TYPE:
         return self.persistence.get(slug, module_type, name)
 
     def create(
         self,
         slug: str,
-        payload: Annotated[ModuleSettings, Body(description="Full module settings payload")],
-    ) -> ModuleSettings:
+        payload: Annotated[MODULE_SETTINGS_TYPE, Body(description="Full module settings payload")],
+    ) -> MODULE_SETTINGS_TYPE:
         return self.persistence.create(slug, payload)
 
     def patch(
@@ -48,8 +51,8 @@ class ModulesRouter:
         slug: str,
         module_type: str,
         name: str,
-        patch: Annotated[ModuleSettings, Body(description="Partial module settings payload")],
-    ) -> ModuleSettings:
+        patch: Annotated[MODULE_SETTINGS_TYPE, Body(description="Partial module settings payload")],
+    ) -> MODULE_SETTINGS_TYPE:
         original = self.persistence.get(slug, module_type, name)
         updated = original.model_copy(update=patch.model_dump(exclude_unset=True))
         return self.persistence.replace(slug, module_type, name, updated)
@@ -59,8 +62,8 @@ class ModulesRouter:
         slug: str,
         module_type: str,
         name: str,
-        payload: Annotated[ModuleSettings, Body(description="Full module settings payload")],
-    ) -> ModuleSettings:
+        payload: Annotated[MODULE_SETTINGS_TYPE, Body(description="Full module settings payload")],
+    ) -> MODULE_SETTINGS_TYPE:
         return self.persistence.replace(slug, module_type, name, payload)
 
     def delete(

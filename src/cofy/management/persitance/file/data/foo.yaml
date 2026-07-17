@@ -39,7 +39,7 @@
                 "description": "Our dynamic tariff tracking the Belpex.",
                 "source": {
                     "type": "energy_cost",
-                    "tariff": {"consumption": {"constant_cost": 1}, "start": "2026-01-01:00:00:00Z"},
+                    "tariff": [{"consumption": {"constant_cost": 1}, "start": "2026-01-01T00:00:00Z"}],
                 },
             },
             {
