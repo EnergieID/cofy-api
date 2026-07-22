@@ -10,8 +10,6 @@ def _resolve(value: Any) -> Any:
     """Recursively convert any BaseSettingsModel instances to their actual objects."""
     if isinstance(value, BaseSettingsModel):
         return value.convert()
-    if hasattr(value, "get_secret_value") and callable(value.get_secret_value):
-        return value.get_secret_value()
     if isinstance(value, list):
         return [_resolve(v) for v in value]
     if isinstance(value, dict):

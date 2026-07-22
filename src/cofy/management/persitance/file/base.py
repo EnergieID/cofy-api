@@ -33,4 +33,8 @@ class FilePersistence:
     def _save_community_config(self, slug: str, config: CofyAPISettings) -> None:
         path = self._community_path(slug)
         with path.open("w", encoding="utf-8") as handle:
-            yaml.safe_dump(config.model_dump(exclude_none=True), handle, sort_keys=True)
+            yaml.safe_dump(
+                config.model_dump(exclude_none=True, polymorphic_serialization=True, round_trip=True),
+                handle,
+                sort_keys=True,
+            )
