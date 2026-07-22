@@ -28,7 +28,7 @@ modules:
       consumption:
         total:
           capacity_based: false
-          constant_cost: 1.0
+          constant_cost: 2.0
           kind: index
           variable_costs: []
       fixed: {}
