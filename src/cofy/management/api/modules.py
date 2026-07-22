@@ -84,7 +84,6 @@ class ModulesRouter:
         name: str,
         payload: Annotated[MODULE_SETTINGS_TYPE, Body(description="Full module settings payload")],
     ) -> MODULE_SETTINGS_TYPE:
-        print(payload.model_dump())
         return self.persistence.replace(slug, module_type, name, payload)
 
     def delete(

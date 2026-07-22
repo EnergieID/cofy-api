@@ -17,7 +17,7 @@ class FileModulesPersistence(FilePersistence, ModulesPersistence):
 
     def create(self, slug: str, module: ModuleSettings) -> ModuleSettings:
         config = self._get_community_config(slug)
-        if any((module.type, module.name) == (module.type, module.name) for module in config.modules):
+        if any((module.type, module.name) == (m.type, m.name) for m in config.modules):
             raise ValueError(f"Module {module.type}:{module.name} already exists")
         config.modules = config.modules + [module]
         self._save_community_config(slug, config)
@@ -25,8 +25,8 @@ class FileModulesPersistence(FilePersistence, ModulesPersistence):
 
     def replace(self, slug: str, module_type: str, name: str, module: ModuleSettings) -> ModuleSettings:
         config = self._get_community_config(slug)
-        for i, module in enumerate(config.modules):
-            if (module.type, module.name) == (module_type, name):
+        for i, m in enumerate(config.modules):
+            if (m.type, m.name) == (module_type, name):
                 config.modules[i] = module
                 self._save_community_config(slug, config)
                 return module
