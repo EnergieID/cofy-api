@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import APIKeyHeader, APIKeyQuery
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel
 from starlette.status import HTTP_401_UNAUTHORIZED
 
 from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
@@ -34,7 +34,7 @@ class TokenInfo(BaseModel):
 
 class TokenAuthSettings(AuthSettings):
     type: str = "token"
-    tokens: dict[SecretStr, TokenInfo] = {}
+    tokens: dict[str, TokenInfo] = {}
 
 
 class TokenAuth(Auth, settings=TokenAuthSettings):

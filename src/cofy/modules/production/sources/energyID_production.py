@@ -4,14 +4,14 @@ import datetime as dt
 import polars as pl
 import requests
 from isodate import strftime
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel
 
 from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 
 class EnergyIDProductionSettings(TimeseriesSourceSettings):
     type: str = "energyid_production"
-    api_key: SecretStr
+    api_key: str
     record_id: str
 
 
