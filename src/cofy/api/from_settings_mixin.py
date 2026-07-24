@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from types import UnionType
+from typing import Annotated, Any, ClassVar, Union, get_args, get_origin
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Discriminator, Tag, create_model, model_validator
 
 
 def _resolve(value: Any) -> Any:
     """Recursively convert any BaseSettingsModel instances to their actual objects."""
     if isinstance(value, BaseSettingsModel):
         return value.convert()
-    if hasattr(value, "get_secret_value") and callable(value.get_secret_value):
-        return value.get_secret_value()
     if isinstance(value, list):
         return [_resolve(v) for v in value]
     if isinstance(value, dict):
@@ -19,7 +18,6 @@ def _resolve(value: Any) -> Any:
 
 
 class BaseSettingsModel(BaseModel):
-    type: str = Field(..., description="Registry discriminator.")
     _model: ClassVar[Any]  # wired automatically on registration
 
     @model_validator(mode="wrap")
@@ -42,6 +40,84 @@ class BaseSettingsModel(BaseModel):
     def convert(self) -> Any:
         kwargs = {name: _resolve(getattr(self, name)) for name in self.__class__.model_fields if name != "type"}
         return self._model(**kwargs)
+
+    @classmethod
+    def union_type(cls) -> Any:
+        """Return a discriminated union type of registered settings models.
+        Nested `BaseSettingsModel`-typed fields are expanded to their own discriminated unions
+        """
+        registry = getattr(cls._model, "_registry", {})
+
+        tagged_models: list[Any] = []
+        for key, model in registry.items():
+            resolved_model = _build_recursive_response_model(model)
+            tagged_models.append(Annotated[resolved_model, Tag(key)])  # ty: ignore[invalid-type-form]
+
+        union = _build_union_type(tagged_models)
+        return Annotated[union, Discriminator(_discriminator_type)]
+
+
+def _discriminator_type(value: Any) -> Any:
+    if isinstance(value, dict):
+        return value.get("type")
+    return getattr(value, "type", None)
+
+
+def _build_union_type(models: list[Any]) -> Any:
+    union = models[0]
+    for model in models[1:]:
+        union = union | model
+    return union
+
+
+def _build_recursive_response_model(model: type[BaseSettingsModel]) -> type[BaseSettingsModel]:
+    overrides: dict[str, tuple[Any, Any]] = {}
+
+    for field_name, field in model.model_fields.items():
+        new_annotation = _transform_annotation(field.annotation)
+        if new_annotation is field.annotation:
+            continue
+
+        default = ... if field.is_required() else field.default
+        overrides[field_name] = (new_annotation, default)
+
+    if not overrides:
+        return model
+
+    return create_model(
+        f"{model.__name__}Response",
+        __base__=model,
+        __module__=model.__module__,
+        **overrides,
+    )  # ty: ignore[no-matching-overload]
+
+
+def _transform_annotation(annotation: Any) -> Any:
+    if isinstance(annotation, type) and issubclass(annotation, BaseSettingsModel):
+        model_cls = getattr(annotation, "_model", None)
+        if model_cls is None:
+            return annotation
+        return annotation.union_type()
+
+    origin = get_origin(annotation)
+    if origin is None:
+        return annotation
+
+    args = get_args(annotation)
+
+    transformed_args = tuple(_transform_annotation(arg) for arg in args)
+    if transformed_args == args:
+        return annotation
+
+    if origin in (Union, UnionType):
+        union = transformed_args[0]
+        for arg in transformed_args[1:]:
+            union = union | arg
+        return union
+
+    if len(transformed_args) == 1:
+        return origin[transformed_args[0]]
+    return origin[transformed_args]
 
 
 class FromSettingsMixin:

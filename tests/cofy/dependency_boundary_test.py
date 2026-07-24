@@ -27,6 +27,7 @@ import pytest
 # PyPI names whose import name differs from the normalised form.
 IMPORT_OVERRIDES: dict[str, set[str]] = {
     "entsoe-py": {"entsoe"},
+    "PyYAML": {"yaml"},
 }
 
 # Extra name → source path prefix(es) it "owns" (relative to src/cofy/).
@@ -38,6 +39,7 @@ EXTRA_ZONES: dict[str, set[str]] = {
     "members": {"modules/members/"},
     "directive": {"modules/directive/"},
     "debug": {"api/debug_"},
+    "management": {"management/"},
 }
 
 # Zones that are always accessible (no extra required).

@@ -1,0 +1,42 @@
+auth:
+  tokens:
+    foo:
+      name: Demo User
+  type: token
+debug_mode: true
+description: Modular cloud API for energy data
+modules:
+- name: entsoe
+  source:
+    api_key: '***'
+    type: entsoe_day_ahead
+  type: tariff
+- formats:
+  - source: Cofy-API-Demo
+    type: kiwatt
+  name: kiwatt
+  source:
+    api_key: '***'
+    country_code: NL
+    type: entsoe_day_ahead
+  type: tariff
+- description: Our dynamic tariff tracking the Belpex.
+  name: dynamic
+  source:
+    tariff:
+    - capacity: {}
+      consumption:
+        total:
+          capacity_based: false
+          constant_cost: 2.0
+          kind: index
+          variable_costs: []
+      fixed: {}
+      injection: {}
+      start: 2026-01-01 00:00:00+00:00
+    type: energy_cost
+  type: tariff
+- name: default
+  type: billing
+title: foo
+type: cofy_api
