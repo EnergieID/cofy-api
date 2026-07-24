@@ -1,6 +1,6 @@
 from cofy.api.module import ModuleSettings
 
-from ...errors import ResourceNotFoundError
+from ...errors import ResourceAlreadyExistsError, ResourceNotFoundError
 from ..modules import ModulesPersistence
 from .base import FilePersistence
 
@@ -18,7 +18,7 @@ class FileModulesPersistence(FilePersistence, ModulesPersistence):
     def create(self, slug: str, module: ModuleSettings) -> ModuleSettings:
         config = self._get_community_config(slug)
         if any((module.type, module.name) == (m.type, m.name) for m in config.modules):
-            raise ValueError(f"Module {module.type}:{module.name} already exists")
+            raise ResourceAlreadyExistsError(f"Module {module.type}:{module.name} already exists")
         config.modules = config.modules + [module]
         self._save_community_config(slug, config)
         return module
