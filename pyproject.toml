@@ -48,6 +48,10 @@ directive = [
 debug = [
     "yappi>=1.7.6",
 ]
+management = [
+    "cofy-api[timeseries,tariff,members,production,directive,billing,debug]",
+    "PyYAML>=6.0.0",
+]
 
 # Convenience extras
 all = ["cofy-api[timeseries,tariff,members,production,directive,billing,debug]"]
