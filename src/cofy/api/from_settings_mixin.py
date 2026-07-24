@@ -47,15 +47,10 @@ class BaseSettingsModel(BaseModel):
         Nested `BaseSettingsModel`-typed fields are expanded to their own discriminated unions
         """
         registry = getattr(cls._model, "_registry", {})
-        if not registry:
-            return cls
-
-        response_cache: dict[type[BaseSettingsModel], type[BaseSettingsModel]] = {}
-        stack: set[type[BaseSettingsModel]] = set()
 
         tagged_models: list[Any] = []
         for key, model in registry.items():
-            resolved_model = _build_recursive_response_model(model, response_cache, stack)
+            resolved_model = _build_recursive_response_model(model)
             tagged_models.append(Annotated[resolved_model, Tag(key)])  # ty: ignore[invalid-type-form]
 
         union = _build_union_type(tagged_models)
@@ -69,61 +64,35 @@ def _discriminator_type(value: Any) -> Any:
 
 
 def _build_union_type(models: list[Any]) -> Any:
-    if not models:
-        return Any
-
     union = models[0]
     for model in models[1:]:
         union = union | model
     return union
 
 
-def _build_recursive_response_model(
-    model: type[BaseSettingsModel],
-    cache: dict[type[BaseSettingsModel], type[BaseSettingsModel]],
-    stack: set[type[BaseSettingsModel]],
-) -> type[BaseSettingsModel]:
-    if model in cache:
-        return cache[model]
-
-    if model in stack:
-        # Break circular references by falling back to the current model.
-        return model
-
-    stack.add(model)
+def _build_recursive_response_model(model: type[BaseSettingsModel]) -> type[BaseSettingsModel]:
     overrides: dict[str, tuple[Any, Any]] = {}
 
     for field_name, field in model.model_fields.items():
-        new_annotation = _transform_annotation(field.annotation, cache, stack)
+        new_annotation = _transform_annotation(field.annotation)
         if new_annotation is field.annotation:
             continue
 
         default = ... if field.is_required() else field.default
         overrides[field_name] = (new_annotation, default)
-        default = ... if field.is_required() else field.default
-        overrides[field_name] = (new_annotation, default)
-
-    stack.remove(model)
 
     if not overrides:
-        cache[model] = model
         return model
 
-    recursive_model = create_model(
+    return create_model(
         f"{model.__name__}Response",
         __base__=model,
         __module__=model.__module__,
         **overrides,
     )  # ty: ignore[no-matching-overload]
-    cache[model] = recursive_model
-    return recursive_model
 
 
-def _transform_annotation(
-    annotation: Any,
-    cache: dict[type[BaseSettingsModel], type[BaseSettingsModel]],
-    stack: set[type[BaseSettingsModel]],
-) -> Any:
+def _transform_annotation(annotation: Any) -> Any:
     if isinstance(annotation, type) and issubclass(annotation, BaseSettingsModel):
         model_cls = getattr(annotation, "_model", None)
         if model_cls is None:
@@ -135,16 +104,8 @@ def _transform_annotation(
         return annotation
 
     args = get_args(annotation)
-    if not args:
-        return annotation
 
-    if origin is Annotated:
-        transformed = _transform_annotation(args[0], cache, stack)
-        if transformed is args[0]:
-            return annotation
-        return Annotated[transformed, *args[1:]]
-
-    transformed_args = tuple(_transform_annotation(arg, cache, stack) for arg in args)
+    transformed_args = tuple(_transform_annotation(arg) for arg in args)
     if transformed_args == args:
         return annotation
 
@@ -154,12 +115,9 @@ def _transform_annotation(
             union = union | arg
         return union
 
-    try:
-        if len(transformed_args) == 1:
-            return origin[transformed_args[0]]
-        return origin[transformed_args]
-    except Exception:
-        return annotation
+    if len(transformed_args) == 1:
+        return origin[transformed_args[0]]
+    return origin[transformed_args]
 
 
 class FromSettingsMixin:
