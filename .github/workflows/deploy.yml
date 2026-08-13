@@ -47,6 +47,7 @@ jobs:
             --build-arg VERSION=${VERSION} \
             -t ${IMAGE}:${VERSION} \
             -t ${IMAGE}:${TAG} \
+            -f Dockerfile \
             .
           
           docker push ${IMAGE}:${VERSION}

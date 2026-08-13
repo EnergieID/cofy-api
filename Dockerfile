@@ -6,19 +6,20 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app
 
 # Copy dependency files first (better layer caching)
+COPY packages/api/pyproject.toml ./packages/api/pyproject.toml
 COPY pyproject.toml uv.lock* ./
 
 # install git, to get git dependencies
 RUN apk add --no-cache git
 
-# Install dependencies for the demo app (including optional extras) first for better layer caching
-RUN uv sync --frozen --no-dev --all-extras --no-install-project
+# Install API package dependencies first for better layer caching
+RUN uv sync --project packages/api --frozen --no-dev --all-extras --no-install-project
 
 # Copy source code
 COPY . .
 
 # Install the project itself with the same extras used by the demo entrypoint
-RUN uv sync --frozen --no-dev --all-extras \
+RUN uv sync --project packages/api --frozen --no-dev --all-extras \
     && find /app/.venv -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
 # --- Final stage (no uv, no build deps) ---
