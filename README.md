@@ -2,7 +2,7 @@
 
 **Cofy Cloud** is an open-source modular framework for ingesting, standardising, storing, and computing energy-related data, designed to run from local setups to cloud deployments.
 
-This repository uses a monorepo structure with separate packages.
+This repository uses a monorepo structure with separate packages. Each package has its own README with more specific instructions.
 
 ## Structure
 
@@ -13,33 +13,31 @@ This repository uses a monorepo structure with separate packages.
 
 ## Quick Start (Repository)
 
-Install root developer tooling:
-
-```sh
-uv sync --group dev
-```
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and [Task](https://taskfile.dev/installation/), used to run cross-package commands.
 
 Run the demo API:
 
 ```sh
-poe demo
+task demo
 ```
 
 Run the management API:
 
 ```sh
-poe management
+task management
 ```
 
 The demo API is available at http://127.0.0.1:8000 with docs at /docs.
 
 ## Development Commands
 
+Root-level commands run the tasks for every package (via [Task](https://taskfile.dev), see [Taskfile.yml](Taskfile.yml)):
+
 ```sh
-poe test
-poe lint
-poe format
-poe check
+task test
+task lint
+task format
+task check
 ```
 
 ## Package Documentation

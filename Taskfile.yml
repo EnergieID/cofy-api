@@ -1,0 +1,49 @@
+version: '3'
+
+tasks:
+  test:
+    desc: Run tests for all packages
+    cmds:
+      - uv run --project packages/api --directory packages/api poe test
+      - uv run --project packages/management-api --directory packages/management-api poe test
+
+  lint:
+    desc: Lint all packages
+    cmds:
+      - uv run --project packages/api --directory packages/api poe lint
+      - uv run --project packages/management-api --directory packages/management-api poe lint
+
+  format:
+    desc: Format all packages
+    cmds:
+      - uv run --project packages/api --directory packages/api poe format
+      - uv run --project packages/management-api --directory packages/management-api poe format
+
+  check:
+    desc: Type-check all packages
+    cmds:
+      - uv run --project packages/api --directory packages/api poe check
+      - uv run --project packages/management-api --directory packages/management-api poe check
+
+  demo:
+    desc: Run the demo API locally
+    dotenv: ['.env.local']
+    cmds:
+      - uv run --project packages/api fastapi dev demo/main.py
+
+  from_settings:
+    desc: Run the from_settings demo locally
+    dotenv: ['.env.local']
+    cmds:
+      - uv run --project packages/api fastapi dev demo/from_settings.py
+
+  management:
+    desc: Run the management API locally
+    cmds:
+      - uv run --project packages/management-api --directory packages/management-api poe run
+
+  prod:
+    desc: Build and run the production container
+    cmds:
+      - docker build -t cofy-api -f Dockerfile .
+      - docker run -p 8080:8080 --env-file .env.local cofy-api

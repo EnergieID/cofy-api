@@ -185,8 +185,8 @@ requires-dist = [
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'tariff'" },
     { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production", "directive", "billing", "debug"], marker = "extra == 'all'" },
     { name = "energy-cost", marker = "extra == 'billing'", specifier = ">=0.7.0" },
-    { name = "energy-cost", marker = "extra == 'members'", specifier = ">=0.7.0" },
-    { name = "energy-cost", marker = "extra == 'tariff'", specifier = ">=0.7.0" },
+    { name = "energy-cost", marker = "extra == 'members'", specifier = "==0.7.0" },
+    { name = "energy-cost", marker = "extra == 'tariff'", specifier = "==0.7.0" },
     { name = "entsoe-py", marker = "extra == 'tariff'", specifier = ">=0.7.10" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.128.0" },
     { name = "isodate", marker = "extra == 'timeseries'", specifier = ">=0.7.2" },
@@ -410,19 +410,18 @@ wheels = [
 
 [[package]]
 name = "energy-cost"
-version = "0.8.2"
+version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "entsoe-py" },
     { name = "isodate" },
     { name = "pandas" },
     { name = "pydantic" },
-    { name = "pyxlsb" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f0/7d/a34e3f159b7db42b3dc6a5a12efa153845aa58de35265470af165a15ead0/energy_cost-0.8.2.tar.gz", hash = "sha256:f82607e3e6b7a4a6e18513c472dce03c517e3275151d979c03fd6896494db2db", size = 6910568, upload-time = "2026-08-04T07:28:32.24Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ac/a6/6b4edd5dd008aa57406153a62abbc9e2d41a4e392340c60139dd2eccec49/energy_cost-0.7.0.tar.gz", hash = "sha256:4cc1823b99a06714a772e04f1496c312ff8023ad1e2bedf667746b9a0f6eff7a", size = 65864, upload-time = "2026-06-15T07:51:55.406Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/95/81/ab96deb687f04436e0fcd10a3ff516d51297f9f52e67e51d5e85536332bc/energy_cost-0.8.2-py3-none-any.whl", hash = "sha256:d618664eae6d33a68f183626f9a61d3b4d312f49dcd737a6e6b5e9c75ce22422", size = 7085896, upload-time = "2026-08-04T07:28:30.559Z" },
+    { url = "https://files.pythonhosted.org/packages/03/2b/60d47756138766a806649b265a5a54a206721bf7b7d5ca353e0a09c54f43/energy_cost-0.7.0-py3-none-any.whl", hash = "sha256:4a7bacdce99a7610665ea9959f75dfb3823092292f178454805e1541f82cd79b", size = 61753, upload-time = "2026-06-15T07:51:54.418Z" },
 ]
 
 [[package]]
@@ -1349,15 +1348,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/fb/48/fb042503b6ca6cd271261dc559fd6432f7d8c713153e9ec5c591af4dfc1c/pytz-2026.3.post1.tar.gz", hash = "sha256:2211d3fcf9a797d3405cac96ac7f61d80e6a644f72a3309607282fe8a2010c5d", size = 319745, upload-time = "2026-07-25T15:12:07.385Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0f/7b/39c34ca613b0b198cb866466651b26b045e2009864c5183c979a3b83f383/pytz-2026.3.post1-py2.py3-none-any.whl", hash = "sha256:dd95840dd199baea12d9cc096a1d452caa6596a1c1e4b5f3dbd1541855d5e815", size = 508283, upload-time = "2026-07-25T15:12:05.782Z" },
-]
-
-[[package]]
-name = "pyxlsb"
-version = "1.0.10"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3f/13/eebaeb7a40b062d1c6f7f91d09e73d30a69e33e4baa7cbe4b7658548b1cd/pyxlsb-1.0.10.tar.gz", hash = "sha256:8062d1ea8626d3f1980e8b1cfe91a4483747449242ecb61013bc2df85435f685", size = 22424, upload-time = "2022-10-14T19:17:47.308Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/92/345823838ae367c59b63e03aef9c331f485370f9df6d049256a61a28f06d/pyxlsb-1.0.10-py2.py3-none-any.whl", hash = "sha256:87c122a9a622e35ca5e741d2e541201d28af00fb46bec492cfa9586890b120b4", size = 23849, upload-time = "2022-10-14T19:17:46.079Z" },
 ]
 
 [[package]]
