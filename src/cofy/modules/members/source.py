@@ -2,12 +2,18 @@ import builtins
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
+from cofy.api import BaseSettingsModel, FromSettingsMixin
+
 from .model import Member
 
 T = TypeVar("T")
 
 
-class MemberSource(ABC, Generic[T]):
+class MemberSourceSettings(BaseSettingsModel):
+    type: str = "member"
+
+
+class MemberSource(FromSettingsMixin, ABC, Generic[T], settings=MemberSourceSettings):
     @abstractmethod
     def list(
         self,

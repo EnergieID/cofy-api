@@ -3,6 +3,7 @@ import datetime as dt
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from cofy.api.module import Module
 from cofy.modules.directive import DirectiveFormat, DirectiveModule, DirectiveSource
 
 from ..timeseries.dummy_source import DummyTimeseriesSource
@@ -43,3 +44,18 @@ def test_api_endpoint_returns_directives():
     assert payload["metadata"]["format"] == "json"
     assert payload["metadata"]["resolution"] == "PT1H"
     assert [entry["value"] for entry in payload["data"]] == ["--", "-", "0"]
+
+
+def test_can_create_from_settings():
+    module = Module.create(
+        {
+            "type": "directive",
+            "source": {
+                "type": "directive",
+                "source": {"type": "dummy_timeseries_source"},
+                "boundaries": [5, 15, 25, 35],
+            },
+        }
+    )
+
+    assert isinstance(module, DirectiveModule)

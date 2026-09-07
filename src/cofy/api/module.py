@@ -3,9 +3,29 @@ from enum import Enum
 from typing import Any
 
 from fastapi import APIRouter
+from pydantic import Field
+
+from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
 
 
-class Module(APIRouter, ABC):
+class ModuleSettings(BaseSettingsModel):
+    type: str = "module"
+    name: str = Field(
+        "default",
+        description="The machine name of the module instance. No spaces, no special characters. Use it to differentiate between multiple instances/implementations of the same module type.",
+        pattern=r"^[a-zA-Z0-9_-]+$",
+    )
+    display_name: str | None = Field(
+        None,
+        description="The human-readable name of the module instance. If not provided, the machine name will be used.",
+    )
+    description: str | None = Field(
+        None,
+        description="A short description of the module instance. If not provided, the module type description will be used.",
+    )
+
+
+class Module(APIRouter, FromSettingsMixin, ABC, settings=ModuleSettings):
     type: str = "module"
     type_description: str = "Generic module"
 

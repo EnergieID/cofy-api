@@ -1,5 +1,5 @@
 import datetime as dt
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
@@ -9,22 +9,10 @@ from isodate import Duration
 from cofy.modules.tariff.sources.energy_cost import EnergyCostTariffSource
 
 
-@pytest.fixture
-def mock_tariff():
-    with patch("cofy.modules.tariff.sources.energy_cost.Tariff") as MockTariff:
-        mock_instance = MagicMock()
-        MockTariff.from_yaml.return_value = mock_instance
-        yield mock_instance
-
-
-def test_init(mock_tariff):
-    src = EnergyCostTariffSource("some_yaml_config")
-    assert src.tariff is mock_tariff
-
-
 @pytest.mark.asyncio
-async def test_fetch_timeseries(mock_tariff):
-    src = EnergyCostTariffSource("some_yaml_config")
+async def test_fetch_timeseries():
+    mock_tariff = MagicMock()
+    src = EnergyCostTariffSource(mock_tariff)
     start = dt.datetime(2026, 1, 1, tzinfo=dt.UTC)
     end = dt.datetime(2026, 1, 2, tzinfo=dt.UTC)
     resolution = dt.timedelta(hours=1)
@@ -49,8 +37,31 @@ async def test_fetch_timeseries(mock_tariff):
 
 
 @pytest.mark.asyncio
-async def test_fetch_timeseries_raises_for_duration(mock_tariff):
-    src = EnergyCostTariffSource("some_yaml_config")
+async def test_fetch_timeseries_filters_nan_values():
+    mock_tariff = MagicMock()
+    src = EnergyCostTariffSource(mock_tariff)
+    start = dt.datetime(2026, 1, 1, tzinfo=dt.UTC)
+    end = dt.datetime(2026, 1, 2, tzinfo=dt.UTC)
+    resolution = dt.timedelta(hours=1)
+
+    mock_tariff.get_values.return_value = pd.DataFrame(
+        {
+            "timestamp": [start, start + resolution, start + 2 * resolution],
+            "total": [10.0, float("nan"), 30.0],
+        }
+    )
+
+    result = await src.fetch_timeseries(start, end, resolution=resolution, cost_group=CostGroup.CONSUMPTION)
+
+    assert result.to_arr() == [
+        {"timestamp": start, "value": 10.0},
+        {"timestamp": start + 2 * resolution, "value": 30.0},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_fetch_timeseries_raises_for_duration():
+    src = EnergyCostTariffSource(MagicMock())
     with pytest.raises(ValueError, match="Resolution only support time components"):
         await src.fetch_timeseries(
             dt.datetime(2026, 1, 1, tzinfo=dt.UTC),
@@ -60,8 +71,8 @@ async def test_fetch_timeseries_raises_for_duration(mock_tariff):
 
 
 @pytest.mark.asyncio
-async def test_fetch_timeseries_raises_for_missing_cost_group(mock_tariff):
-    src = EnergyCostTariffSource("some_yaml_config")
+async def test_fetch_timeseries_raises_for_missing_cost_group():
+    src = EnergyCostTariffSource(MagicMock())
     with pytest.raises(ValueError, match="Cost group must be provided."):
         await src.fetch_timeseries(
             dt.datetime(2026, 1, 1, tzinfo=dt.UTC),
@@ -71,8 +82,9 @@ async def test_fetch_timeseries_raises_for_missing_cost_group(mock_tariff):
 
 
 @pytest.mark.asyncio
-async def test_fetch_timeseries_raises_when_series_is_none(mock_tariff):
-    src = EnergyCostTariffSource("some_yaml_config")
+async def test_fetch_timeseries_raises_when_series_is_none():
+    mock_tariff = MagicMock()
+    src = EnergyCostTariffSource(mock_tariff)
     mock_tariff.get_values.return_value = None
     with pytest.raises(ValueError, match="No tariff data available"):
         await src.fetch_timeseries(
@@ -83,12 +95,12 @@ async def test_fetch_timeseries_raises_when_series_is_none(mock_tariff):
         )
 
 
-def test_supported_resolutions(mock_tariff):
-    src = EnergyCostTariffSource("some_yaml_config")
+def test_supported_resolutions():
+    src = EnergyCostTariffSource(MagicMock())
     assert src.supported_resolutions == ["PT5M", "PT15M", "PT1H", "P1D", "P7D"]
 
 
-def test_extra_args(mock_tariff):
-    src = EnergyCostTariffSource("some_yaml_config")
+def test_extra_args():
+    src = EnergyCostTariffSource(MagicMock())
     args = src.extra_args
     assert "cost_group" in args

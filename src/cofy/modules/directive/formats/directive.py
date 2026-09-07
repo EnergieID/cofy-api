@@ -3,7 +3,7 @@ from typing import Literal, TypeVar
 
 from pydantic import BaseModel
 
-from cofy.modules.timeseries import JSONFormat
+from cofy.modules.timeseries import JSONFormat, TimeseriesFormatSettings
 
 MetadataType = TypeVar("MetadataType", bound=BaseModel)
 
@@ -16,6 +16,10 @@ class DirectiveRecord(BaseModel):
     value: DirectiveSteps
 
 
-class DirectiveFormat(JSONFormat[DirectiveRecord, MetadataType]):
+class DirectiveFormatSettings(TimeseriesFormatSettings):
+    type: str = "directive"
+
+
+class DirectiveFormat(JSONFormat[DirectiveRecord, MetadataType], settings=DirectiveFormatSettings):
     def __init__(self, MT: type[MetadataType] | None = None):
         super().__init__(DT=DirectiveRecord, MT=MT)

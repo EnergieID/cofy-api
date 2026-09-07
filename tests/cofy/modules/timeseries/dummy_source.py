@@ -1,9 +1,13 @@
 import datetime as dt
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
+from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 
-class DummyTimeseriesSource(TimeseriesSource):
+class DummyTimeseriesSourceSettings(TimeseriesSourceSettings):
+    type: str = "dummy_timeseries_source"
+
+
+class DummyTimeseriesSource(TimeseriesSource, settings=DummyTimeseriesSourceSettings):
     async def fetch_timeseries(
         self,
         start: dt.datetime,

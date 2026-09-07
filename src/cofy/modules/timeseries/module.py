@@ -6,16 +6,22 @@ from fastapi.exceptions import RequestValidationError
 from isodate import ISO8601Error, parse_duration
 from pydantic import create_model
 
-from cofy import Module
+from cofy import Module, ModuleSettings
 
-from .format import TimeseriesFormat
+from .format import TimeseriesFormat, TimeseriesFormatSettings
 from .formats.csv import CSVFormat
 from .formats.json import JSONFormat
 from .model import ISODuration
-from .source import TimeseriesSource
+from .source import TimeseriesSource, TimeseriesSourceSettings
 
 
-class TimeseriesModule(Module):
+class TimeseriesModuleSettings(ModuleSettings):
+    type: str = "timeseries"
+    source: TimeseriesSourceSettings
+    formats: list[TimeseriesFormatSettings] | None = None
+
+
+class TimeseriesModule(Module, settings=TimeseriesModuleSettings):
     type: str = "timeseries"
     type_description: str = "Module providing timeseries data."
     source: TimeseriesSource

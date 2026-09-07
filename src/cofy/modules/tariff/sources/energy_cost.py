@@ -6,14 +6,21 @@ import pandas as pd
 from energy_cost import CostGroup, Tariff
 from fastapi import Query
 from isodate import Duration
+from pydantic import Field
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
+from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 
-class EnergyCostTariffSource(TimeseriesSource):
-    def __init__(self, yaml_config: str, cost_group: CostGroup | None = None):
+class EnergyCostTariffSourceSettings(TimeseriesSourceSettings):
+    type: str = "energy_cost"
+    tariff: Tariff = Field(description="Energy cost tariff instance")
+    cost_group: CostGroup | None = None
+
+
+class EnergyCostTariffSource(TimeseriesSource, settings=EnergyCostTariffSourceSettings):
+    def __init__(self, tariff: Tariff, cost_group: CostGroup | None = None):
         super().__init__()
-        self.tariff = Tariff.from_yaml(yaml_config)
+        self.tariff = tariff
         self.cost_group = cost_group
 
     async def fetch_timeseries(
@@ -41,6 +48,7 @@ class EnergyCostTariffSource(TimeseriesSource):
         if series is None:
             raise ValueError("No tariff data available for the given parameters.")
         df = series.rename(columns={"total": "value"})
+        df = df[df["value"].notna()].copy()
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         return Timeseries(frame=df, metadata={"unit": "EUR/MWh"})
 
