@@ -22,7 +22,7 @@ timeseries = [
 ]
 tariff = [
     "cofy-api[timeseries]",
-    "energy-cost>=0.7.0",
+    "energy-cost==0.7.0",
     "entsoe-py>=0.7.10",
     "pandas>=3.0.0"
 ]
@@ -37,7 +37,7 @@ production = [
     "requests>=2.32.0",
 ]
 members = [
-    "energy-cost>=0.7.0",
+    "energy-cost==0.7.0",
 ]
 directive = [
     "cofy-api[timeseries]",

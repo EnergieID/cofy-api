@@ -1,0 +1,7 @@
+{
+    "folders": [
+        { "name": "cofy-cloud", "path": "." },
+        { "name": "api", "path": "packages/api" },
+        { "name": "management-api", "path": "packages/management-api" }
+    ]
+}
