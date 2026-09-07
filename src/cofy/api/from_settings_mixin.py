@@ -146,10 +146,8 @@ class FromSettingsMixin:
             if "_registry" in base.__dict__:
                 registry = base.__dict__["_registry"]
                 if isinstance(registry, dict):
-                    if type_name in registry and registry[type_name].__name__ != settings.__name__:
-                        raise TypeError(
-                            f"Duplicate registration for type {type_name!r} in {cls.__name__} and {registry[type_name].__name__}"
-                        )
+                    if type_name in registry:
+                        raise TypeError(f"Duplicate registration for type {type_name!r}")
                     registry[type_name] = settings
 
     @classmethod

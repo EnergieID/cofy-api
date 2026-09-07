@@ -45,14 +45,10 @@ The API is now available at `http://127.0.0.1:8000` with interactive docs at `/d
 Protect the API with bearer-token authentication:
 
 ```python
-from fastapi import Depends
-
 from cofy import CofyAPI
-from cofy.api import token_verifier
+from cofy.api import TokenAuth, TokenInfo
 
-app = CofyAPI(
-    dependencies=[Depends(token_verifier({"my-secret-token": {"name": "Admin"}}))]
-)
+app = CofyAPI(auth=TokenAuth({"my-secret-token": TokenInfo(name="Admin")}))
 ```
 
 Clients authenticate via header (`Authorization: Bearer my-secret-token`) or query parameter (`?token=my-secret-token`).
