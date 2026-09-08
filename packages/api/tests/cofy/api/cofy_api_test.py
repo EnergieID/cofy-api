@@ -17,8 +17,10 @@ def test_cofy_initialization():
 def test_debug_mode_registers_debug_routes(tmp_path):
     """CofyAPI with debug_mode=True must register the /debug/* endpoints."""
     cofy = CofyAPI(debug_mode=True, debug_dir=tmp_path)
-    route_paths = [r.path for r in cofy.routes if hasattr(r, "path")]
-    assert any("/debug/" in str(p) for p in route_paths)
+    client = TestClient(cofy)
+    response = client.get("/debug/nonexistent-id/profile")
+    assert response.status_code == 404
+    assert "nonexistent-id" in response.json()["detail"]
 
 
 def test_debug_mode_uses_tempdir_when_no_dir_given():
