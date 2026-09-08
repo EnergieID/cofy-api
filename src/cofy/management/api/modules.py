@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Path
+from pydantic import TypeAdapter
 
 from cofy.api.module import ModuleSettings
 from cofy.modules.discovery import discover_all_types
@@ -12,6 +13,7 @@ from ..persitance.modules import ModulesPersistence
 # Import every installed module/source/format type,
 discover_all_types()
 AnyModuleSettings = ModuleSettings.union_type()
+_any_module_adapter = TypeAdapter(AnyModuleSettings)
 
 
 class ModulesRouter:
@@ -54,10 +56,15 @@ class ModulesRouter:
         slug: str,
         module_type: str,
         name: str,
-        patch: Annotated[AnyModuleSettings, Body(description="Partial module settings payload")],
+        patch: Annotated[
+            dict[str, Any],
+            Body(description="Partial module settings payload, merged onto the existing module"),
+        ],
     ) -> AnyModuleSettings:
         original = self.persistence.get(slug, module_type, name)
-        updated = original.model_copy(update=patch.model_dump(exclude_unset=True))
+        merged = original.model_dump() | patch
+        updated = _any_module_adapter.validate_python(merged)
+        self._check_identity_matches_path(updated, module_type, name)
         return self.persistence.replace(slug, module_type, name, updated)
 
     def put(
@@ -67,7 +74,17 @@ class ModulesRouter:
         name: str,
         payload: Annotated[AnyModuleSettings, Body(description="Full module settings payload")],
     ) -> AnyModuleSettings:
+        self._check_identity_matches_path(payload, module_type, name)
         return self.persistence.replace(slug, module_type, name, payload)
+
+    @staticmethod
+    def _check_identity_matches_path(module: AnyModuleSettings, module_type: str, name: str) -> None:
+        """Reject a PUT/PATCH body whose (type, name) differs from the URL it was sent to."""
+        if (module.type, module.name) != (module_type, name):
+            raise ValueError(
+                f"Module identity in body (type={module.type!r}, name={module.name!r}) must match "
+                f"the URL path (type={module_type!r}, name={name!r})"
+            )
 
     def delete(
         self,

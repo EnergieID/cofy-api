@@ -207,6 +207,32 @@ def test_put_unknown_module_returns_404(client: TestClient):
     assert r.status_code == 404
 
 
+def test_put_rejects_body_type_mismatch(client: TestClient, tmp_data: Path):
+    """A PUT body describing a different module type than the URL must be rejected, not
+    silently overwrite the addressed module with an unrelated one."""
+    payload = {"type": "billing", "name": "default"}
+    r = client.put("/management/communities/test/modules/tariff/spot", json=payload)
+    assert r.status_code == 422
+
+    saved = _read_modules(tmp_data)
+    assert any(m["type"] == "tariff" and m["name"] == "spot" for m in saved)  # untouched
+    assert sum(1 for m in saved if m["type"] == "billing" and m["name"] == "default") == 1  # no duplicate
+
+
+def test_put_rejects_body_name_mismatch(client: TestClient, tmp_data: Path):
+    payload = {
+        "type": "tariff",
+        "name": "renamed",
+        "source": {"type": "entsoe_day_ahead", "api_key": "k"},
+    }
+    r = client.put("/management/communities/test/modules/tariff/spot", json=payload)
+    assert r.status_code == 422
+
+    saved = _read_modules(tmp_data)
+    assert any(m["type"] == "tariff" and m["name"] == "spot" for m in saved)  # untouched
+    assert not any(m["name"] == "renamed" for m in saved)
+
+
 # ── PATCH /{module_type}/{name} (partial update) ──────────────────────────
 
 
@@ -225,6 +251,38 @@ def test_patch_unknown_module_returns_404(client: TestClient):
     patch = {"type": "billing", "name": "ghost", "description": "x"}
     r = client.patch("/management/communities/test/modules/billing/ghost", json=patch)
     assert r.status_code == 404
+
+
+def test_patch_applies_partial_update_to_module_with_required_fields(client: TestClient, tmp_data: Path):
+    patch = {"type": "tariff", "name": "spot", "description": "spot tariff"}
+    r = client.patch("/management/communities/test/modules/tariff/spot", json=patch)
+    assert r.status_code == 200
+    assert r.json()["description"] == "spot tariff"
+    assert r.json()["source"]["api_key"] == "secret-key"
+
+    saved = _read_modules(tmp_data)
+    spot = next(m for m in saved if m["name"] == "spot")
+    assert spot["description"] == "spot tariff"
+    assert spot["source"]["api_key"] == "secret-key"
+
+
+def test_patch_rejects_type_change(client: TestClient, tmp_data: Path):
+    patch = {"type": "billing"}
+    r = client.patch("/management/communities/test/modules/tariff/spot", json=patch)
+    assert r.status_code == 422
+
+    saved = _read_modules(tmp_data)
+    assert any(m["type"] == "tariff" and m["name"] == "spot" for m in saved)  # untouched
+
+
+def test_patch_rejects_name_change(client: TestClient, tmp_data: Path):
+    patch = {"name": "renamed"}
+    r = client.patch("/management/communities/test/modules/tariff/spot", json=patch)
+    assert r.status_code == 422
+
+    saved = _read_modules(tmp_data)
+    assert any(m["type"] == "tariff" and m["name"] == "spot" for m in saved)  # untouched
+    assert not any(m["name"] == "renamed" for m in saved)
 
 
 # ── DELETE /{module_type}/{name} ──────────────────────────────────────────
@@ -248,3 +306,23 @@ def test_delete_does_not_affect_other_modules(client: TestClient, tmp_data: Path
 
     saved = _read_modules(tmp_data)
     assert any(m["type"] == "tariff" and m["name"] == "spot" for m in saved)
+
+
+# ── FileModulesPersistence.replace: defense in depth ──────────────────────
+
+
+def test_replace_rejects_collision_with_a_different_existing_module(tmp_data: Path):
+    """Called directly - bypassing ModulesRouter's own identity check - replace() must
+    still refuse to turn the addressed module into a duplicate of an unrelated one."""
+    from cofy.management.errors import ResourceAlreadyExistsError
+    from cofy.modules.billing import BillingModuleSettings
+
+    persistence = FileModulesPersistence(tmp_data)
+    colliding = BillingModuleSettings(name="default")  # already exists under a different slot
+
+    with pytest.raises(ResourceAlreadyExistsError):
+        persistence.replace("test", "tariff", "spot", colliding)
+
+    saved = _read_modules(tmp_data)
+    assert any(m["type"] == "tariff" and m["name"] == "spot" for m in saved)  # untouched
+    assert sum(1 for m in saved if m["type"] == "billing" and m["name"] == "default") == 1  # no duplicate
