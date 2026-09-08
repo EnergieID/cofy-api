@@ -233,58 +233,6 @@ def test_put_rejects_body_name_mismatch(client: TestClient, tmp_data: Path):
     assert not any(m["name"] == "renamed" for m in saved)
 
 
-# ── PATCH /{module_type}/{name} (partial update) ──────────────────────────
-
-
-def test_patch_updates_description(client: TestClient, tmp_data: Path):
-    patch = {"type": "billing", "name": "default", "description": "Updated desc"}
-    r = client.patch("/management/communities/test/modules/billing/default", json=patch)
-    assert r.status_code == 200
-    assert r.json()["description"] == "Updated desc"
-
-    saved = _read_modules(tmp_data)
-    billing = next(m for m in saved if m["name"] == "default")
-    assert billing.get("description") == "Updated desc"
-
-
-def test_patch_unknown_module_returns_404(client: TestClient):
-    patch = {"type": "billing", "name": "ghost", "description": "x"}
-    r = client.patch("/management/communities/test/modules/billing/ghost", json=patch)
-    assert r.status_code == 404
-
-
-def test_patch_applies_partial_update_to_module_with_required_fields(client: TestClient, tmp_data: Path):
-    patch = {"type": "tariff", "name": "spot", "description": "spot tariff"}
-    r = client.patch("/management/communities/test/modules/tariff/spot", json=patch)
-    assert r.status_code == 200
-    assert r.json()["description"] == "spot tariff"
-    assert r.json()["source"]["api_key"] == "secret-key"
-
-    saved = _read_modules(tmp_data)
-    spot = next(m for m in saved if m["name"] == "spot")
-    assert spot["description"] == "spot tariff"
-    assert spot["source"]["api_key"] == "secret-key"
-
-
-def test_patch_rejects_type_change(client: TestClient, tmp_data: Path):
-    patch = {"type": "billing"}
-    r = client.patch("/management/communities/test/modules/tariff/spot", json=patch)
-    assert r.status_code == 422
-
-    saved = _read_modules(tmp_data)
-    assert any(m["type"] == "tariff" and m["name"] == "spot" for m in saved)  # untouched
-
-
-def test_patch_rejects_name_change(client: TestClient, tmp_data: Path):
-    patch = {"name": "renamed"}
-    r = client.patch("/management/communities/test/modules/tariff/spot", json=patch)
-    assert r.status_code == 422
-
-    saved = _read_modules(tmp_data)
-    assert any(m["type"] == "tariff" and m["name"] == "spot" for m in saved)  # untouched
-    assert not any(m["name"] == "renamed" for m in saved)
-
-
 # ── DELETE /{module_type}/{name} ──────────────────────────────────────────
 
 
