@@ -23,7 +23,7 @@ jobs:
       - name: Install poethepoet
         run: uv tool install poethepoet
       - name: Run API tests
-        run: uv run --project packages/api poe test --cov-report=lcov:cov-api.info --cov-report=xml:cov-api.xml
+        run: uv run --project packages/api --directory packages/api poe test --cov-report=lcov:../../cov-api.info --cov-report=xml:../../cov-api.xml
       - name: Code Coverage Annotation
         uses: ggilder/codecoverage@v1
         with:
@@ -48,7 +48,7 @@ jobs:
       - name: Install poethepoet
         run: uv tool install poethepoet
       - name: Run management API tests
-        run: uv run --project packages/management-api poe test --cov-report=lcov:cov-management.info --cov-report=xml:cov-management.xml
+        run: uv run --project packages/management-api --directory packages/management-api poe test --cov-report=lcov:../../cov-management.info --cov-report=xml:../../cov-management.xml
       - name: Code Coverage Annotation
         uses: ggilder/codecoverage@v1
         with:
