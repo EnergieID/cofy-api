@@ -20,8 +20,6 @@ jobs:
           version: '0.9.21'
       - name: Install dependencies
         run: uv sync --project packages/api --group dev
-      - name: Install poethepoet
-        run: uv tool install poethepoet
       - name: Run API tests
         run: uv run --project packages/api --directory packages/api poe test --cov-report=lcov:../../cov-api.info --cov-report=xml:../../cov-api.xml
       - name: Code Coverage Annotation
@@ -45,8 +43,6 @@ jobs:
           version: '0.9.21'
       - name: Install dependencies
         run: uv sync --project packages/management-api --group dev
-      - name: Install poethepoet
-        run: uv tool install poethepoet
       - name: Run management API tests
         run: uv run --project packages/management-api --directory packages/management-api poe test --cov-report=lcov:../../cov-management.info --cov-report=xml:../../cov-management.xml
       - name: Code Coverage Annotation

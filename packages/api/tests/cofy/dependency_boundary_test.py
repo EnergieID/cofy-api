@@ -39,7 +39,6 @@ EXTRA_ZONES: dict[str, set[str]] = {
     "members": {"modules/members/"},
     "directive": {"modules/directive/"},
     "debug": {"api/debug_"},
-    "management": {"management/"},
 }
 
 # Zones that are always accessible (no extra required).
