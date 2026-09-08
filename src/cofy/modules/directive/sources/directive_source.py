@@ -1,4 +1,5 @@
 import datetime as dt
+from typing import TYPE_CHECKING, Literal
 
 import narwhals as nw
 from pydantic import Field
@@ -7,10 +8,16 @@ from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, T
 
 from ..formats.directive import DIRECTIVE_STEPS
 
+if TYPE_CHECKING:
+    # Published at runtime by finalize(); the base class is the static stand-in.
+    AnyTimeseriesSourceSettings = TimeseriesSourceSettings
+
 
 class DirectiveSourceSettings(TimeseriesSourceSettings):
-    type: str = "directive"
-    source: TimeseriesSourceSettings
+    type: Literal["directive"] = "directive"
+    # Recursive: a directive source can wrap any source, including another directive.
+    # Unresolved until cofy.api.finalize() publishes the discriminated unions.
+    source: "AnyTimeseriesSourceSettings"
     boundaries: tuple[float, float, float, float]
     reverse: bool = Field(default=False)
 

@@ -1,19 +1,19 @@
 import asyncio
 import datetime as dt
-from typing import Annotated, cast
+from typing import Annotated, Literal, cast
 
 import pandas as pd
 from entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
 from fastapi.params import Query
-from pydantic import Field, SecretStr
+from pydantic import Field
 
 from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 
 class EntsoeDayAheadTariffSourceSettings(TimeseriesSourceSettings):
-    type: str = "entsoe_day_ahead"
-    api_key: SecretStr
+    type: Literal["entsoe_day_ahead"] = "entsoe_day_ahead"
+    api_key: str
     country_code: str | None = None
 
 

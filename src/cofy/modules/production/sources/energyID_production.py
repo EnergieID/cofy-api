@@ -1,17 +1,18 @@
 import asyncio
 import datetime as dt
+from typing import Literal
 
 import polars as pl
 import requests
 from isodate import strftime
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel
 
 from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 
 class EnergyIDProductionSettings(TimeseriesSourceSettings):
-    type: str = "energyid_production"
-    api_key: SecretStr
+    type: Literal["energyid_production"] = "energyid_production"
+    api_key: str
     record_id: str
 
 

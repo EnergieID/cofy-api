@@ -17,7 +17,7 @@ class DirectiveRecord(BaseModel):
 
 
 class DirectiveFormatSettings(TimeseriesFormatSettings):
-    type: str = "directive"
+    type: Literal["directive"] = "directive"
 
 
 class DirectiveFormat(JSONFormat[DirectiveRecord, MetadataType], settings=DirectiveFormatSettings):

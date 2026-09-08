@@ -48,6 +48,10 @@ directive = [
 debug = [
     "yappi>=1.7.6",
 ]
+management = [
+    "cofy-api[timeseries,tariff,members,production,directive,billing,debug]",
+    "PyYAML>=6.0.0",
+]
 
 # Convenience extras
 all = ["cofy-api[timeseries,tariff,members,production,directive,billing,debug]"]
@@ -87,6 +91,8 @@ envfile = ".env.local"
 [tool.poe.tasks.from_settings]
 cmd = "fastapi dev demo/from_settings.py"
 envfile = ".env.local"
+[tool.poe.tasks.management]
+cmd = "uvicorn cofy.management.main:app --reload"
 [tool.poe.tasks.prod]
 shell = """
 docker build -t cofy-api .

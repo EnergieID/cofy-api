@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi.responses import StreamingResponse
 
 from ..format import TimeseriesFormat, TimeseriesFormatSettings
@@ -6,7 +8,7 @@ from .json import DefaultMetadataType
 
 
 class CSVFormatSettings(TimeseriesFormatSettings):
-    type: str = "csv"
+    type: Literal["csv"] = "csv"
 
 
 class CSVFormat(TimeseriesFormat, settings=CSVFormatSettings):

@@ -20,6 +20,22 @@
                 "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache"
             },
             "justMyCode": false
+        },
+        {
+            "name": "Python Debugger: Management API",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "cofy.management.main:app",
+                "--reload"
+            ],
+            "jinja": true,
+            "envFile": "${workspaceFolder}/.env.local",
+            "env": {
+                "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache"
+            },
+            "justMyCode": false
         }
     ]
 }

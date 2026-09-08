@@ -1,5 +1,6 @@
 import asyncio
 import datetime as dt
+from typing import TYPE_CHECKING, Literal
 
 import narwhals as nw
 from pydantic import Field
@@ -8,13 +9,17 @@ from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, T
 
 from ..formats.directive import DIRECTIVE_STEPS
 
+if TYPE_CHECKING:
+    # Published at runtime by finalize(); the base class is the static stand-in.
+    AnyTimeseriesSourceSettings = TimeseriesSourceSettings
+
 BOUNDARY_COLUMNS = ("b0", "b1", "b2", "b3")
 
 
 class DynamicBoundaryDirectiveSourceSettings(TimeseriesSourceSettings):
-    type: str = "dynamic_boundary_directive"
-    signal_source: TimeseriesSourceSettings
-    boundary_source: TimeseriesSourceSettings
+    type: Literal["dynamic_boundary_directive"] = "dynamic_boundary_directive"
+    signal_source: "AnyTimeseriesSourceSettings"
+    boundary_source: "AnyTimeseriesSourceSettings"
     reverse: bool = Field(default=False)
 
 

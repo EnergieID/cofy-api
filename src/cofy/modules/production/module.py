@@ -1,9 +1,11 @@
+from typing import Literal
+
 from cofy.modules.timeseries import TimeseriesModule
 from cofy.modules.timeseries.module import TimeseriesModuleSettings
 
 
 class ProductionModuleSettings(TimeseriesModuleSettings):
-    type: str = "production"
+    type: Literal["production"] = "production"
 
 
 class ProductionModule(TimeseriesModule, settings=ProductionModuleSettings):

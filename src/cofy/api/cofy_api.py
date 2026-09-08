@@ -1,6 +1,6 @@
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -10,6 +10,11 @@ from .docs_router import DocsRouter
 from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
 from .module import Module, ModuleSettings
 from .token_auth import Auth, AuthSettings
+
+if TYPE_CHECKING:
+    # Published at runtime by finalize(); the base class is the static stand-in.
+    AnyModuleSettings = ModuleSettings
+    AnyAuthSettings = AuthSettings
 
 DEFAULT_ARGS: dict[str, Any] = {
     "title": "Cofy API",
@@ -22,13 +27,13 @@ DEFAULT_ARGS: dict[str, Any] = {
 
 
 class CofyAPISettings(BaseSettingsModel):
-    type: str = "cofy_api"
+    type: Literal["cofy_api"] = "cofy_api"
     title: str = DEFAULT_ARGS["title"]
     description: str = DEFAULT_ARGS["description"]
     debug_mode: bool = False
     debug_dir: Path | None = None
-    modules: list[ModuleSettings] | None = None
-    auth: AuthSettings | None = None
+    modules: "list[AnyModuleSettings]" = []
+    auth: "AnyAuthSettings | None" = None
 
 
 class CofyAPI(FastAPI, FromSettingsMixin, settings=CofyAPISettings):

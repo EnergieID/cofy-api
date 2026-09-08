@@ -182,6 +182,17 @@ directive = [
     { name = "isodate" },
     { name = "narwhals" },
 ]
+management = [
+    { name = "energy-cost" },
+    { name = "entsoe-py" },
+    { name = "isodate" },
+    { name = "narwhals" },
+    { name = "pandas" },
+    { name = "polars" },
+    { name = "pyyaml" },
+    { name = "requests" },
+    { name = "yappi" },
+]
 members = [
     { name = "energy-cost" },
 ]
@@ -221,6 +232,7 @@ requires-dist = [
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'production'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'tariff'" },
     { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production", "directive", "billing", "debug"], marker = "extra == 'all'" },
+    { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production", "directive", "billing", "debug"], marker = "extra == 'management'" },
     { name = "energy-cost", marker = "extra == 'billing'", specifier = ">=0.7.0" },
     { name = "energy-cost", marker = "extra == 'members'", specifier = ">=0.7.0" },
     { name = "energy-cost", marker = "extra == 'tariff'", specifier = ">=0.7.0" },
@@ -233,11 +245,12 @@ requires-dist = [
     { name = "pandas", marker = "extra == 'tariff'", specifier = ">=3.0.0" },
     { name = "polars", marker = "extra == 'production'", specifier = ">=1.38.1" },
     { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "pyyaml", marker = "extra == 'management'", specifier = ">=6.0.0" },
     { name = "requests", marker = "extra == 'production'", specifier = ">=2.32.0" },
     { name = "starlette", specifier = ">=0.41.0" },
     { name = "yappi", marker = "extra == 'debug'", specifier = ">=1.7.6" },
 ]
-provides-extras = ["timeseries", "tariff", "billing", "production", "members", "directive", "debug", "all"]
+provides-extras = ["timeseries", "tariff", "billing", "production", "members", "directive", "debug", "management", "all"]
 
 [package.metadata.requires-dev]
 dev = [

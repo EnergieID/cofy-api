@@ -1,3 +1,5 @@
+from typing import Literal
+
 from energy_cost import PowerDirection
 from fastapi import HTTPException
 
@@ -8,7 +10,7 @@ from .models.billing_response import BillingMetadata, BillingResponse
 
 
 class BillingModuleSettings(ModuleSettings):
-    type: str = "billing"
+    type: Literal["billing"] = "billing"
 
 
 class BillingModule(Module, settings=BillingModuleSettings):

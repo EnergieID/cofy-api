@@ -1,4 +1,5 @@
 import datetime as dt
+from typing import Literal
 
 from cofy.modules.timeseries import (
     TimeseriesModule,
@@ -7,7 +8,7 @@ from cofy.modules.timeseries import (
 
 
 class TariffModuleSettings(TimeseriesModuleSettings):
-    type: str = "tariff"
+    type: Literal["tariff"] = "tariff"
 
 
 def floor_datetime(dt_obj: dt.datetime, delta: dt.timedelta) -> dt.datetime:

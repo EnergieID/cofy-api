@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated, Literal
 
 from fastapi import Depends, Query, Request
 from fastapi.exceptions import RequestValidationError
@@ -14,11 +14,17 @@ from .formats.json import JSONFormat
 from .model import ISODuration
 from .source import TimeseriesSource, TimeseriesSourceSettings
 
+if TYPE_CHECKING:
+    # Published at runtime by finalize(); the base class is the static stand-in.
+    AnyTimeseriesSourceSettings = TimeseriesSourceSettings
+    AnyTimeseriesFormatSettings = TimeseriesFormatSettings
+
 
 class TimeseriesModuleSettings(ModuleSettings):
-    type: str = "timeseries"
-    source: TimeseriesSourceSettings
-    formats: list[TimeseriesFormatSettings] | None = None
+    type: Literal["timeseries"] = "timeseries"
+    # Unresolved until cofy.api.finalize() publishes the discriminated unions - see there.
+    source: "AnyTimeseriesSourceSettings"
+    formats: "list[AnyTimeseriesFormatSettings] | None" = None
 
 
 class TimeseriesModule(Module, settings=TimeseriesModuleSettings):

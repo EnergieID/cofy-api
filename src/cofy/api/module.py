@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter
 from pydantic import Field
@@ -9,7 +9,7 @@ from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
 
 
 class ModuleSettings(BaseSettingsModel):
-    type: str = "module"
+    type: Literal["module"] = "module"
     name: str = Field(
         "default",
         description="The machine name of the module instance. No spaces, no special characters. Use it to differentiate between multiple instances/implementations of the same module type.",

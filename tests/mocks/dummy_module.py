@@ -1,8 +1,10 @@
+from typing import Literal
+
 from cofy import Module, ModuleSettings
 
 
 class DummyModuleSettings(ModuleSettings):
-    type: str = "dummy"
+    type: Literal["dummy"] = "dummy"
 
 
 class DummyModule(Module, settings=DummyModuleSettings):
