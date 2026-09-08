@@ -1,10 +1,11 @@
 import datetime as dt
+from typing import Literal
 
 from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 
 class DummyTimeseriesSourceSettings(TimeseriesSourceSettings):
-    type: str = "dummy_timeseries_source"
+    type: Literal["dummy_timeseries_source"] = "dummy_timeseries_source"
 
 
 class DummyTimeseriesSource(TimeseriesSource, settings=DummyTimeseriesSourceSettings):

@@ -1,6 +1,6 @@
 import asyncio
 import datetime as dt
-from typing import Annotated
+from typing import Annotated, Literal
 
 import pandas as pd
 from energy_cost import CostGroup, Tariff
@@ -12,7 +12,7 @@ from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, T
 
 
 class EnergyCostTariffSourceSettings(TimeseriesSourceSettings):
-    type: str = "energy_cost"
+    type: Literal["energy_cost"] = "energy_cost"
     tariff: Tariff = Field(description="Energy cost tariff instance")
     cost_group: CostGroup | None = None
 

@@ -1,5 +1,6 @@
 import asyncio
 import datetime as dt
+from typing import Literal
 
 import polars as pl
 import requests
@@ -10,7 +11,7 @@ from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, T
 
 
 class EnergyIDProductionSettings(TimeseriesSourceSettings):
-    type: str = "energyid_production"
+    type: Literal["energyid_production"] = "energyid_production"
     api_key: str
     record_id: str
 

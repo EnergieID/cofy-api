@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -27,7 +28,7 @@ class ResponseModel(BaseModel):
 
 
 class KiwattFormatSettings(TimeseriesFormatSettings):
-    type: str = "kiwatt"
+    type: Literal["kiwatt"] = "kiwatt"
     source: str = Field(default="Cofy-API-Demo")
 
 

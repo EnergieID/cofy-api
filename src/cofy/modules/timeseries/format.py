@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Literal
 
 from fastapi import Response
 from fastapi.responses import JSONResponse
@@ -9,7 +10,7 @@ from .model import Timeseries
 
 
 class TimeseriesFormatSettings(BaseSettingsModel):
-    type: str = "timeseries"
+    type: Literal["timeseries"] = "timeseries"
 
 
 class TimeseriesFormat(FromSettingsMixin, ABC, settings=TimeseriesFormatSettings):

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
+from typing import Literal
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import APIKeyHeader, APIKeyQuery
@@ -10,7 +11,7 @@ from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
 
 
 class AuthSettings(BaseSettingsModel):
-    type: str = "auth"
+    type: Literal["auth"] = "auth"
 
 
 class Auth(FromSettingsMixin, ABC, settings=AuthSettings):
@@ -33,7 +34,7 @@ class TokenInfo(BaseModel):
 
 
 class TokenAuthSettings(AuthSettings):
-    type: str = "token"
+    type: Literal["token"] = "token"
     tokens: dict[str, TokenInfo] = {}
 
 

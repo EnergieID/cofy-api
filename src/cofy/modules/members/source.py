@@ -1,6 +1,6 @@
 import builtins
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic, Literal, TypeVar
 
 from cofy.api import BaseSettingsModel, FromSettingsMixin
 
@@ -10,7 +10,7 @@ T = TypeVar("T")
 
 
 class MemberSourceSettings(BaseSettingsModel):
-    type: str = "member"
+    type: Literal["member"] = "member"
 
 
 class MemberSource(FromSettingsMixin, ABC, Generic[T], settings=MemberSourceSettings):

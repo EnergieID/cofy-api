@@ -1,4 +1,4 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from energy_cost import Contract
 from fastapi import HTTPException
@@ -8,10 +8,14 @@ from cofy import Module, ModuleSettings
 from .model import ECContractResponse, MeterType, VerifyMemberRequest
 from .source import MemberSource, MemberSourceSettings
 
+if TYPE_CHECKING:
+    # Published at runtime by finalize(); the base class is the static stand-in.
+    AnyMemberSourceSettings = MemberSourceSettings
+
 
 class MembersModuleSettings(ModuleSettings):
-    type: str = "members"
-    source: MemberSourceSettings
+    type: Literal["members"] = "members"
+    source: "AnyMemberSourceSettings"
 
 
 class MembersModule(Module, settings=MembersModuleSettings):

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from types import UnionType
-from typing import Annotated, Any, ClassVar, Union, get_args, get_origin
+import sys
+from functools import reduce
+from operator import or_
+from typing import Annotated, Any, ClassVar
 
-from pydantic import BaseModel, Discriminator, Tag, create_model, model_validator
+from pydantic import BaseModel, Field
 
 
 def _resolve(value: Any) -> Any:
@@ -17,25 +19,16 @@ def _resolve(value: Any) -> Any:
     return value
 
 
+# Every settings model wired to a FromSettingsMixin class, in registration order.
+_registered_settings: list[type[BaseSettingsModel]] = []
+# How many of those were already reflected in the published unions, so that finalize() can
+# tell whether anything registered since it last ran.
+_resolved_count = 0
+_resolving = False
+
+
 class BaseSettingsModel(BaseModel):
     _model: ClassVar[Any]  # wired automatically on registration
-
-    @model_validator(mode="wrap")
-    @classmethod
-    def _polymorphic_dispatch(cls, value: Any, handler: Any) -> Any:
-        if isinstance(value, BaseSettingsModel):
-            return value
-
-        if isinstance(value, dict):
-            type_name = value.get("type")
-            model_cls = getattr(cls, "_model", None)
-            if isinstance(type_name, str) and model_cls is not None:
-                registry = getattr(model_cls, "_registry", {})
-                concrete_settings = registry.get(type_name)
-                if concrete_settings is not None and concrete_settings is not cls:
-                    return concrete_settings.model_validate(value)
-
-        return handler(value)
 
     def convert(self) -> Any:
         kwargs = {name: _resolve(getattr(self, name)) for name in self.__class__.model_fields if name != "type"}
@@ -43,81 +36,87 @@ class BaseSettingsModel(BaseModel):
 
     @classmethod
     def union_type(cls) -> Any:
-        """Return a discriminated union type of registered settings models.
-        Nested `BaseSettingsModel`-typed fields are expanded to their own discriminated unions
-        """
+        """Return a discriminated union of every settings model registered under `cls`."""
+        finalize()
         registry = getattr(cls._model, "_registry", {})
+        union = reduce(or_, registry.values())
+        return Annotated[union, Field(discriminator="type")]
 
-        tagged_models: list[Any] = []
-        for key, model in registry.items():
-            resolved_model = _build_recursive_response_model(model)
-            tagged_models.append(Annotated[resolved_model, Tag(key)])  # ty: ignore[invalid-type-form]
-
-        union = _build_union_type(tagged_models)
-        return Annotated[union, Discriminator(_discriminator_type)]
-
-
-def _discriminator_type(value: Any) -> Any:
-    if isinstance(value, dict):
-        return value.get("type")
-    return getattr(value, "type", None)
+    @classmethod
+    def union_alias(cls) -> str:
+        """Name under which `settings`' discriminated union is published to settings modules."""
+        return f"Any{cls.__name__}"
 
 
-def _build_union_type(models: list[Any]) -> Any:
-    union = models[0]
-    for model in models[1:]:
-        union = union | model
-    return union
+def finalize(*, force: bool = False) -> None:
+    """Publish the `Any<Name>` union aliases and rebuild every settings model.
+
+    Runs automatically whenever a resolved model is needed - reading a union via
+    `union_type()`, or building an object via `create()` - and returns immediately if
+    nothing has registered since it last ran. Calling it explicitly after discovery is
+    therefore optional, and mainly serves to make an application's startup order obvious.
+
+    It is deliberately not run per registration: that would rebuild every settings model
+    once per registered type, and would publish unions that are still missing the types
+    imported later in the same discovery pass.
+
+    Note that a union already *captured* into a variable is a snapshot - a type registered
+    afterwards will not appear in it, so read `union_type()` after discovery, not before.
+    """
+    global _resolved_count, _resolving
+
+    if _resolving:
+        return  # re-entered via union_type() while publishing; the outer call completes it
+    if not force and _resolved_count == len(_registered_settings):
+        return  # nothing registered since the last run
+
+    _resolving = True
+    try:
+        settings_models = list(_registered_settings)
+        aliases = {settings.union_alias(): settings.union_type() for settings in settings_models}
+        modules = {sys.modules[settings.__module__] for settings in settings_models}
+
+        # Bind every alias everywhere first: a settings model may reference a union whose
+        # members live in other modules, so all names must exist before anything is rebuilt.
+        for module in modules:
+            for name, union in aliases.items():
+                setattr(module, name, union)
+
+        for settings in settings_models:
+            _reresolve_alias_fields(settings, aliases)
+            settings.model_rebuild(force=True)
+
+        _resolved_count = len(settings_models)
+    finally:
+        _resolving = False
 
 
-def _build_recursive_response_model(model: type[BaseSettingsModel]) -> type[BaseSettingsModel]:
-    overrides: dict[str, tuple[Any, Any]] = {}
+def _reresolve_alias_fields(settings: type[BaseSettingsModel], aliases: dict[str, Any]) -> None:
+    """Re-evaluate the fields of `settings` that are annotated with a union alias.
 
-    for field_name, field in model.model_fields.items():
-        new_annotation = _transform_annotation(field.annotation)
-        if new_annotation is field.annotation:
-            continue
+    On the first pass the aliases are still unresolved names, so pydantic resolves them
+    itself when the model is built. On any later pass they are already resolved to the
+    union as it stood back then, and `model_rebuild()` reuses that stale annotation rather
+    than re-reading the source - so a type registered afterwards would never show up. To
+    pick it up, the annotation is evaluated afresh from the class that declared it.
 
-        default = ... if field.is_required() else field.default
-        overrides[field_name] = (new_annotation, default)
+    The annotation's original *source* is re-evaluated rather than its type structure being
+    walked, so an alias nested in any container (`list[...]`, `dict[str, ...]`, `X | None`,
+    and any combination) is handled without a case per container kind.
 
-    if not overrides:
-        return model
-
-    return create_model(
-        f"{model.__name__}Response",
-        __base__=model,
-        __module__=model.__module__,
-        **overrides,
-    )  # ty: ignore[no-matching-overload]
-
-
-def _transform_annotation(annotation: Any) -> Any:
-    if isinstance(annotation, type) and issubclass(annotation, BaseSettingsModel):
-        model_cls = getattr(annotation, "_model", None)
-        if model_cls is None:
-            return annotation
-        return annotation.union_type()
-
-    origin = get_origin(annotation)
-    if origin is None:
-        return annotation
-
-    args = get_args(annotation)
-
-    transformed_args = tuple(_transform_annotation(arg) for arg in args)
-    if transformed_args == args:
-        return annotation
-
-    if origin in (Union, UnionType):
-        union = transformed_args[0]
-        for arg in transformed_args[1:]:
-            union = union | arg
-        return union
-
-    if len(transformed_args) == 1:
-        return origin[transformed_args[0]]
-    return origin[transformed_args]
+    The annotation is evaluated against the declaring module's globals, so an alias field
+    on a settings class defined *inside a function* cannot also reference a name local to
+    that function. That combination raises rather than silently going stale, and does not
+    occur for module-level settings classes - which is what a plugin declares.
+    """
+    for name in settings.model_fields:
+        for klass in settings.__mro__:
+            raw = klass.__dict__.get("__annotations__", {}).get(name)
+            if raw is None:
+                continue
+            if isinstance(raw, str) and any(alias in raw for alias in aliases):
+                settings.model_fields[name].annotation = eval(raw, vars(sys.modules[klass.__module__]))  # noqa: S307
+            break
 
 
 class FromSettingsMixin:
@@ -150,8 +149,13 @@ class FromSettingsMixin:
                         raise TypeError(f"Duplicate registration for type {type_name!r}")
                     registry[type_name] = settings
 
+        if settings not in _registered_settings:
+            _registered_settings.append(settings)
+
     @classmethod
     def create(cls: type[FromSettingsMixin], data: dict[str, Any]):
+        finalize()
+
         type_name = data.get("type")
         if not isinstance(type_name, str):
             raise ValueError("Missing or invalid 'type' in settings data")

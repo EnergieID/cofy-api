@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Generic, TypeVar
+from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
@@ -30,7 +30,7 @@ class ResponseModel(BaseModel, Generic[DataType, MetadataType]):
 
 
 class JSONFormatSettings(TimeseriesFormatSettings):
-    type: str = "json"
+    type: Literal["json"] = "json"
 
 
 class JSONFormat(TimeseriesFormat, Generic[DataType, MetadataType], settings=JSONFormatSettings):

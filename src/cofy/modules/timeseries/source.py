@@ -1,5 +1,6 @@
 import datetime as dt
 from abc import ABC, abstractmethod
+from typing import Literal
 
 from cofy.api import BaseSettingsModel, FromSettingsMixin
 
@@ -7,7 +8,7 @@ from .model import ISODuration, Timeseries
 
 
 class TimeseriesSourceSettings(BaseSettingsModel):
-    type: str = "timeseries"
+    type: Literal["timeseries"] = "timeseries"
 
 
 class TimeseriesSource(FromSettingsMixin, ABC, settings=TimeseriesSourceSettings):

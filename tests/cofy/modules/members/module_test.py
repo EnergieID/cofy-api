@@ -1,5 +1,6 @@
 import builtins
 import datetime as dt
+from typing import Literal
 
 import energy_cost as ec
 from fastapi import FastAPI
@@ -57,7 +58,7 @@ def _make_contract(
 
 
 class DummyMemberSourceSettings(MemberSourceSettings):
-    type: str = "dummy_member_source"
+    type: Literal["dummy_member_source"] = "dummy_member_source"
 
 
 class DummyMemberSource(MemberSource[Member], settings=DummyMemberSourceSettings):

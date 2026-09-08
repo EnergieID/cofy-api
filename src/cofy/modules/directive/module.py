@@ -1,3 +1,5 @@
+from typing import Literal
+
 from cofy.modules.timeseries import (
     TimeseriesFormat,
     TimeseriesModule,
@@ -9,7 +11,7 @@ from .formats.directive import DirectiveFormat
 
 
 class DirectiveModuleSettings(TimeseriesModuleSettings):
-    type: str = "directive"
+    type: Literal["directive"] = "directive"
 
 
 class DirectiveModule(TimeseriesModule, settings=DirectiveModuleSettings):
