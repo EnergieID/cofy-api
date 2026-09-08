@@ -4,10 +4,5 @@
             "titleBar.activeBackground": "#304401"
         }
     },
-    "python.defaultInterpreterPath": "${workspaceFolder}/packages/api/.venv/bin/python",
-    "python.testing.pytestEnabled": true,
-    "python.testing.cwd": "${workspaceFolder}/packages/api",
-    "python.testing.pytestArgs": [
-        "tests", "--import-mode=importlib"
-    ]
+    "python.defaultInterpreterPath": "${workspaceFolder}/packages/api/.venv/bin/python"
 }
