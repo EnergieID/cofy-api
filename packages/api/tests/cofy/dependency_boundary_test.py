@@ -42,7 +42,7 @@ EXTRA_ZONES: dict[str, set[str]] = {
 }
 
 # Zones that are always accessible (no extra required).
-CORE_ZONES: set[str] = {"api/", "__init__.py"}
+CORE_ZONES: set[str] = {"api/"}
 
 
 # ── pyproject.toml parsing ───────────────────────────────────────────────
@@ -156,10 +156,10 @@ def _accessible_zones(relpath: str) -> set[str]:
 
 
 # ── Import extraction ────────────────────────────────────────────────────
-def _extract_imports(path: Path, relpath: str) -> tuple[set[str], set[str]]:
+def _extract_imports(source: str, relpath: str) -> tuple[set[str], set[str]]:
     """Return (third_party_names, cofy_internal_subpaths) from static analysis."""
     try:
-        tree = ast.parse(path.read_text(), filename=str(path))
+        tree = ast.parse(source, filename=relpath)
     except SyntaxError:
         return set(), set()
 
@@ -195,17 +195,19 @@ def _classify(module: str, level: int, relpath: str, third_party: set[str], inte
 
 
 # ── Test ─────────────────────────────────────────────────────────────────
-def _collect() -> list[tuple[str, Path]]:
+def _collect() -> list[tuple[str, str]]:
+    # cofy is a namespace package, so resources.files() returns a MultiplexedPath whose
+    # as_file() materializes a temp copy — read contents now, while it's still alive.
     with resources.as_file(resources.files("cofy")) as root:
-        return [(str(f.relative_to(root)), f) for f in sorted(root.rglob("*.py"))]
+        return [(str(f.relative_to(root)), f.read_text()) for f in sorted(root.rglob("*.py"))]
 
 
 _CASES = _collect()
 
 
-@pytest.mark.parametrize(("relpath", "filepath"), _CASES, ids=[c[0] for c in _CASES])
-def test_imports_respect_dependency_boundaries(relpath: str, filepath: Path):
-    third_party, internal = _extract_imports(filepath, relpath)
+@pytest.mark.parametrize(("relpath", "source"), _CASES, ids=[c[0] for c in _CASES])
+def test_imports_respect_dependency_boundaries(relpath: str, source: str):
+    third_party, internal = _extract_imports(source, relpath)
 
     # Third-party: must be stdlib, core, or an allowed extra
     allowed = _allowed_packages(relpath)

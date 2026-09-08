@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Path
-
 from cofy.api.module import ModuleSettings
 from cofy.modules.discovery import discover_all_types
+from fastapi import APIRouter, Body, Path
 
 from ..persitance.modules import ModulesPersistence
 

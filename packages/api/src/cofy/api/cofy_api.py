@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING, Any, Literal
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from ..version import get_installed_version
 from .docs_router import DocsRouter
 from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
 from .module import Module, ModuleSettings
 from .token_auth import Auth, AuthSettings
+from .version import get_installed_version
 
 if TYPE_CHECKING:
     # Published at runtime by finalize(); the base class is the static stand-in.

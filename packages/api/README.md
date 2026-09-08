@@ -22,7 +22,7 @@ pip install "cofy-api[tariff,members]"
 Create an app.py file with a minimal Cofy API:
 
 ```python
-from cofy import CofyAPI
+from cofy.api import CofyAPI
 from cofy.modules.tariff import TariffModule
 
 app = CofyAPI()
@@ -42,8 +42,7 @@ The API is now available at `http://127.0.0.1:8000` with interactive docs at `/d
 Protect the API with bearer-token authentication:
 
 ```python
-from cofy import CofyAPI
-from cofy.api import TokenAuth, TokenInfo
+from cofy.api import CofyAPI, TokenAuth, TokenInfo
 
 app = CofyAPI(auth=TokenAuth({"my-secret-token": TokenInfo(name="Admin")}))
 ```

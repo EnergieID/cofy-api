@@ -1,6 +1,6 @@
 from typing import Literal
 
-from cofy import Module, ModuleSettings
+from cofy.api import Module, ModuleSettings
 
 
 class DummyModuleSettings(ModuleSettings):

@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-
 from cofy.api.cofy_api import CofyAPISettings
 
 from ...errors import ResourceNotFoundError
