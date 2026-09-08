@@ -6,7 +6,7 @@
     },
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
-        "tests", "--import-mode=importlib"
+        "packages/api/tests", "--import-mode=importlib"
     ],
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
 }

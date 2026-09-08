@@ -3,6 +3,13 @@ name: Publish
 on:
   workflow_dispatch:
     inputs:
+      package:
+        description: "Package to publish"
+        required: true
+        type: choice
+        options:
+          - api
+          - management-api
       version:
         description: "Version to publish (e.g. 0.2.0)"
         required: true
@@ -28,15 +35,15 @@ jobs:
           git push origin "v${{ inputs.version }}"
 
       - name: Set version for build
-        run: sed -i 's/^version = ".*"/version = "${{ inputs.version }}"/' pyproject.toml
+        run: sed -i 's/^version = ".*"/version = "${{ inputs.version }}"/' "packages/${{ inputs.package }}/pyproject.toml"
 
       - uses: astral-sh/setup-uv@v7
 
       - name: Build
-        run: uv build
+        run: uv build --project "packages/${{ inputs.package }}"
 
       - name: Publish to PyPI
-        run: uv publish --trusted-publishing always
+        run: uv publish --trusted-publishing always --project "packages/${{ inputs.package }}"
 
       - name: Create GitHub Release
         env:

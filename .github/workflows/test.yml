@@ -10,7 +10,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  api-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -19,34 +19,65 @@ jobs:
         with:
           version: '0.9.21'
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --project packages/api --group dev
       - name: Install poethepoet
         run: uv tool install poethepoet
-      - name: Run tests
-        run: poe test --cov-report=lcov:cov.info --cov-report=xml:cov.xml
+      - name: Run API tests
+        run: uv run --project packages/api poe test --cov-report=lcov:cov-api.info --cov-report=xml:cov-api.xml
       - name: Code Coverage Annotation
         uses: ggilder/codecoverage@v1
         with:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          COVERAGE_FILE_PATH: "cov.info"
+          COVERAGE_FILE_PATH: "cov-api.info"
       - name: Upload coverage data
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-data
-          path: cov.xml
+          name: coverage-api
+          path: cov-api.xml
+
+  management-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: '0.9.21'
+      - name: Install dependencies
+        run: uv sync --project packages/management-api --group dev
+      - name: Install poethepoet
+        run: uv tool install poethepoet
+      - name: Run management API tests
+        run: uv run --project packages/management-api poe test --cov-report=lcov:cov-management.info --cov-report=xml:cov-management.xml
+      - name: Code Coverage Annotation
+        uses: ggilder/codecoverage@v1
+        with:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          COVERAGE_FILE_PATH: "cov-management.info"
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-management
+          path: cov-management.xml
 
   coverage:
     runs-on: ubuntu-latest
-    needs: test
+    needs:
+      - api-tests
+      - management-tests
     steps:
-      - name: Download coverage data
+      - name: Download API coverage data
         uses: actions/download-artifact@v8
         with:
-          name: coverage-data
+          name: coverage-api
+      - name: Download management coverage data
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-management
       - name: Code Coverage Report
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: cov.xml
+          filename: cov-api.xml,cov-management.xml
           badge: true
           hide_complexity: true
           hide_branch_rate: true

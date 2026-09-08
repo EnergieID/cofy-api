@@ -33,7 +33,8 @@
             "jinja": true,
             "envFile": "${workspaceFolder}/.env.local",
             "env": {
-                "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache"
+                "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache",
+                "PYTHONPATH": "${workspaceFolder}/packages/api/src:${workspaceFolder}/packages/management-api/src"
             },
             "justMyCode": false
         }

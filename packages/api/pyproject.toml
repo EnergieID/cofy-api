@@ -1,0 +1,104 @@
+[project]
+name = "cofy-api"
+authors = [
+    { name="EnergyID", email = "info@energieid.be" },
+    { name="Jorg" }
+]
+version = "0.0.0"
+description = "An open-source modular framework for ingesting, standardising, storing, and computing energy-related data."
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.128.0",
+    "pydantic>=2.0.0",
+    "starlette>=0.41.0",
+]
+
+[project.optional-dependencies]
+timeseries = [
+    "isodate>=0.7.2",
+    "narwhals>=2.15.0"
+]
+tariff = [
+    "cofy-api[timeseries]",
+    "energy-cost>=0.7.0",
+    "entsoe-py>=0.7.10",
+    "pandas>=3.0.0"
+]
+billing = [
+    "cofy-api[timeseries]",
+    "energy-cost>=0.7.0",
+    "pandas>=3.0.0"
+]
+production = [
+    "cofy-api[timeseries]",
+    "polars>=1.38.1",
+    "requests>=2.32.0",
+]
+members = [
+    "energy-cost>=0.7.0",
+]
+directive = [
+    "cofy-api[timeseries]",
+    "narwhals>=2.15.0"
+]
+debug = [
+    "yappi>=1.7.6",
+]
+all = ["cofy-api[timeseries,tariff,members,production,directive,billing,debug]"]
+
+[project.urls]
+Source = "https://github.com/EnergieID/cofy-api"
+Changelog = "https://github.com/EnergieID/cofy-api/releases"
+
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
+
+[dependency-groups]
+dev = [
+    "cofy-api[all,debug]",
+    "poethepoet>=0.37.0",
+    "pyinstrument>=5.1.2",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.0.0",
+    "pytest>=9.0.2",
+    "ruff>=0.14.13",
+    "ty>=0.0.12",
+]
+
+[tool.poe.env]
+PYTHONPYCACHEPREFIX = ".pycache"
+
+[tool.poe.tasks]
+lint = "ruff check --fix"
+format = "ruff format"
+check = "ty check"
+test = "pytest --cov=cofy --cov-report=term-missing --import-mode=importlib tests"
+
+[tool.coverage.report]
+skip_covered = true
+
+[tool.coverage.run]
+source = ["cofy"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "UP",
+    "B",
+    "SIM",
+    "I",
+]
+ignore = [
+    "E501",
+]

@@ -262,8 +262,9 @@ def test_delete_does_not_affect_other_modules(client: TestClient, tmp_data: Path
 def test_replace_rejects_collision_with_a_different_existing_module(tmp_data: Path):
     """Called directly - bypassing ModulesRouter's own identity check - replace() must
     still refuse to turn the addressed module into a duplicate of an unrelated one."""
-    from cofy.management.errors import ResourceAlreadyExistsError
     from cofy.modules.billing import BillingModuleSettings
+
+    from cofy.management.errors import ResourceAlreadyExistsError
 
     persistence = FileModulesPersistence(tmp_data)
     colliding = BillingModuleSettings(name="default")  # already exists under a different slot
