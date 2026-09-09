@@ -1,0 +1,75 @@
+[project]
+name = "cofy-management-api"
+authors = [
+    { name="EnergyID", email = "info@energieid.be" },
+    { name="Jorg" }
+]
+version = "0.0.0"
+description = "Management API for configuring and operating one or more Cofy API instances."
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "cofy-api[all]>=0.0.0",
+    "PyYAML>=6.0.0",
+]
+
+[tool.uv.sources]
+cofy-api = { path = "../api", editable = true }
+
+[project.urls]
+Source = "https://github.com/EnergieID/cofy-api"
+Changelog = "https://github.com/EnergieID/cofy-api/releases"
+
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
+
+[tool.setuptools.package-data]
+"cofy.management.persitance.file" = ["data/*.yaml"]
+
+[dependency-groups]
+dev = [
+    "cofy-management-api",
+    "poethepoet>=0.37.0",
+    "pytest-cov>=7.0.0",
+    "pytest>=9.0.2",
+    "ruff>=0.14.13",
+    "ty>=0.0.12",
+]
+
+[tool.poe.env]
+PYTHONPYCACHEPREFIX = ".pycache"
+
+[tool.poe.tasks]
+lint = "ruff check --fix"
+format = "ruff format"
+check = { shell = "PYTHONPATH=src:../api/src ty check --ignore unresolved-import" }
+test = "pytest --cov=cofy.management --cov-report=term-missing --import-mode=importlib tests"
+run = "uvicorn cofy.management.main:app --reload"
+
+[tool.coverage.report]
+skip_covered = true
+
+[tool.coverage.run]
+source = ["cofy.management"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "UP",
+    "B",
+    "SIM",
+    "I",
+]
+ignore = [
+    "E501",
+]

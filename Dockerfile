@@ -6,20 +6,21 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app
 
 # Copy dependency files first (better layer caching)
-COPY pyproject.toml uv.lock* ./
+COPY packages/api/pyproject.toml ./packages/api/pyproject.toml
+COPY packages/api/uv.lock* ./packages/api/uv.lock
 
 # install git, to get git dependencies
 RUN apk add --no-cache git
 
-# Install dependencies for the demo app (including optional extras) first for better layer caching
-RUN uv sync --frozen --no-dev --all-extras --no-install-project
+# Install API package dependencies first for better layer caching
+RUN uv sync --project packages/api --frozen --no-dev --all-extras --no-install-project
 
 # Copy source code
 COPY . .
 
 # Install the project itself with the same extras used by the demo entrypoint
-RUN uv sync --frozen --no-dev --all-extras \
-    && find /app/.venv -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+RUN uv sync --project packages/api --frozen --no-dev --all-extras \
+    && find /app/packages/api/.venv -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
 # --- Final stage (no uv, no build deps) ---
 FROM python:3.12-alpine
@@ -33,4 +34,4 @@ ARG VERSION=dev
 ENV APP_VERSION=${VERSION}
 
 # Most cloud platforms inject a PORT env var — default to 8080 locally
-CMD ["sh", "-c", "/app/.venv/bin/uvicorn demo.main:cofy --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["sh", "-c", "/app/packages/api/.venv/bin/uvicorn demo.main:cofy --host 0.0.0.0 --port ${PORT:-8080}"]

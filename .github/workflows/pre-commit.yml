@@ -19,11 +19,11 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: '0.9.21'
-      - name: Install dependencies
-        run: uv sync
       - name: Install pre-commit
         run: uv tool install pre-commit
-      - name: Install poethepoet
-        run: uv tool install poethepoet
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: '3.x'
       - name: Run pre-commit hooks
         run: pre-commit run --all-files
