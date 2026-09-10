@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Literal
 
 import pytest
@@ -522,3 +523,166 @@ def test_self_composing_settings_schema_is_correct_at_every_usage_site():
     assert set(inner["discriminator"]["mapping"]) == {"fsm_node", "fsm_wrapper"}
     # and it refers back to the wrapper itself, rather than only to the plain base type
     assert inner["discriminator"]["mapping"]["fsm_wrapper"].endswith("/WrapperSettings")
+
+
+def test_abstract_types_are_pruned_from_the_registry():
+    """A base that only exists to be subclassed must not be offered as a usable type."""
+    from abc import ABC, abstractmethod
+
+    class ShapeSettings(BaseSettingsModel):
+        type: Literal["cr_shape"] = "cr_shape"
+
+    class Shape(FromSettingsMixin, ABC, settings=ShapeSettings):
+        @abstractmethod
+        def area(self) -> float:
+            """Area of the shape."""
+
+    class SquareSettings(ShapeSettings):
+        type: Literal["cr_square"] = "cr_square"
+        side: float = 1.0
+
+    class Square(Shape, settings=SquareSettings):
+        def __init__(self, side: float = 1.0):
+            self.side = side
+
+        def area(self) -> float:
+            return self.side**2
+
+    finalize()
+
+    assert set(Shape._registry) == {"cr_square"}
+    assert Shape._registry["cr_square"] is SquareSettings
+
+
+def test_a_config_naming_an_abstract_type_fails_validation():
+    """Rather than validating and then raising when something tries to build it."""
+    from abc import ABC, abstractmethod
+
+    class ToolSettings(BaseSettingsModel):
+        type: Literal["pr_tool"] = "pr_tool"
+
+    class Tool(FromSettingsMixin, ABC, settings=ToolSettings):
+        @abstractmethod
+        def use(self) -> str:
+            """Use the tool."""
+
+    class HammerSettings(ToolSettings):
+        type: Literal["pr_hammer"] = "pr_hammer"
+
+    class Hammer(Tool, settings=HammerSettings):
+        def use(self) -> str:
+            return "bang"
+
+    ta = TypeAdapter(ToolSettings.union_type())
+
+    assert isinstance(ta.validate_python({"type": "pr_hammer"}), HammerSettings)
+    with pytest.raises(ValidationError):
+        ta.validate_python({"type": "pr_tool"})
+
+
+def test_only_unimplemented_types_are_pruned_not_every_abstract_descendant():
+    """Having an abstract ancestor is fine; having an unimplemented method is not."""
+    from abc import ABC, abstractmethod
+
+    class DeviceSettings(BaseSettingsModel):
+        type: Literal["pr_device"] = "pr_device"
+
+    class Device(FromSettingsMixin, ABC, settings=DeviceSettings):
+        @abstractmethod
+        def run(self) -> str:
+            """Run the device."""
+
+    class PartialSettings(DeviceSettings):
+        type: Literal["pr_partial"] = "pr_partial"
+
+    class Partial(Device, settings=PartialSettings):
+        pass  # still abstract: `run` is not implemented
+
+    class DoneSettings(PartialSettings):
+        type: Literal["pr_done"] = "pr_done"
+
+    class Done(Partial, settings=DoneSettings):
+        def run(self) -> str:
+            return "running"
+
+    finalize()
+
+    assert set(Device._registry) == {"pr_done"}
+
+
+def test_registry_exposes_the_registered_types():
+    class ColourSettings(BaseSettingsModel):
+        type: Literal["reg_colour"] = "reg_colour"
+
+    class Colour(FromSettingsMixin, settings=ColourSettings):
+        pass
+
+    class RedSettings(ColourSettings):
+        type: Literal["reg_red"] = "reg_red"
+
+    class Red(Colour, settings=RedSettings):
+        pass
+
+    assert ColourSettings.registry() == {"reg_colour": ColourSettings, "reg_red": RedSettings}
+
+
+def test_registry_returns_a_copy_callers_cannot_corrupt():
+    class SizeSettings(BaseSettingsModel):
+        type: Literal["reg_size"] = "reg_size"
+
+    class Size(FromSettingsMixin, settings=SizeSettings):
+        pass
+
+    SizeSettings.registry().clear()
+
+    assert SizeSettings.registry() == {"reg_size": SizeSettings}
+
+
+def test_an_abstract_base_with_no_implementations_stays_registered_with_a_warning(
+    caplog: pytest.LogCaptureFixture,
+):
+    """Removing it would leave a union with no members at all, which cannot be expressed and
+    would break every model with a field of that type. Keeping it is a workaround for a
+    family that has nothing configurable in it, so it must not pass silently."""
+    from abc import ABC, abstractmethod
+
+    class LonelySettings(BaseSettingsModel):
+        type: Literal["pr_lonely"] = "pr_lonely"
+
+    class Lonely(FromSettingsMixin, ABC, settings=LonelySettings):
+        @abstractmethod
+        def act(self) -> str:
+            """Do something."""
+
+    with caplog.at_level(logging.WARNING, logger="cofy.api.from_settings_mixin"):
+        finalize(force=True)
+
+    assert set(Lonely._registry) == {"pr_lonely"}
+    assert LonelySettings.union_type() is not None
+    warnings = [r.getMessage() for r in caplog.records]
+    assert any("pr_lonely" in w and "Lonely" in w for w in warnings), warnings
+
+
+def test_pruning_a_family_that_has_implementations_warns_about_nothing(caplog: pytest.LogCaptureFixture):
+    from abc import ABC, abstractmethod
+
+    class PairSettings(BaseSettingsModel):
+        type: Literal["pr_pair"] = "pr_pair"
+
+    class Pair(FromSettingsMixin, ABC, settings=PairSettings):
+        @abstractmethod
+        def act(self) -> str:
+            """Do something."""
+
+    class RealSettings(PairSettings):
+        type: Literal["pr_real"] = "pr_real"
+
+    class Real(Pair, settings=RealSettings):
+        def act(self) -> str:
+            return "acted"
+
+    with caplog.at_level(logging.WARNING, logger="cofy.api.from_settings_mixin"):
+        finalize(force=True)
+
+    assert set(Pair._registry) == {"pr_real"}
+    assert not [r for r in caplog.records if "pr_pair" in r.getMessage()]

@@ -18,8 +18,14 @@ import pytest
 import yaml
 from cofy.api.cofy_api import CofyAPISettings
 from cofy.modules.billing import BillingModuleSettings
+from yaml.representer import RepresenterError
 
 from cofy.management.errors import ResourceAlreadyExistsError
+from cofy.management.persitance.file.base import (
+    DATA_DIR_ENV_VAR,
+    PACKAGED_BASE_PATH,
+    default_base_path,
+)
 from cofy.management.persitance.file.modules import FileModulesPersistence
 
 
@@ -200,17 +206,21 @@ def test_read_waits_for_an_in_progress_write_instead_of_seeing_a_torn_file(
 ):
     """The write path truncates the file before rewriting it, so a read landing in that
     window (if it weren't excluded) would see an empty/partial file instead of either the
-    old or the new content. A read must instead wait for the write to finish."""
+    old or the new content. A read must instead wait for the write to finish.
+
+    The writer is paused at its serialization step, which is inside the locked block and
+    just ahead of the truncate, so the reader below is genuinely contending for a lock the
+    writer still holds."""
     persistence = FileModulesPersistence(tmp_data)
     original_dump = yaml.safe_dump
 
-    writer_has_truncated = threading.Event()
+    writer_is_committing = threading.Event()
     let_writer_finish = threading.Event()
 
-    def instrumented_dump(data, stream, **kwargs):
-        writer_has_truncated.set()  # base.py always truncates before calling safe_dump
+    def instrumented_dump(data, **kwargs):
+        writer_is_committing.set()
         assert let_writer_finish.wait(timeout=5), "reader never attempted to read"
-        return original_dump(data, stream, **kwargs)
+        return original_dump(data, **kwargs)
 
     monkeypatch.setattr(yaml, "safe_dump", instrumented_dump)
 
@@ -220,7 +230,7 @@ def test_read_waits_for_an_in_progress_write_instead_of_seeing_a_torn_file(
 
     writer_thread = threading.Thread(target=writer)
     writer_thread.start()
-    assert writer_has_truncated.wait(timeout=5), "writer never reached its truncate+dump step"
+    assert writer_is_committing.wait(timeout=5), "writer never reached its commit step"
 
     reader_result: dict[str, list[str]] = {}
 
@@ -240,3 +250,58 @@ def test_read_waits_for_an_in_progress_write_instead_of_seeing_a_torn_file(
 
     # The reader must see the complete, final write - not a torn, in-between file.
     assert reader_result["names"] == ["default", "new"]
+
+
+def test_a_failed_serialization_leaves_the_file_intact(tmp_data: Path, monkeypatch: pytest.MonkeyPatch):
+    """The config is serialized before the file is truncated, so a dump that raises must not
+    destroy the previous contents - truncating first would leave an empty config behind."""
+    persistence = FileModulesPersistence(tmp_data)
+    path = tmp_data / "test.yaml"
+    before = path.read_bytes()
+
+    def exploding_dump(data, **kwargs):
+        raise RepresenterError("cannot represent an object")
+
+    monkeypatch.setattr(yaml, "safe_dump", exploding_dump)
+
+    with pytest.raises(RepresenterError):
+        persistence.create("test", BillingModuleSettings(name="new"))
+
+    assert path.read_bytes() == before
+
+
+# ── slug safety: defense in depth ─────────────────────────────────────────
+
+
+@pytest.mark.parametrize("slug", ["../outside", "a/b", ".", "..", "", "with space"])
+def test_community_path_refuses_a_slug_that_is_not_a_safe_filename(tmp_data: Path, slug: str):
+    """Called directly - bypassing the routers' own pattern checks - the layer that turns a
+    slug into a filename must still refuse anything that could address another directory."""
+    persistence = FileModulesPersistence(tmp_data)
+
+    with pytest.raises(ValueError, match="must match"):
+        persistence._community_path(slug)
+
+
+def test_community_path_accepts_the_documented_slug_characters(tmp_data: Path):
+    persistence = FileModulesPersistence(tmp_data)
+
+    assert persistence._community_path("Abc-123_x") == tmp_data / "Abc-123_x.yaml"
+
+
+# ── where the data directory comes from ───────────────────────────────────
+
+
+def test_data_directory_defaults_to_the_packaged_samples(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv(DATA_DIR_ENV_VAR, raising=False)
+
+    assert default_base_path() == PACKAGED_BASE_PATH
+
+
+def test_data_directory_can_be_configured(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """A deployment that creates communities must be able to point this somewhere writable -
+    the packaged path lives inside the installed distribution."""
+    monkeypatch.setenv(DATA_DIR_ENV_VAR, str(tmp_path))
+
+    assert default_base_path() == tmp_path
+    assert FileModulesPersistence().base_path == tmp_path

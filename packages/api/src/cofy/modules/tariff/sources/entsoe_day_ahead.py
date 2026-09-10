@@ -8,12 +8,13 @@ from entsoe.exceptions import NoMatchingDataError
 from fastapi.params import Query
 from pydantic import Field
 
+from cofy.api import Secret
 from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 
 class EntsoeDayAheadTariffSourceSettings(TimeseriesSourceSettings):
     type: Literal["entsoe_day_ahead"] = "entsoe_day_ahead"
-    api_key: str
+    api_key: Secret
     country_code: str | None = None
 
 

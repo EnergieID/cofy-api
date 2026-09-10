@@ -2,6 +2,7 @@ from .cofy_api import CofyAPI
 from .docs_router import DocsRouter
 from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin, finalize
 from .module import Module, ModuleSettings
+from .secret import MASK, Secret, restore_masked_secrets
 from .token_auth import Auth, AuthSettings, TokenAuth, TokenAuthSettings, TokenInfo
 from .version import __version__
 
@@ -13,6 +14,9 @@ __all__ = [
     "finalize",
     "Module",
     "ModuleSettings",
+    "Secret",
+    "MASK",
+    "restore_masked_secrets",
     "TokenInfo",
     "TokenAuth",
     "TokenAuthSettings",

@@ -20,7 +20,12 @@ class ModulesPersistence(ABC):
 
     @abstractmethod
     def replace(self, slug: str, module_type: str, name: str, module: ModuleSettings) -> ModuleSettings:
-        """Replace one module for a community."""
+        """Replace one module for a community.
+
+        This is a *full* replace of a payload built from a read whose secrets were masked, so
+        implementations must call `cofy.api.restore_masked_secrets` against the module being
+        replaced, inside whatever lock guards the write.
+        """
 
     @abstractmethod
     def delete(self, slug: str, module_type: str, name: str) -> None:
