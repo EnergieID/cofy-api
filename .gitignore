@@ -215,3 +215,8 @@ local.settings.json
 
 # SQLite database files
 *.db
+# Frontend / Node
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo

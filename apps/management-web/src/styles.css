@@ -1,0 +1,15 @@
+/* Carbon's components carry their own styles, compiled into the component modules, but most
+   of those styles read `--cds-*` tokens without a fallback - so `applyCarbonTheme()` in
+   main.ts declares the token values on the document, where they inherit into every shadow
+   root. Overriding any of them here (or in a host page) re-themes every Carbon element. */
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--cds-background);
+  color: var(--cds-text-primary);
+}

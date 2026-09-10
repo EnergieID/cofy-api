@@ -1,0 +1,40 @@
+{
+  "name": "@cofy/management-web",
+  "version": "0.0.0",
+  "description": "Default management console for a Cofy deployment.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "check": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "format": "eslint . --fix",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@carbon/layout": "^11.0.0",
+    "@carbon/themes": "^11.0.0",
+    "@carbon/web-components": "^2.63.0",
+    "@cofy/frontend-sdk": "file:../../packages/frontend-sdk",
+    "@cofy/web-components": "file:../../packages/web-components",
+    "@dodona/lit-state": "^1.3.0",
+    "@lit/context": "^1.1.6",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^24.0.0",
+    "eslint": "^9.0.0",
+    "jsdom": "^30.0.1",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.0.0",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
+  }
+}

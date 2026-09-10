@@ -4,5 +4,21 @@
             "titleBar.activeBackground": "#304401"
         }
     },
-    "python.defaultInterpreterPath": "${workspaceFolder}/packages/api/.venv/bin/python"
+    "python.defaultInterpreterPath": "${workspaceFolder}/packages/api/.venv/bin/python",
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/.venv": true,
+        "**/.pycache": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/package-lock.json": true
+    },
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/dist/**": true,
+        "**/.venv/**": true
+    }
 }
