@@ -1,29 +1,74 @@
 version: '3'
 
+# Each package manages its own dependencies, so the frontend tasks below loop over the
+# package directories rather than going through a workspace root - matching how the Python
+# packages are driven. They switch to the Node version pinned in .nvmrc through nvm when nvm
+# is installed, and otherwise use whatever node is on PATH.
+#
+# The order matters: the app and the components consume the packages they depend on through
+# those packages' build output, so the libraries are built first.
+vars:
+  NODE_PACKAGES: packages/frontend-sdk packages/web-components apps/management-web
+  WITH_NODE: 'NVM="${NVM_DIR:-$HOME/.nvm}/nvm.sh"; [ -s "$NVM" ] && . "$NVM" && nvm use --silent;'
+
 tasks:
   test:
     desc: Run tests for all packages
     cmds:
       - uv run --project packages/api --directory packages/api poe test
       - uv run --project packages/management-api --directory packages/management-api poe test
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm run test --if-present) || exit 1
+        done'
 
   lint:
     desc: Lint all packages
     cmds:
       - uv run --project packages/api --directory packages/api poe lint
       - uv run --project packages/management-api --directory packages/management-api poe lint
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm run lint --if-present) || exit 1
+        done'
 
   format:
     desc: Format all packages
     cmds:
       - uv run --project packages/api --directory packages/api poe format
       - uv run --project packages/management-api --directory packages/management-api poe format
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm run format --if-present) || exit 1
+        done'
 
   check:
     desc: Type-check all packages
     cmds:
       - uv run --project packages/api --directory packages/api poe check
       - uv run --project packages/management-api --directory packages/management-api poe check
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm run check --if-present) || exit 1
+        done'
+
+  install:
+    desc: Install the frontend package dependencies
+    cmds:
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm install) || exit 1
+        done'
 
   demo:
     desc: Run the demo API locally
@@ -41,6 +86,26 @@ tasks:
     desc: Run the management API locally
     cmds:
       - uv run --project packages/management-api --directory packages/management-api poe run
+
+  web:
+    desc: Run the management console locally (expects `task management` on :8000)
+    cmds:
+      - bash -c '{{.WITH_NODE}} cd apps/management-web && npm run dev'
+
+  build:
+    desc: Build the frontend packages and the console
+    cmds:
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm run build --if-present) || exit 1
+        done'
+
+  generate:
+    desc: Regenerate the typed API client from the management API's OpenAPI document
+    cmds:
+      - bash -c '{{.WITH_NODE}} cd packages/frontend-sdk && npm run generate'
 
   prod:
     desc: Build and run the production container

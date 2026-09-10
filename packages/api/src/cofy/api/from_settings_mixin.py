@@ -1,17 +1,25 @@
 from __future__ import annotations
 
+import logging
 import sys
 from functools import reduce
 from operator import or_
-from typing import Annotated, Any, ClassVar
+from typing import Annotated, Any, ClassVar, Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
+
+logger = logging.getLogger(__name__)
 
 
 def _resolve(value: Any) -> Any:
     """Recursively convert any BaseSettingsModel instances to their actual objects."""
     if isinstance(value, BaseSettingsModel):
         return value.convert()
+    if isinstance(value, SecretStr):
+        # A `Secret` field masks itself on every dump; the object being built needs the real
+        # value, so unwrap it here rather than making every runtime constructor accept
+        # `str | SecretStr` and remember to reveal it.
+        return value.get_secret_value()
     if isinstance(value, list):
         return [_resolve(v) for v in value]
     if isinstance(value, dict):
@@ -43,6 +51,12 @@ class BaseSettingsModel(BaseModel):
         return Annotated[union, Field(discriminator="type")]
 
     @classmethod
+    def registry(cls) -> dict[str, type[Self]]:
+        """Every settings model registered under `cls`, keyed by its type tag."""
+        finalize()
+        return dict(getattr(cls._model, "_registry", {}))
+
+    @classmethod
     def union_alias(cls) -> str:
         """Name under which `settings`' discriminated union is published to settings modules."""
         return f"Any{cls.__name__}"
@@ -72,6 +86,7 @@ def finalize(*, force: bool = False) -> None:
 
     _resolving = True
     try:
+        _prune_abstract_registrations()
         settings_models = list(_registered_settings)
         aliases = {settings.union_alias(): settings.union_type() for settings in settings_models}
         modules = {sys.modules[settings.__module__] for settings in settings_models}
@@ -89,6 +104,30 @@ def finalize(*, force: bool = False) -> None:
         _resolved_count = len(settings_models)
     finally:
         _resolving = False
+
+
+def _prune_abstract_registrations() -> None:
+    """Unregister settings whose target class still has unimplemented abstract methods."""
+    for settings in list(_registered_settings):
+        if not getattr(settings._model, "__abstractmethods__", None):
+            continue
+
+        type_name = settings.model_fields["type"].default
+        for base in settings._model.__mro__:
+            registry = base.__dict__.get("_registry")
+            if not isinstance(registry, dict) or registry.get(type_name) is not settings:
+                continue
+            if len(registry) == 1:
+                logger.warning(
+                    "Type %r is abstract but is the only one registered under %s, so it is left in place. "
+                    "Nothing can be configured for this family: either give %s a settings-constructible "
+                    "implementation, or drop its settings models.",
+                    type_name,
+                    base.__name__,
+                    base.__name__,
+                )
+                continue
+            del registry[type_name]
 
 
 def _reresolve_alias_fields(settings: type[BaseSettingsModel], aliases: dict[str, Any]) -> None:

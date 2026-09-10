@@ -7,12 +7,13 @@ import requests
 from isodate import strftime
 from pydantic import BaseModel
 
+from cofy.api import Secret
 from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
 
 
 class EnergyIDProductionSettings(TimeseriesSourceSettings):
     type: Literal["energyid_production"] = "energyid_production"
-    api_key: str
+    api_key: Secret
     record_id: str
 
 

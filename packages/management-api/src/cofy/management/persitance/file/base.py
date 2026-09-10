@@ -1,4 +1,6 @@
 import fcntl
+import os
+import re
 from collections.abc import Generator
 from contextlib import contextmanager
 from importlib import resources
@@ -10,15 +12,44 @@ from cofy.api.cofy_api import CofyAPISettings
 
 from ...errors import ResourceNotFoundError
 
-DEFAULT_BASE_PATH = Path(str(resources.files("cofy.management.persitance.file") / "data"))
+PACKAGED_BASE_PATH = Path(str(resources.files("cofy.management.persitance.file") / "data"))
+"""Sample communities shipped with the package, used when no data directory is configured."""
+
+DATA_DIR_ENV_VAR = "COFY_MANAGEMENT_DATA_DIR"
+
+SLUG_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
+"""Characters a community slug may contain, matching the rule for module names."""
+
+
+def default_base_path() -> Path:
+    """Where community configs live.
+
+    The packaged samples are fine to read but not to write - that path is inside the
+    installed distribution - so a deployment that edits communities must set the
+    environment variable.
+    """
+    configured = os.environ.get(DATA_DIR_ENV_VAR)
+    return Path(configured) if configured else PACKAGED_BASE_PATH
 
 
 class FilePersistence:
-    def __init__(self, base_path: Path = DEFAULT_BASE_PATH):
-        self.base_path = base_path
+    def __init__(self, base_path: Path | None = None):
+        self.base_path = base_path if base_path is not None else default_base_path()
 
     def _community_path(self, slug: str) -> Path:
+        # A slug becomes a filename, so anything outside the pattern - a separator, a `..`, a
+        # leading dot - could address a file outside the data directory. The HTTP layer
+        # happens to reject most of that, but a slug also arrives in a request body when a
+        # community is created, where nothing else is checking.
+        if not SLUG_PATTERN.match(slug):
+            raise ValueError(f"Community slug {slug!r} must match {SLUG_PATTERN.pattern}")
         return self.base_path / f"{slug}.yaml"
+
+    def _community_slugs(self) -> list[str]:
+        """Every community that exists, in a stable order."""
+        if not self.base_path.is_dir():
+            return []
+        return sorted(path.stem for path in self.base_path.glob("*.yaml"))
 
     @contextmanager
     def _open_community_config(self, slug: str, mode: Literal["read", "write"]) -> Generator[CofyAPISettings]:
@@ -58,12 +89,19 @@ class FilePersistence:
                 yield config
 
                 if mode == "write":
-                    handle.seek(0)
-                    handle.truncate()
-                    yaml.safe_dump(
+                    # Serialize before truncating, so a dump that raises leaves the previous
+                    # contents alone instead of emptying the file.
+                    dumped = yaml.safe_dump(
                         config.model_dump(exclude_none=True, polymorphic_serialization=True, round_trip=True),
-                        handle,
                         sort_keys=True,
                     )
+                    handle.seek(0)
+                    handle.truncate()
+                    handle.write(dumped)
+                    # Flush inside the lock: the write is buffered and the lock is released
+                    # before the handle is closed, so without this the next reader could take
+                    # the lock and still see the truncated file.
+                    handle.flush()
+                    os.fsync(handle.fileno())
             finally:
                 fcntl.flock(handle, fcntl.LOCK_UN)
