@@ -124,3 +124,37 @@ def test_non_body_validation_errors_keep_their_own_location(client: TestClient):
     assert r.status_code == 422
     (error,) = r.json()["errors"]
     assert tuple(error["loc"]) == ("query", "count")
+
+
+# ── machine-readable codes ────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("route", "code"),
+    [
+        ("/not-found", "resource-not-found"),
+        ("/conflict", "resource-already-exists"),
+        ("/invariant", "validation-failed"),
+        ("/unmapped", "internal-error"),
+    ],
+)
+def test_every_problem_names_its_failure_in_a_stable_code(client: TestClient, route: str, code: str):
+    """`title` and `detail` are English prose for a person; `code` is what a client branches
+    on or translates."""
+    assert client.get(route).json()["code"] == code
+
+
+def test_validation_failures_carry_the_validation_code(client: TestClient):
+    r = client.post("/body", json={"count": "not-a-number"})
+
+    assert r.json()["code"] == "validation-failed"
+
+
+def test_each_field_error_keeps_pydantic_s_own_code(client: TestClient):
+    """The per-field `type` is what lets a client translate the message instead of showing
+    the English one pydantic produced."""
+    r = client.post("/body", json={"count": "not-a-number"})
+
+    types = {e["type"] for e in r.json()["errors"]}
+    assert "missing" in types  # `name` was not supplied
+    assert any(t.endswith("_type") or t.endswith("_parsing") for t in types)  # `count` was

@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { AllowedModulesStore, ApiClient, ModuleStore, type ModuleSettings } from "@cofy/frontend-sdk";
 
-import { CofyModuleEditor } from "../../src/components/cofy-module-editor.js";
-import type { YamlEditorChange } from "../../src/components/cofy-yaml-editor.js";
+import { CofyModuleEditor } from "../../src/components/module/cofy-module-editor.js";
+import { testI18n } from "../support/i18n.js";
+import type { YamlEditorChange } from "../../src/components/editor/cofy-yaml-editor.js";
 
 const stored: ModuleSettings = {
   type: "tariff",
@@ -29,6 +30,7 @@ function stubApi(): ApiClient {
 async function mount(): Promise<CofyModuleEditor> {
   const api = stubApi();
   const element = new CofyModuleEditor();
+  element.i18n = await testI18n();
   element.moduleStore = new ModuleStore(api);
   element.allowedModules = new AllowedModulesStore(api);
   element.slug = "test";
@@ -73,7 +75,7 @@ describe("cofy-module-editor", () => {
     await element.updateComplete;
     expect(element.shadowRoot!.querySelector("cofy-yaml-editor")!.text).toContain("edited");
 
-    element.shadowRoot!.querySelectorAll("cds-button")[1]!.dispatchEvent(new MouseEvent("click"));
+    element.shadowRoot!.querySelectorAll("wa-button")[1]!.dispatchEvent(new MouseEvent("click"));
     await element.updateComplete;
 
     expect(element.shadowRoot!.querySelector("cofy-yaml-editor")!.text).toBe(original);
@@ -81,7 +83,7 @@ describe("cofy-module-editor", () => {
 
   it("enables the actions only once there is something to save", async () => {
     const element = await mount();
-    const buttons = (): NodeListOf<Element> => element.shadowRoot!.querySelectorAll("cds-button");
+    const buttons = (): NodeListOf<Element> => element.shadowRoot!.querySelectorAll("wa-button");
 
     expect(buttons()[0]!.hasAttribute("disabled")).toBe(true);
     expect(buttons()[1]!.hasAttribute("disabled")).toBe(true);

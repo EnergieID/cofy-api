@@ -1,6 +1,5 @@
 import { consume } from "@lit/context";
-import { StateController } from "@dodona/lit-state";
-import { LitElement, css, html, nothing } from "lit";
+import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
@@ -12,16 +11,17 @@ import {
   type ProblemError,
 } from "@cofy/frontend-sdk";
 
-import "@carbon/web-components/es/components/button/button.js";
-import "@carbon/web-components/es/components/heading/index.js";
-import "@carbon/web-components/es/components/stack/index.js";
-import "@carbon/web-components/es/components/skeleton-text/skeleton-text.js";
+import "@awesome.me/webawesome/dist/components/button/button.js";
+import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 
-import { allowedModulesStoreContext, moduleStoreContext } from "../context.js";
-import { toYaml } from "../yaml.js";
-import "./cofy-problem-details.js";
-import "./cofy-yaml-editor.js";
-import type { YamlEditorChange } from "./cofy-yaml-editor.js";
+import { CofyElement } from "../../cofy-element.js";
+import { allowedModulesStoreContext, moduleStoreContext } from "../../context.js";
+import { layoutStyles } from "../../theme/layout-styles.js";
+import { nativeStyles } from "../../theme/native-styles.js";
+import { toYaml } from "../../yaml.js";
+import "../cofy-problem-details.js";
+import "../editor/cofy-yaml-editor.js";
+import type { YamlEditorChange } from "../editor/cofy-yaml-editor.js";
 
 /**
  * Edits one module as YAML, checked against its type's schema as you type.
@@ -31,46 +31,58 @@ import type { YamlEditorChange } from "./cofy-yaml-editor.js";
  * that this build has never seen.
  */
 @customElement("cofy-module-editor")
-export class CofyModuleEditor extends LitElement {
-  public static override styles = css`
-    :host {
-      display: block;
-    }
-    header {
-      display: flex;
-      align-items: baseline;
-      gap: 0.75rem;
-      margin-block-end: 1rem;
-    }
-    .muted {
-      color: var(--cds-text-secondary, #525252);
-      font-size: 0.875rem;
-    }
-    /* cds-stack leaves its own host as an inline box, so a block margin on it does
-       nothing - it groups the buttons, and this row places them. */
-    .actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--cds-spacing-05);
-      margin-block-start: var(--cds-spacing-06);
-    }
-    .issues {
-      margin: var(--cds-spacing-05) 0 0;
-      padding-left: 1rem;
-      color: var(--cds-text-error, #da1e28);
-      font-size: 0.875rem;
-    }
-    .issues button {
-      background: none;
-      border: 0;
-      padding: 0;
-      color: inherit;
-      text-decoration: underline;
-      cursor: pointer;
-      font: inherit;
-    }
-  `;
+export class CofyModuleEditor extends CofyElement {
+  public static override styles = [
+    nativeStyles,
+    layoutStyles,
+    css`
+      :host {
+        display: block;
+      }
+      header {
+        display: flex;
+        align-items: baseline;
+        gap: 0.75rem;
+        margin-block-end: 1rem;
+      }
+      /* native.css spaces a heading below itself whenever something follows it in the flow,
+         which here is the inline type badge beside it, not below - reset for the flex row. */
+      h2 {
+        margin: 0;
+      }
+      .muted {
+        color: var(--wa-color-text-quiet, #525252);
+        font-size: 0.875rem;
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--wa-space-m);
+        margin-block-start: var(--wa-space-l);
+      }
+      .issues {
+        margin: var(--wa-space-m) 0 0;
+        padding-inline-start: 1rem;
+        color: var(--wa-color-danger-border-loud, #da1e28);
+        font-size: 0.875rem;
+      }
+      .skeleton {
+        display: flex;
+        flex-direction: column;
+        gap: var(--wa-space-xs);
+      }
+      .issues button {
+        background: none;
+        border: 0;
+        padding: 0;
+        color: inherit;
+        text-decoration: underline;
+        cursor: pointer;
+        font: inherit;
+      }
+    `,
+  ];
 
   @consume({ context: moduleStoreContext, subscribe: true })
   public moduleStore!: ModuleStore;
@@ -87,8 +99,6 @@ export class CofyModuleEditor extends LitElement {
   @state() private saveError: ProblemError | null = null;
   @state() private saved = false;
 
-  public readonly stateController = new StateController(this);
-
   public override willUpdate(changed: Map<string, unknown>): void {
     if (changed.has("slug") || changed.has("moduleId") || changed.has("moduleStore")) {
       void this.open();
@@ -99,19 +109,19 @@ export class CofyModuleEditor extends LitElement {
     if (this.draft === null) {
       return this.moduleStore?.error != null
         ? html`<cofy-problem-details .problem=${this.moduleStore.error}></cofy-problem-details>`
-        : html`<cds-skeleton-text paragraph line-count="5"></cds-skeleton-text>`;
+        : html`<div class="skeleton">
+            ${Array.from({ length: 5 }, () => html`<wa-skeleton></wa-skeleton>`)}
+          </div>`;
     }
 
     const { draft } = this;
     const blocked = this.syntaxErrors.length > 0 || !draft.valid || draft.renamed;
 
     return html`
-      <cds-section>
-        <header>
-          <cds-heading>${draft.original.display_name || draft.original.name}</cds-heading>
-          <span class="muted">${draft.original.type}</span>
-        </header>
-      </cds-section>
+      <header>
+        <h2>${draft.original.display_name || draft.original.name}</h2>
+        <span class="muted">${draft.original.type}</span>
+      </header>
 
       ${this.saveError === null
         ? nothing
@@ -126,19 +136,20 @@ export class CofyModuleEditor extends LitElement {
       ${this.problems(draft)}
 
       <footer class="actions">
-        <cds-stack orientation="horizontal" gap="3">
-          <cds-button
+        <div class="wa-cluster">
+          <wa-button
+            variant="brand"
             ?disabled=${blocked || !draft.dirty || draft.saving}
             @click=${(): void => void this.save()}
           >
-            ${draft.saving ? "Saving…" : "Save"}
-          </cds-button>
-          <cds-button kind="secondary" ?disabled=${!draft.dirty} @click=${(): void => this.reset()}>
-            Discard
-          </cds-button>
-        </cds-stack>
+            ${draft.saving ? this.t("editor.saving") : this.t("editor.save")}
+          </wa-button>
+          <wa-button appearance="outlined" ?disabled=${!draft.dirty} @click=${(): void => this.reset()}>
+            ${this.t("editor.discard")}
+          </wa-button>
+        </div>
         <span class="muted">
-          ${draft.dirty ? "Unsaved changes" : this.saved ? "Saved" : "No changes"}
+          ${draft.dirty ? this.t("editor.unsaved") : this.saved ? this.t("editor.saved") : this.t("editor.unchanged")}
         </span>
       </footer>
     `;
@@ -152,10 +163,7 @@ export class CofyModuleEditor extends LitElement {
     }
     if (draft.renamed) {
       return html`<ul class="issues">
-        <li>
-          A module's type and name are its identity and cannot be changed here — create a new
-          module instead.
-        </li>
+        <li>${this.t("editor.renamed")}</li>
       </ul>`;
     }
     if (draft.issues.length === 0) return nothing;
@@ -165,7 +173,7 @@ export class CofyModuleEditor extends LitElement {
         (issue): TemplateResult => html`
           <li>
             <button type="button" @click=${(): void => this.reveal(issue.pointer)}>
-              ${issue.pointer === "" ? "document" : issue.pointer}
+              ${issue.pointer === "" ? this.t("editor.documentRoot") : issue.pointer}
             </button>
             — ${issue.message}
           </li>

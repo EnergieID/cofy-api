@@ -1,6 +1,5 @@
 import { State, stateProperty } from "@dodona/lit-state";
 import type { TemplateResult } from "lit";
-import { html } from "lit";
 
 import { buildHash, matchRoute, pathFromHash, type RouteParams, type RouteTable } from "../router.js";
 
@@ -52,11 +51,10 @@ export class RouteState<Name extends string = string> extends State {
     if (window.location.hash !== hash) window.location.hash = hash;
   }
 
-  /** The page for the current path, or a not-found message when no route claims it. */
-  public render(): TemplateResult {
+  /** The page for the current path, or `undefined` when no route claims it. */
+  public render(): TemplateResult | undefined {
     const match = matchRoute(this.routes, this.path);
-    if (match === undefined) return html`<p>No page for <code>${this.path}</code>.</p>`;
-    return match.route.render(match.params);
+    return match?.route.render(match.params);
   }
 
   private readonly onHashChange = (): void => {

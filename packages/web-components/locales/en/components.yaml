@@ -1,0 +1,88 @@
+# Strings owned by @cofy/web-components.
+#
+# A deployment overrides any of these by serving its own file at the same path for its
+# language; anything it leaves out falls back to this one, key by key.
+
+communityList:
+  title: Communities
+  description: Each community is one Cofy configuration.
+  empty: No communities are configured.
+  columns:
+    community: Community
+    slug: Slug
+    modules: Modules
+
+moduleList:
+  title: Modules
+  description: What this community collects, computes and serves.
+  add: Add module
+  delete: Delete
+  deleting: Deleting…
+  empty: No modules are configured for this community.
+  deleteConfirm: "Delete {{name}}? Its configuration cannot be recovered."
+  columns:
+    module: Module
+    type: Type
+    # Names the delete column for a screen reader; the header itself is visually empty.
+    actions: Actions
+
+editor:
+  save: Save
+  saving: Saving…
+  discard: Discard
+  saved: Saved
+  unsaved: Unsaved changes
+  unchanged: No changes
+  documentRoot: document
+  renamed: A module's type and name are its identity and cannot be changed here — create a new module instead.
+
+create:
+  type: Module type
+  choose: Choose a type…
+  submit: Create module
+  creating: Creating…
+  cancel: Cancel
+
+settings:
+  open: Settings
+  theme:
+    legend: Appearance
+    names:
+      # "System" keeps following the operating system, rather than copying it once.
+      system: System
+      light: Light
+      dark: Dark
+  language:
+    legend: Language
+    choose: Choose a language
+
+# Keyed by the `code` the API puts on every problem document, so a failure reads in the
+# reader's language. Anything without a translation here falls back to the server's own
+# English `title` and `detail`, which is worse than a translation but never blank.
+errors:
+  unknown:
+    title: Request failed
+  resource-not-found:
+    title: Not found
+  resource-already-exists:
+    title: Already exists
+  precondition-failed:
+    title: Changed since you loaded it
+  validation-failed:
+    title: Some fields need attention
+    detail: The values below could not be accepted.
+  internal-error:
+    title: Something went wrong
+
+  # Keyed by pydantic's own code for a field failure. Unknown codes fall back to the English
+  # message pydantic produced, so a new one degrades rather than disappearing.
+  validation:
+    missing: This field is required.
+    string_type: This must be text.
+    int_type: This must be a whole number.
+    float_type: This must be a number.
+    bool_type: This must be true or false.
+    literal_error: This is not one of the allowed values.
+    union_tag_invalid: This type is not one of the allowed types.
+    string_pattern_mismatch: This is not in the expected format.
+    value_error: This value could not be accepted.

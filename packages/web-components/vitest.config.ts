@@ -9,7 +9,7 @@ export default defineConfig({
     // of these along. `@dodona/lit-state` keeps its read recorder in a module-level
     // singleton and `lit` its element registry in another, so two copies mean a store
     // records a read that the component's controller never sees - reactivity silently stops.
-    dedupe: ["lit", "@dodona/lit-state", "@lit/context", "@carbon/web-components"],
+    dedupe: ["lit", "@dodona/lit-state", "@lit/context", "@awesome.me/webawesome"],
     alias: {
       // Test against the sibling's sources, so its build output cannot go stale under us.
       "@cofy/frontend-sdk": sdk,
@@ -19,5 +19,8 @@ export default defineConfig({
     // Lit components need a DOM; jsdom is enough for the rendering these tests assert on.
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
+    // Off by default, which silently resolves every `?raw` CSS import - `nativeStyles` and
+    // `layoutStyles` among them - to an empty string rather than failing loudly.
+    css: true,
   },
 });

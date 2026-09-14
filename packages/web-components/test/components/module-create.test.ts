@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { AllowedModulesStore, ApiClient, ModuleStore } from "@cofy/frontend-sdk";
 
-import { CofyModuleCreate } from "../../src/components/cofy-module-create.js";
+import { CofyModuleCreate } from "../../src/components/module/cofy-module-create.js";
+import { testI18n } from "../support/i18n.js";
 
 const catalog = [
   {
@@ -54,6 +55,7 @@ async function mount(preload = true): Promise<CofyModuleCreate> {
   if (preload) await allowedModules.ensure("test");
 
   const element = new CofyModuleCreate();
+  element.i18n = await testI18n();
   element.allowedModules = allowedModules;
   element.moduleStore = new ModuleStore(api);
   element.slug = "test";
@@ -68,9 +70,11 @@ function document_(element: CofyModuleCreate): string {
 }
 
 function selectType(element: CofyModuleCreate, type: string): void {
-  element.shadowRoot!
-    .querySelector("cds-select")!
-    .dispatchEvent(new CustomEvent("cds-select-selected", { detail: { value: type } }));
+  // Set the value and fire a plain `change`, the way the real control does - rather than
+  // fabricating a detail payload the component would never otherwise see.
+  const select = element.shadowRoot!.querySelector<HTMLElement & { value: string }>("wa-select")!;
+  select.value = type;
+  select.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 describe("cofy-module-create", () => {
@@ -81,9 +85,10 @@ describe("cofy-module-create", () => {
   it("offers every allowed module type", async () => {
     const element = await mount();
 
-    const items = element.shadowRoot!.querySelectorAll("cds-select-item");
+    const items = element.shadowRoot!.querySelectorAll("wa-option");
 
-    expect(Array.from(items).map((item) => item.getAttribute("value"))).toEqual(["", "billing", "tariff"]);
+    // No empty first option any more - "choose a type" is the select's placeholder.
+    expect(Array.from(items).map((item) => item.getAttribute("value"))).toEqual(["billing", "tariff"]);
   });
 
   it("renders the catalog that arrives after the first render", async () => {
@@ -93,8 +98,8 @@ describe("cofy-module-create", () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     await element.updateComplete;
 
-    const items = element.shadowRoot!.querySelectorAll("cds-select-item");
-    expect(Array.from(items).map((item) => item.getAttribute("value"))).toEqual(["", "billing", "tariff"]);
+    const items = element.shadowRoot!.querySelectorAll("wa-option");
+    expect(Array.from(items).map((item) => item.getAttribute("value"))).toEqual(["billing", "tariff"]);
   });
 
   it("seeds a document for every allowed type, including the recursive ones", async () => {

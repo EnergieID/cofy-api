@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { locate } from "../src/components/cofy-yaml-editor.js";
+import { locate } from "../src/components/editor/cofy-yaml-editor.js";
 
 const document = `type: tariff
 name: spot

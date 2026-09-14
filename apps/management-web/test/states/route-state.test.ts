@@ -79,13 +79,13 @@ describe("RouteState", () => {
   it("renders the matching route with its parameters", () => {
     state.navigate("modules", { slug: "foo" });
 
-    expect(JSON.stringify(state.render().values)).toContain("foo");
+    expect(JSON.stringify(state.render()!.values)).toContain("foo");
   });
 
   it("says so when no route claims the path", () => {
     window.location.hash = "#/nope";
     const orphan = new RouteState(routes);
 
-    expect(JSON.stringify(orphan.render().values)).toContain("/nope");
+    expect(orphan.render()).toBeUndefined();
   });
 });

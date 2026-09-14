@@ -1,8 +1,9 @@
 import { consume } from "@lit/context";
-import { StateController } from "@dodona/lit-state";
-import { LitElement, css, html, nothing } from "lit";
+import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+// Keyed, so a select that moves its options cannot leave Lit patching nodes that have moved.
+import { repeat } from "lit/directives/repeat.js";
 import {
   validate,
   type AllowedModulesStore,
@@ -12,17 +13,20 @@ import {
   type ValidationIssue,
 } from "@cofy/frontend-sdk";
 
-import "@carbon/web-components/es/components/button/button.js";
-import "@carbon/web-components/es/components/select/index.js";
-import "@carbon/web-components/es/components/stack/index.js";
-import "@carbon/web-components/es/components/skeleton-text/skeleton-text.js";
+import "@awesome.me/webawesome/dist/components/button/button.js";
+import "@awesome.me/webawesome/dist/components/option/option.js";
+import "@awesome.me/webawesome/dist/components/select/select.js";
+import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 
-import { allowedModulesStoreContext, moduleStoreContext } from "../context.js";
-import { seedFromSchema } from "../schema-defaults.js";
-import { toYaml } from "../yaml.js";
-import "./cofy-problem-details.js";
-import "./cofy-yaml-editor.js";
-import type { YamlEditorChange } from "./cofy-yaml-editor.js";
+import { CofyElement } from "../../cofy-element.js";
+import { allowedModulesStoreContext, moduleStoreContext } from "../../context.js";
+import { layoutStyles } from "../../theme/layout-styles.js";
+import { nativeStyles } from "../../theme/native-styles.js";
+import { seedFromSchema } from "../../schema-defaults.js";
+import { toYaml } from "../../yaml.js";
+import "../cofy-problem-details.js";
+import "../editor/cofy-yaml-editor.js";
+import type { YamlEditorChange } from "../editor/cofy-yaml-editor.js";
 
 /**
  * Creates a module, starting from a skeleton derived from the chosen type's schema.
@@ -31,29 +35,36 @@ import type { YamlEditorChange } from "./cofy-yaml-editor.js";
  * never heard of a module type still offers it as soon as the server does.
  */
 @customElement("cofy-module-create")
-export class CofyModuleCreate extends LitElement {
-  public static override styles = css`
-    :host {
-      display: block;
-    }
-    .picker {
-      max-inline-size: 24rem;
-      margin-block-end: 1.5rem;
-    }
-    /* cds-stack leaves its own host as an inline box, so a block margin on it does
-       nothing - it groups the buttons, and this row places them. */
-    .actions {
-      display: flex;
-      align-items: center;
-      gap: var(--cds-spacing-05);
-      margin-block-start: var(--cds-spacing-06);
-    }
-    .issues {
-      margin: var(--cds-spacing-05) 0 0;
-      padding-inline-start: 1rem;
-      color: var(--cds-text-error);
-    }
-  `;
+export class CofyModuleCreate extends CofyElement {
+  public static override styles = [
+    nativeStyles,
+    layoutStyles,
+    css`
+      :host {
+        display: block;
+      }
+      .picker {
+        max-inline-size: 24rem;
+        margin-block-end: 1.5rem;
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: var(--wa-space-m);
+        margin-block-start: var(--wa-space-l);
+      }
+      .issues {
+        margin: var(--wa-space-m) 0 0;
+        padding-inline-start: 1rem;
+        color: var(--wa-color-danger-border-loud);
+      }
+      .skeleton {
+        display: flex;
+        flex-direction: column;
+        gap: var(--wa-space-xs);
+      }
+    `,
+  ];
 
   @consume({ context: moduleStoreContext, subscribe: true })
   public moduleStore!: ModuleStore;
@@ -71,8 +82,6 @@ export class CofyModuleCreate extends LitElement {
   @state() private saving = false;
   @state() private error: ProblemError | null = null;
 
-  public readonly stateController = new StateController(this);
-
   public override willUpdate(changed: Map<string, unknown>): void {
     if ((changed.has("slug") || changed.has("allowedModules")) && this.slug !== "") {
       void this.allowedModules?.ensure(this.slug);
@@ -81,7 +90,11 @@ export class CofyModuleCreate extends LitElement {
 
   public override render(): TemplateResult {
     const allowed = this.allowedModules?.list(this.slug);
-    if (allowed === undefined) return html`<cds-skeleton-text paragraph line-count="4"></cds-skeleton-text>`;
+    if (allowed === undefined) {
+      return html`<div class="skeleton">
+        ${Array.from({ length: 4 }, () => html`<wa-skeleton></wa-skeleton>`)}
+      </div>`;
+    }
 
     const blocked = this.type === "" || this.syntaxErrors.length > 0 || this.issues.length > 0 || this.saving;
 
@@ -89,16 +102,19 @@ export class CofyModuleCreate extends LitElement {
       ${this.error === null ? nothing : html`<cofy-problem-details .problem=${this.error}></cofy-problem-details>`}
 
       <div class="picker">
-        <cds-select
-          label-text="Module type"
-          value=${this.type}
-          @cds-select-selected=${(e: CustomEvent<{ value?: string }>): void => this.onTypeSelected(e)}
+        <wa-select
+          label=${this.t("create.type")}
+          placeholder=${this.t("create.choose")}
+          .value=${this.type}
+          lang=${this.i18n?.resolvedLanguage ?? "en"}
+          @change=${(event: Event): void => this.onTypeSelected(event)}
         >
-          <cds-select-item value="">Choose a type…</cds-select-item>
-          ${allowed.map(
-            (option) => html`<cds-select-item value=${option.type}>${option.type} — ${option.description}</cds-select-item>`,
+          ${repeat(
+            allowed,
+            (option) => option.type,
+            (option) => html`<wa-option value=${option.type}>${option.type} — ${option.description}</wa-option>`,
           )}
-        </cds-select>
+        </wa-select>
       </div>
 
       ${this.type === ""
@@ -111,12 +127,14 @@ export class CofyModuleCreate extends LitElement {
             ></cofy-yaml-editor>
             ${this.problems()}
             <footer class="actions">
-              <cds-stack orientation="horizontal" gap="3">
-                <cds-button ?disabled=${blocked} @click=${(): void => void this.create()}>
-                  ${this.saving ? "Creating…" : "Create module"}
-                </cds-button>
-                <cds-button kind="ghost" @click=${(): void => this.cancel()}>Cancel</cds-button>
-              </cds-stack>
+              <div class="wa-cluster">
+                <wa-button variant="brand" ?disabled=${blocked} @click=${(): void => void this.create()}>
+                  ${this.saving ? this.t("create.creating") : this.t("create.submit")}
+                </wa-button>
+                <wa-button appearance="plain" @click=${(): void => this.cancel()}>
+                  ${this.t("create.cancel")}
+                </wa-button>
+              </div>
             </footer>
           `}
     `;
@@ -130,8 +148,10 @@ export class CofyModuleCreate extends LitElement {
     </ul>`;
   }
 
-  private onTypeSelected(event: CustomEvent<{ value?: string }>): void {
-    const type = event.detail.value ?? "";
+  private onTypeSelected(event: Event): void {
+    // Web Awesome's form controls are `ElementInternals`-associated, so they emit a plain
+    // `change` and the value lives on the element - not in a `detail` payload.
+    const type = (event.target as HTMLElement & { value?: string }).value ?? "";
     this.type = type;
     this.error = null;
     if (type === "") {

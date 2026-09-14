@@ -1,0 +1,37 @@
+# A deployment adding a language for the library's own strings, by serving a file at the path
+# the library's `en` sits at. Deliberately incomplete: everything left out falls back to
+# English key by key, so a translation can start small and grow.
+
+communityList:
+  title: Gemeenschappen
+  description: Elke gemeenschap is één Cofy-configuratie.
+  empty: Er zijn geen gemeenschappen geconfigureerd.
+  columns:
+    community: Gemeenschap
+    slug: Naam
+    modules: Modules
+
+moduleList:
+  title: Modules
+  description: Wat deze gemeenschap verzamelt, berekent en aanbiedt.
+  add: Module toevoegen
+  delete: Verwijderen
+  deleting: Verwijderen…
+  empty: Er zijn geen modules geconfigureerd voor deze gemeenschap.
+  deleteConfirm: "{{name}} verwijderen? De configuratie kan niet worden hersteld."
+  columns:
+    module: Module
+    type: Type
+    actions: Acties
+
+settings:
+  open: Instellingen
+  theme:
+    legend: Weergave
+    names:
+      system: Systeem
+      light: Licht
+      dark: Donker
+  language:
+    legend: Taal
+    choose: Kies een taal

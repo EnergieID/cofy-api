@@ -3,9 +3,13 @@ import { EditorState, type Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { yaml as yamlLanguage } from "@codemirror/lang-yaml";
 import { basicSetup } from "codemirror";
-import { LitElement, css, html } from "lit";
+
+import { cofyEditorTheme } from "./yaml-highlight.js";
+import { css, html } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
+
+import { CofyElement } from "../../cofy-element.js";
 import { parseDocument } from "yaml";
 
 /** What the editor's current text means, recomputed on every change. */
@@ -32,20 +36,20 @@ export interface YamlEditorIssue {
  * document's own node positions.
  */
 @customElement("cofy-yaml-editor")
-export class CofyYamlEditor extends LitElement {
+export class CofyYamlEditor extends CofyElement {
   public static override styles = css`
     :host {
       display: block;
     }
     .editor {
-      border: 1px solid var(--cds-border-strong, #8d8d8d);
-      background: var(--cds-field, #f4f4f4);
+      border: 1px solid var(--wa-color-surface-border);
+      background: var(--wa-color-surface-lowered);
     }
     .cm-editor {
       max-block-size: 60vh;
     }
     .cm-editor.cm-focused {
-      outline: 2px solid var(--cds-focus, #0f62fe);
+      outline: 2px solid var(--wa-color-focus);
       outline-offset: -2px;
     }
   `;
@@ -108,6 +112,7 @@ export class CofyYamlEditor extends LitElement {
     return [
       basicSetup,
       yamlLanguage(),
+      cofyEditorTheme(),
       lintGutter(),
       linter((view) => this.diagnostics(view)),
       keymap.of([]),

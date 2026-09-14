@@ -1,0 +1,11 @@
+# Strings owned by the management console itself. The components it embeds carry their own.
+
+title: Cofy management
+product: Cofy
+subtitle: management
+
+newModule:
+  crumb: New module
+  heading: Add module
+
+notFound: No page for {{path}}.

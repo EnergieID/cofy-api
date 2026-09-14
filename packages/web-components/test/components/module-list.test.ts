@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiClient, ModuleStore, type ModuleSettings } from "@cofy/frontend-sdk";
 
-import { CofyModuleList } from "../../src/components/cofy-module-list.js";
+import { CofyModuleList } from "../../src/components/module/cofy-module-list.js";
+import { testI18n } from "../support/i18n.js";
 
 const modules: ModuleSettings[] = [
   { type: "tariff", name: "entsoe" },
@@ -26,6 +27,7 @@ function stubApi(state: { modules: ModuleSettings[] }): ApiClient {
 
 async function mount(state: { modules: ModuleSettings[] }): Promise<CofyModuleList> {
   const element = new CofyModuleList();
+  element.i18n = await testI18n();
   element.store = new ModuleStore(stubApi(state));
   element.slug = "test";
   document.body.append(element);
@@ -36,9 +38,14 @@ async function mount(state: { modules: ModuleSettings[] }): Promise<CofyModuleLi
 }
 
 function rowNames(element: CofyModuleList): string[] {
-  return Array.from(element.shadowRoot!.querySelectorAll("cds-table-row")).map(
-    (row) => row.getAttribute("selection-name") ?? "",
+  return Array.from(element.shadowRoot!.querySelectorAll("tr[data-key]")).map(
+    (row) => row.getAttribute("data-key") ?? "",
   );
+}
+
+/** The delete button in the row for *key*. */
+function deleteButton(element: CofyModuleList, key: string): HTMLElement {
+  return element.shadowRoot!.querySelector<HTMLElement>(`tr[data-key="${key}"] .actions wa-button`)!;
 }
 
 describe("cofy-module-list", () => {
@@ -53,18 +60,18 @@ describe("cofy-module-list", () => {
     expect(rowNames(element)).toEqual(["tariff:entsoe", "tariff:kiwatt", "billing:default"]);
   });
 
-  it("carries its own title and toolbar, so a page adds no chrome", async () => {
+  it("carries its own heading and create action, so a page adds no chrome", async () => {
     const element = await mount({ modules: [...modules] });
     const root = element.shadowRoot!;
 
-    expect(root.querySelector("cds-table-header-title")?.textContent?.trim()).toBe("Modules");
-    expect(root.querySelector("cds-table-toolbar-search")).not.toBeNull();
-    expect(root.querySelector("cds-table-batch-actions")).not.toBeNull();
+    expect(root.querySelector('cofy-heading [slot="title"]')?.textContent?.trim()).toBe("Modules");
+    expect(root.querySelector('cofy-heading [slot="actions"]')?.textContent?.trim()).toBe("Add module");
   });
 
   it("still shows the remaining rows after a delete", async () => {
-    // Carbon's `is-sortable` reorders row elements behind Lit's back, which left the table
-    // empty after any list change - the store had rows and the DOM had none.
+    // Carbon's `is-sortable` reordered row elements behind Lit's back, which left the table
+    // empty after any list change - the store had rows and the DOM had none. A plain table has
+    // nothing doing that, but the guarantee is worth keeping under test.
     const state = { modules: [...modules] };
     const element = await mount(state);
 
@@ -79,48 +86,56 @@ describe("cofy-module-list", () => {
     const events: unknown[] = [];
     element.addEventListener("module-edit", (event) => events.push((event as CustomEvent).detail));
 
-    element.shadowRoot!.querySelectorAll("cds-table-row")[1]!.dispatchEvent(new MouseEvent("click"));
+    element.shadowRoot!.querySelectorAll("tr[data-key]")[1]!.dispatchEvent(new MouseEvent("click"));
 
     expect(events).toEqual([{ slug: "test", id: { type: "tariff", name: "kiwatt" } }]);
   });
 
-  it("does not open a module when the click was on its checkbox", async () => {
+  it("opens a module from the keyboard, which a plain row does not do by itself", async () => {
     const element = await mount({ modules: [...modules] });
+    const events: unknown[] = [];
+    element.addEventListener("module-edit", (event) => events.push((event as CustomEvent).detail));
+
+    const row = element.shadowRoot!.querySelectorAll("tr[data-key]")[0]!;
+    expect(row.getAttribute("tabindex")).toBe("0");
+    row.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+
+    expect(events).toEqual([{ slug: "test", id: { type: "tariff", name: "entsoe" } }]);
+  });
+
+  it("does not open a module when the click was on its delete button", async () => {
+    const element = await mount({ modules: [...modules] });
+    vi.spyOn(window, "confirm").mockReturnValue(false);
     const events: unknown[] = [];
     element.addEventListener("module-edit", () => events.push("opened"));
 
-    const row = element.shadowRoot!.querySelectorAll("cds-table-row")[0]!;
-    const checkbox = row.shadowRoot!.querySelector("cds-checkbox")!;
-    checkbox.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
+    deleteButton(element, "tariff:entsoe").dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
 
     expect(events).toEqual([]);
   });
 
-  it("asks for the toolbar's create action rather than routing itself", async () => {
+  it("asks for the create action rather than routing itself", async () => {
     const element = await mount({ modules: [...modules] });
     const events: unknown[] = [];
     element.addEventListener("module-create", (event) => events.push((event as CustomEvent).detail));
 
-    element.shadowRoot!.querySelector("cds-table-toolbar-content cds-button")!.dispatchEvent(new MouseEvent("click"));
+    element.shadowRoot!.querySelector('[slot="actions"]')!.dispatchEvent(new MouseEvent("click"));
 
     expect(events).toEqual([{ slug: "test" }]);
   });
 
-  it("deletes every selected module after one confirmation", async () => {
+  it("deletes exactly the module whose button was pressed", async () => {
     const state = { modules: [...modules] };
     const element = await mount(state);
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    for (const name of ["tariff:entsoe", "billing:default"]) {
-      element.shadowRoot!.querySelector(`cds-table-row[selection-name="${name}"]`)!.setAttribute("selected", "");
-    }
-    element.shadowRoot!.querySelector("cds-table-batch-actions cds-button")!.dispatchEvent(new MouseEvent("click"));
+    deleteButton(element, "tariff:entsoe").dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, 20));
     await element.updateComplete;
 
     expect(confirm).toHaveBeenCalledTimes(1);
-    expect(state.modules.map((module) => module.name)).toEqual(["kiwatt"]);
-    expect(rowNames(element)).toEqual(["tariff:kiwatt"]);
+    expect(state.modules.map((module) => module.name)).toEqual(["kiwatt", "default"]);
+    expect(rowNames(element)).toEqual(["tariff:kiwatt", "billing:default"]);
   });
 
   it("deletes nothing when the confirmation is dismissed", async () => {
@@ -128,25 +143,19 @@ describe("cofy-module-list", () => {
     const element = await mount(state);
     vi.spyOn(window, "confirm").mockReturnValue(false);
 
-    element.shadowRoot!.querySelector('cds-table-row[selection-name="tariff:entsoe"]')!.setAttribute("selected", "");
-    element.shadowRoot!.querySelector("cds-table-batch-actions cds-button")!.dispatchEvent(new MouseEvent("click"));
+    deleteButton(element, "tariff:entsoe").dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, 20));
 
     expect(state.modules).toHaveLength(3);
   });
 
-  it("names the single module in the confirmation, and counts several", async () => {
+  it("names the module in the confirmation", async () => {
     const element = await mount({ modules: [...modules] });
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
 
-    element.shadowRoot!.querySelector('cds-table-row[selection-name="tariff:entsoe"]')!.setAttribute("selected", "");
-    element.shadowRoot!.querySelector("cds-table-batch-actions cds-button")!.dispatchEvent(new MouseEvent("click"));
+    deleteButton(element, "tariff:entsoe").dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(confirm.mock.calls[0]![0]).toContain("Delete entsoe? Its configuration");
 
-    element.shadowRoot!.querySelector('cds-table-row[selection-name="tariff:kiwatt"]')!.setAttribute("selected", "");
-    element.shadowRoot!.querySelector("cds-table-batch-actions cds-button")!.dispatchEvent(new MouseEvent("click"));
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(confirm.mock.calls[1]![0]).toContain("Delete 2 modules? Their configuration");
+    expect(confirm.mock.calls[0]![0]).toContain("Delete entsoe? Its configuration");
   });
 });

@@ -1,0 +1,39 @@
+/*
+ * The console's brand ramp — the one place its colour is decided.
+ *
+ * Web Awesome derives every semantic brand token from these eleven steps, and derives them
+ * separately for light and dark: `--wa-color-brand-fill-loud` (the primary button) is step 50
+ * in both schemes, `--wa-color-text-link` is 40 in light and 70 in dark, the focus ring is 60.
+ * So setting a brand means declaring the ramp and nothing else — no code, no build step, and
+ * both schemes follow.
+ *
+ * The scale runs the opposite way to most: 95 is the lightest step, 05 the darkest.
+ *
+ * A muted green, built from Web Awesome's own green hue rather than picked freehand: same hue
+ * (~149°) and the same per-step lightness as their `--wa-color-green-*`, chroma scaled to 65%
+ * throughout. Matching their own lightness ladder is what makes a swapped-in brand read as one
+ * of the family rather than an odd one out, and it carries their contrast guarantees over with
+ * it - checked against every token that actually uses step 50 or 40/70 (button label, link
+ * text, on-quiet/on-normal text), each clears WCAG AA (>=4.5:1 for text, >=3:1 for the focus
+ * ring) against the real surface it renders on, in both schemes.
+ *
+ * Declared unlayered, so it beats Web Awesome's own `@layer wa-color-variant` defaults.
+ */
+:root {
+  --wa-color-brand-95: #e8f6e8;
+  --wa-color-brand-90: #ceedcd;
+  --wa-color-brand-80: #a6d3a9;
+  --wa-color-brand-70: #7ebb85;
+  --wa-color-brand-60: #56a365;
+  --wa-color-brand-50: #428151;
+  --wa-color-brand-40: #31613f;
+  --wa-color-brand-30: #274c32;
+  --wa-color-brand-20: #1d3724;
+  --wa-color-brand-10: #102115;
+  --wa-color-brand-05: #08140b;
+
+  /* The "core" pair. Without these, `--wa-color-brand` would still point at Web Awesome's own
+     blue rather than the ramp above. */
+  --wa-color-brand: var(--wa-color-brand-50);
+  --wa-color-brand-on: white;
+}
