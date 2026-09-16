@@ -2,66 +2,43 @@ import { consume } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-// Keyed, so a select that moves its options cannot leave Lit patching nodes that have moved.
-import { repeat } from "lit/directives/repeat.js";
 import {
-  validate,
+  EditableValue,
+  type AllowedModule,
   type AllowedModulesStore,
   type ModuleSettings,
   type ModuleStore,
   type ProblemError,
-  type ValidationIssue,
 } from "@cofy/frontend-sdk";
 
+import "@awesome.me/webawesome/dist/components/badge/badge.js";
 import "@awesome.me/webawesome/dist/components/button/button.js";
-import "@awesome.me/webawesome/dist/components/option/option.js";
-import "@awesome.me/webawesome/dist/components/select/select.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 
 import { CofyElement } from "../../cofy-element.js";
 import { allowedModulesStoreContext, moduleStoreContext } from "../../context.js";
-import { layoutStyles } from "../../theme/layout-styles.js";
 import { nativeStyles } from "../../theme/native-styles.js";
-import { seedFromSchema } from "../../schema-defaults.js";
-import { toYaml } from "../../yaml.js";
+import { utilityStyles } from "../../theme/utility-styles.js";
 import "../cofy-problem-details.js";
-import "../editor/cofy-yaml-editor.js";
-import type { YamlEditorChange } from "../editor/cofy-yaml-editor.js";
+import "../layout/cofy-heading.js";
+import "./cofy-module-form.js";
+import type { ModuleFormMode } from "./cofy-module-form.js";
 
 /**
  * Creates a module, starting from a skeleton derived from the chosen type's schema.
  *
  * The type list comes from what the community is allowed to configure, so a build that has
- * never heard of a module type still offers it as soon as the server does.
+ * never heard of a module type still offers it as soon as the server does. Picking a type is
+ * itself part of the form `cofy-module-form` renders, not a separate step before it.
  */
 @customElement("cofy-module-create")
 export class CofyModuleCreate extends CofyElement {
   public static override styles = [
     nativeStyles,
-    layoutStyles,
+    utilityStyles,
     css`
       :host {
         display: block;
-      }
-      .picker {
-        max-inline-size: 24rem;
-        margin-block-end: 1.5rem;
-      }
-      .actions {
-        display: flex;
-        align-items: center;
-        gap: var(--wa-space-m);
-        margin-block-start: var(--wa-space-l);
-      }
-      .issues {
-        margin: var(--wa-space-m) 0 0;
-        padding-inline-start: 1rem;
-        color: var(--wa-color-danger-border-loud);
-      }
-      .skeleton {
-        display: flex;
-        flex-direction: column;
-        gap: var(--wa-space-xs);
       }
     `,
   ];
@@ -74,13 +51,10 @@ export class CofyModuleCreate extends CofyElement {
 
   @property({ type: String }) public slug = "";
 
-  @state() private type = "";
-  @state() private text = "";
-  @state() private value: ModuleSettings | null = null;
-  @state() private syntaxErrors: string[] = [];
-  @state() private issues: ValidationIssue[] = [];
+  @state() private draft: EditableValue<ModuleSettings> | null = null;
   @state() private saving = false;
   @state() private error: ProblemError | null = null;
+  @state() private mode: ModuleFormMode = "form";
 
   public override willUpdate(changed: Map<string, unknown>): void {
     if ((changed.has("slug") || changed.has("allowedModules")) && this.slug !== "") {
@@ -89,107 +63,90 @@ export class CofyModuleCreate extends CofyElement {
   }
 
   public override render(): TemplateResult {
-    const allowed = this.allowedModules?.list(this.slug);
-    if (allowed === undefined) {
-      return html`<div class="skeleton">
+    const catalog = this.allowedModules?.list(this.slug);
+    if (catalog === undefined) {
+      return html`<div class="wa-stack">
         ${Array.from({ length: 4 }, () => html`<wa-skeleton></wa-skeleton>`)}
       </div>`;
     }
 
-    const blocked = this.type === "" || this.syntaxErrors.length > 0 || this.issues.length > 0 || this.saving;
+    const { draft } = this;
+    const blocked = draft === null || !draft.valid || this.saving;
+    const hasSchema = draft !== null && catalog.some((option) => option.type === draft.current.type);
 
     return html`
-      ${this.error === null ? nothing : html`<cofy-problem-details .problem=${this.error}></cofy-problem-details>`}
+      <div class="wa-stack">
+        <cofy-heading>
+          <span slot="title">${this.t("create.title")}</span>
+          ${hasSchema
+            ? html`<wa-button slot="actions" appearance="plain" @click=${(): void => this.toggleMode()}>
+                ${this.mode === "form" ? this.t("form.viewAsYaml") : this.t("form.viewAsForm")}
+              </wa-button>`
+            : nothing}
+        </cofy-heading>
 
-      <div class="picker">
-        <wa-select
-          label=${this.t("create.type")}
-          placeholder=${this.t("create.choose")}
-          .value=${this.type}
-          lang=${this.i18n?.resolvedLanguage ?? "en"}
-          @change=${(event: Event): void => this.onTypeSelected(event)}
-        >
-          ${repeat(
-            allowed,
-            (option) => option.type,
-            (option) => html`<wa-option value=${option.type}>${option.type} — ${option.description}</wa-option>`,
-          )}
-        </wa-select>
+        ${this.error === null ? nothing : html`<cofy-problem-details .problem=${this.error}></cofy-problem-details>`}
+
+        <cofy-module-form
+          .catalog=${catalog}
+          .value=${draft?.current ?? null}
+          .issues=${draft?.issues ?? []}
+          .mode=${this.mode}
+          @module-form-change=${(e: CustomEvent<{ value: ModuleSettings }>): void => this.onFormChange(e)}
+        ></cofy-module-form>
+
+        ${draft === null
+          ? nothing
+          : html`
+              <footer class="wa-split">
+                <div class="wa-cluster">
+                  <wa-button variant="brand" ?disabled=${blocked} @click=${(): void => void this.create()}>
+                    ${this.saving ? this.t("create.creating") : this.t("create.submit")}
+                  </wa-button>
+                  <wa-button appearance="plain" @click=${(): void => this.cancel()}>
+                    ${this.t("create.cancel")}
+                  </wa-button>
+                </div>
+                ${draft.issues.length === 0
+                  ? nothing
+                  : html`<wa-badge variant="danger">${this.t("form.issuesToggle", { count: draft.issues.length })}</wa-badge>`}
+             </footer>
+            `}
       </div>
-
-      ${this.type === ""
-        ? nothing
-        : html`
-            <cofy-yaml-editor
-              .text=${this.text}
-              .issues=${this.issues.map((issue) => ({ pointer: issue.pointer, message: issue.message }))}
-              @yaml-change=${(e: CustomEvent<YamlEditorChange>): void => this.onChange(e)}
-            ></cofy-yaml-editor>
-            ${this.problems()}
-            <footer class="actions">
-              <div class="wa-cluster">
-                <wa-button variant="brand" ?disabled=${blocked} @click=${(): void => void this.create()}>
-                  ${this.saving ? this.t("create.creating") : this.t("create.submit")}
-                </wa-button>
-                <wa-button appearance="plain" @click=${(): void => this.cancel()}>
-                  ${this.t("create.cancel")}
-                </wa-button>
-              </div>
-            </footer>
-          `}
     `;
   }
 
-  private problems(): TemplateResult | typeof nothing {
-    const messages = this.syntaxErrors.length > 0 ? this.syntaxErrors : this.issues.map((i) => `${i.pointer} — ${i.message}`);
-    if (messages.length === 0) return nothing;
-    return html`<ul class="issues">
-      ${messages.map((message) => html`<li>${message}</li>`)}
-    </ul>`;
-  }
-
-  private onTypeSelected(event: Event): void {
-    // Web Awesome's form controls are `ElementInternals`-associated, so they emit a plain
-    // `change` and the value lives on the element - not in a `detail` payload.
-    const type = (event.target as HTMLElement & { value?: string }).value ?? "";
-    this.type = type;
+  private onFormChange(event: CustomEvent<{ value: ModuleSettings }>): void {
     this.error = null;
-    if (type === "") {
-      this.text = "";
+    const draft = this.draft;
+    if (draft === null) {
+      const created = new EditableValue(event.detail.value);
+      this.draft = created;
+      this.check(created);
       return;
     }
-
-    const schema = this.allowedModules.find(this.slug, type)?.schema;
-    const seeded = schema === undefined ? { type } : (seedFromSchema(schema) as Record<string, unknown>);
-    const module = { ...seeded, type, name: "" } as ModuleSettings;
-    this.value = module;
-    this.text = toYaml(module);
-    this.check(module);
+    draft.set(event.detail.value);
+    this.check(draft);
   }
 
-  private onChange(event: CustomEvent<YamlEditorChange>): void {
-    const { text, value, syntaxErrors } = event.detail;
-    // Track what the editor holds, so switching type can push a fresh document into it.
-    this.text = text;
-    this.syntaxErrors = syntaxErrors;
-    if (syntaxErrors.length > 0) return;
-
-    this.value = value as ModuleSettings;
-    this.check(this.value);
+  private catalog(): readonly AllowedModule[] {
+    return this.allowedModules?.list(this.slug) ?? [];
   }
 
-  private check(module: ModuleSettings): void {
-    const schema = this.allowedModules.find(this.slug, this.type)?.schema;
-    this.issues = schema === undefined ? [] : validate(schema, module);
+  private check(draft: EditableValue<ModuleSettings>): void {
+    const schema = this.catalog().find((option) => option.type === draft.current.type)?.schema;
+    if (schema === undefined) return;
+    draft.check(schema);
   }
 
   private async create(): Promise<void> {
-    if (this.value === null) return;
+    const draft = this.draft;
+    if (draft === null) return;
 
     this.saving = true;
     this.error = null;
     try {
-      const created = await this.moduleStore.create(this.slug, this.value);
+      const created = await this.moduleStore.create(this.slug, draft.current);
       this.dispatchEvent(
         new CustomEvent("module-created", {
           detail: { slug: this.slug, id: { type: created.type, name: created.name } },
@@ -206,6 +163,10 @@ export class CofyModuleCreate extends CofyElement {
 
   private cancel(): void {
     this.dispatchEvent(new CustomEvent("create-cancelled", { bubbles: true, composed: true }));
+  }
+
+  private toggleMode(): void {
+    this.mode = this.mode === "form" ? "yaml" : "form";
   }
 }
 

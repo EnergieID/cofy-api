@@ -1,5 +1,7 @@
 import type { JsonSchema } from "@cofy/frontend-sdk";
 
+import { deref, isRecord, noneExpanding, refOf, type RefGuard } from "./schema-ref.js";
+
 /**
  * Build the smallest object that a schema would plausibly accept.
  *
@@ -10,7 +12,7 @@ import type { JsonSchema } from "@cofy/frontend-sdk";
  * default becomes `""`, which the author still has to fill in, and the editor says so.
  */
 export function seedFromSchema(schema: JsonSchema, root: JsonSchema = schema): unknown {
-  return seed(schema, root, new Set());
+  return seed(schema, root, noneExpanding);
 }
 
 /**
@@ -20,8 +22,8 @@ export function seedFromSchema(schema: JsonSchema, root: JsonSchema = schema): u
  * source can lead back to one - and unlike validation, which walks a finite instance, seeding
  * walks the schema itself. Without this the walk never bottoms out.
  */
-function seed(schema: JsonSchema, root: JsonSchema, expanding: ReadonlySet<string>): unknown {
-  const ref = typeof schema["$ref"] === "string" ? schema["$ref"] : undefined;
+function seed(schema: JsonSchema, root: JsonSchema, expanding: RefGuard): unknown {
+  const ref = refOf(schema);
   if (ref !== undefined && expanding.has(ref)) return null;
 
   const path = ref === undefined ? expanding : new Set([...expanding, ref]);
@@ -55,7 +57,7 @@ function seed(schema: JsonSchema, root: JsonSchema, expanding: ReadonlySet<strin
   }
 }
 
-function seedObject(node: JsonSchema, root: JsonSchema, expanding: ReadonlySet<string>): Record<string, unknown> {
+function seedObject(node: JsonSchema, root: JsonSchema, expanding: RefGuard): Record<string, unknown> {
   const properties = node["properties"];
   const required = new Set(Array.isArray(node["required"]) ? (node["required"] as string[]) : []);
   const seeded: Record<string, unknown> = {};
@@ -71,19 +73,4 @@ function seedObject(node: JsonSchema, root: JsonSchema, expanding: ReadonlySet<s
     seeded[name] = seed(property, root, expanding);
   }
   return seeded;
-}
-
-function deref(schema: JsonSchema, root: JsonSchema): JsonSchema {
-  const ref = schema["$ref"];
-  if (typeof ref !== "string" || !ref.startsWith("#/$defs/")) return schema;
-
-  const defs = root["$defs"];
-  if (!isRecord(defs)) return schema;
-
-  const target = defs[ref.slice("#/$defs/".length)];
-  return isRecord(target) ? target : schema;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

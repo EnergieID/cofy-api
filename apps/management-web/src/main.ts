@@ -14,10 +14,10 @@ import {
   communityStoreContext,
   createI18n,
   i18nContext,
-  layoutStyles,
   moduleStoreContext,
   nativeStyles,
   themeStateContext,
+  utilityStyles,
   yamlBackend,
 } from "@cofy/web-components";
 import "@cofy/web-components";
@@ -72,7 +72,7 @@ theme.start();
 export class CofyApp extends LitElement {
   public static override styles = [
     nativeStyles,
-    layoutStyles,
+    utilityStyles,
     css`
       :host {
         display: block;

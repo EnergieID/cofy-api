@@ -11,6 +11,7 @@ import "@awesome.me/webawesome/dist/components/tag/tag.js";
 import { CofyElement } from "../../cofy-element.js";
 import { moduleStoreContext } from "../../context.js";
 import { tableStyles } from "../../theme/table.js";
+import { utilityStyles } from "../../theme/utility-styles.js";
 import "../layout/cofy-heading.js";
 import "../cofy-problem-details.js";
 
@@ -26,23 +27,16 @@ import "../cofy-problem-details.js";
 export class CofyModuleList extends CofyElement {
   public static override styles = [
     tableStyles,
+    utilityStyles,
     css`
       :host {
         display: block;
-      }
-      cofy-heading {
-        margin-block-end: var(--wa-space-m);
       }
       th.actions,
       td.actions {
         inline-size: 1%;
         white-space: nowrap;
         text-align: end;
-      }
-      .skeleton {
-        display: flex;
-        flex-direction: column;
-        gap: var(--wa-space-s);
       }
     `,
   ];
@@ -69,36 +63,38 @@ export class CofyModuleList extends CofyElement {
 
     if (error != null) return html`<cofy-problem-details .problem=${error}></cofy-problem-details>`;
     if (modules === undefined) {
-      return html`<div class="skeleton">
+      return html`<div class="wa-stack">
         ${Array.from({ length: 4 }, () => html`<wa-skeleton></wa-skeleton>`)}
       </div>`;
     }
 
     return html`
-      <cofy-heading>
-        <span slot="title">${this.t("moduleList.title")}</span>
-        <span slot="description">${this.t("moduleList.description")}</span>
-        <wa-button slot="actions" variant="brand" @click=${(): void => this.requestCreate()}>
-          ${this.t("moduleList.add")}
-        </wa-button>
-      </cofy-heading>
+      <div class="wa-stack">
+        <cofy-heading>
+          <span slot="title">${this.t("moduleList.title")}</span>
+          <span slot="description">${this.t("moduleList.description")}</span>
+          <wa-button slot="actions" variant="brand" @click=${(): void => this.requestCreate()}>
+            ${this.t("moduleList.add")}
+          </wa-button>
+        </cofy-heading>
 
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">${this.t("moduleList.columns.module")}</th>
-            <th scope="col">${this.t("moduleList.columns.type")}</th>
-            <th scope="col" class="actions">${this.t("moduleList.columns.actions")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${modules.length === 0
-            ? html`<tr class="empty">
-                <td class="secondary" colspan="3">${this.t("moduleList.empty")}</td>
-              </tr>`
-            : modules.map((module): TemplateResult => this.row(module))}
-        </tbody>
-      </table>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">${this.t("moduleList.columns.module")}</th>
+              <th scope="col">${this.t("moduleList.columns.type")}</th>
+              <th scope="col" class="actions">${this.t("moduleList.columns.actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${modules.length === 0
+              ? html`<tr class="empty">
+                  <td class="secondary" colspan="3">${this.t("moduleList.empty")}</td>
+                </tr>`
+              : modules.map((module): TemplateResult => this.row(module))}
+          </tbody>
+        </table>
+      </div>
     `;
   }
 

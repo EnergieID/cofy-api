@@ -31,8 +31,8 @@ export class CofyProblemDetails extends CofyElement {
         margin: 0;
       }
       ul {
-        margin: 0.5rem 0 0;
-        padding-inline-start: 1rem;
+        margin: var(--wa-space-xs) 0 0;
+        padding-inline-start: var(--wa-space-m);
       }
     `,
   ];

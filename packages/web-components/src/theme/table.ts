@@ -24,7 +24,7 @@ export const tableStyles: CSSResultGroup = [
     }
     tbody tr:focus-visible {
       outline: var(--wa-focus-ring);
-      outline-offset: -2px;
+      outline-offset: calc(var(--wa-focus-ring-offset) * -2);
     }
     /* The empty-state row is not a row you can open. */
     tbody tr.empty,

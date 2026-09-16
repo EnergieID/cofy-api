@@ -40,6 +40,10 @@ if (typeof globalThis.document !== "undefined") {
   globalThis.ResizeObserver ??= NoopResizeObserver;
   globalThis.IntersectionObserver ??= NoopIntersectionObserver;
 
+  // Several Web Awesome components scroll a newly opened item into view; jsdom has no layout,
+  // so there is nothing to scroll, but it still needs to exist.
+  fallback(Element.prototype, "scrollIntoView", () => {});
+
   // Every Web Awesome component is form-associated and calls `setValidity` from `firstUpdated`
   // - `wa-button` included. jsdom implements `attachInternals()` but not the validity half of
   // what it returns, so without these the first render of any component rejects. `validity`

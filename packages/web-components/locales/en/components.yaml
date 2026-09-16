@@ -27,21 +27,32 @@ moduleList:
     actions: Actions
 
 editor:
+  title: Edit module
   save: Save
   saving: Saving…
   discard: Discard
   saved: Saved
   unsaved: Unsaved changes
   unchanged: No changes
-  documentRoot: document
   renamed: A module's type and name are its identity and cannot be changed here — create a new module instead.
 
 create:
-  type: Module type
-  choose: Choose a type…
+  title: Add module
   submit: Create module
   creating: Creating…
   cancel: Cancel
+
+form:
+  add: Add
+  remove: Remove
+  choose: Choose
+  type: Type
+  moduleType: Module type
+  chooseType: Choose a type…
+  viewAsYaml: View as YAML
+  viewAsForm: View as form
+  issuesToggle_one: "{{count}} error blocks saving"
+  issuesToggle_other: "{{count}} errors block saving"
 
 settings:
   open: Settings

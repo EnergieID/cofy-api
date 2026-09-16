@@ -38,7 +38,6 @@ export class CofyNewModulePage extends CofyPage {
   public override render(): TemplateResult {
     return html`
       <section>
-        <h1>${this.t("newModule.heading")}</h1>
         <cofy-module-create
           .slug=${this.slug}
           @module-created=${(event: CustomEvent<{ slug: string; id: { type: string; name: string } }>): void =>

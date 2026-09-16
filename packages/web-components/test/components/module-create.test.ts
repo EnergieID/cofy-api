@@ -61,20 +61,31 @@ async function mount(preload = true): Promise<CofyModuleCreate> {
   element.slug = "test";
   document.body.append(element);
   await element.updateComplete;
+  // `cofy-module-form` (and its own type wa-select) mounts recursively and needs its own tick
+  // to finish its first render before its options are ready to interact with.
+  await new Promise((resolve) => setTimeout(resolve, 0));
   return element;
 }
 
-/** What the editor currently holds; the component's own copy is private. */
-function document_(element: CofyModuleCreate): string {
-  return element.shadowRoot!.querySelector("cofy-yaml-editor")?.text ?? "";
+/** The type picker now lives inside `cofy-module-form`, itself part of the create component's own form. */
+function moduleForm(element: CofyModuleCreate): HTMLElement & { value: unknown; shadowRoot: ShadowRoot } {
+  return element.shadowRoot!.querySelector("cofy-module-form") as HTMLElement & { value: unknown; shadowRoot: ShadowRoot };
 }
 
-function selectType(element: CofyModuleCreate, type: string): void {
+/** What the form currently holds; the component's own copy is private. */
+function seeded(element: CofyModuleCreate): Record<string, unknown> | undefined {
+  return moduleForm(element).value as Record<string, unknown> | undefined;
+}
+
+async function selectType(element: CofyModuleCreate, type: string): Promise<void> {
   // Set the value and fire a plain `change`, the way the real control does - rather than
   // fabricating a detail payload the component would never otherwise see.
-  const select = element.shadowRoot!.querySelector<HTMLElement & { value: string }>("wa-select")!;
+  const select = moduleForm(element).shadowRoot.querySelector<HTMLElement & { value: string }>("wa-select")!;
   select.value = type;
   select.dispatchEvent(new Event("change", { bubbles: true }));
+  await element.updateComplete;
+  // `cofy-module-form` re-renders one tick after cofy-module-create's own update settles.
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 describe("cofy-module-create", () => {
@@ -85,9 +96,8 @@ describe("cofy-module-create", () => {
   it("offers every allowed module type", async () => {
     const element = await mount();
 
-    const items = element.shadowRoot!.querySelectorAll("wa-option");
+    const items = moduleForm(element).shadowRoot.querySelectorAll("wa-option");
 
-    // No empty first option any more - "choose a type" is the select's placeholder.
     expect(Array.from(items).map((item) => item.getAttribute("value"))).toEqual(["billing", "tariff"]);
   });
 
@@ -98,7 +108,7 @@ describe("cofy-module-create", () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     await element.updateComplete;
 
-    const items = element.shadowRoot!.querySelectorAll("wa-option");
+    const items = moduleForm(element).shadowRoot.querySelectorAll("wa-option");
     expect(Array.from(items).map((item) => item.getAttribute("value"))).toEqual(["billing", "tariff"]);
   });
 
@@ -108,38 +118,78 @@ describe("cofy-module-create", () => {
     const element = await mount();
 
     for (const type of ["billing", "tariff"]) {
-      selectType(element, type);
-      await element.updateComplete;
-      expect(document_(element)).toContain(`type: ${type}`);
+      await selectType(element, type);
+      expect(seeded(element)?.["type"]).toBe(type);
     }
   });
 
   it("replaces the document when the type is changed again", async () => {
     const element = await mount();
 
-    selectType(element, "billing");
-    await element.updateComplete;
-    const billing = document_(element);
+    await selectType(element, "billing");
+    const billing = seeded(element);
 
-    selectType(element, "tariff");
-    await element.updateComplete;
+    await selectType(element, "tariff");
 
-    expect(document_(element)).not.toBe(billing);
-    expect(document_(element)).toContain("type: tariff");
+    expect(seeded(element)).not.toEqual(billing);
+    expect(seeded(element)?.["type"]).toBe("tariff");
   });
 
-  it("leaves unset fields out of the seeded document", async () => {
+  it("leaves unset, undefaulted fields out of the seeded document", async () => {
     const element = await mount();
 
-    selectType(element, "billing");
-    await element.updateComplete;
+    await selectType(element, "billing");
 
-    expect(document_(element)).not.toContain("null");
+    expect(Object.values(seeded(element)!)).not.toContain(null);
+    expect(Object.values(seeded(element)!)).not.toContain(undefined);
   });
 
-  it("shows no editor until a type is chosen", async () => {
+  it("shows no fields below the picker until a type is chosen", async () => {
     const element = await mount();
 
-    expect(element.shadowRoot!.querySelector("cofy-yaml-editor")).toBeNull();
+    expect(moduleForm(element).shadowRoot.querySelector("cofy-object-form")).toBeNull();
+    expect(moduleForm(element).shadowRoot.querySelector("cofy-yaml-editor")).toBeNull();
+  });
+
+  it("shows no footer until a type is chosen", async () => {
+    const element = await mount();
+
+    expect(element.shadowRoot!.querySelector("footer")).toBeNull();
+  });
+
+  it("shows a fixed title in its heading, and no view toggle until a type is chosen", async () => {
+    const element = await mount();
+
+    expect(element.shadowRoot!.querySelector('cofy-heading [slot="title"]')?.textContent?.trim()).toBe(
+      "Add module",
+    );
+    expect(element.shadowRoot!.querySelector('cofy-heading wa-button[slot="actions"]')).toBeNull();
+  });
+
+  it("shows the view toggle once a type is chosen, and hides the picker once YAML is selected", async () => {
+    const element = await mount();
+    await selectType(element, "billing");
+
+    const toggle = element.shadowRoot!.querySelector<HTMLElement>('cofy-heading wa-button[slot="actions"]');
+    expect(toggle).not.toBeNull();
+    expect(moduleForm(element).shadowRoot.querySelector("wa-select")).not.toBeNull();
+
+    toggle!.dispatchEvent(new MouseEvent("click"));
+    await element.updateComplete;
+
+    expect(moduleForm(element).shadowRoot.querySelector("wa-select")).toBeNull();
+    expect(moduleForm(element).shadowRoot.querySelector("cofy-yaml-editor")).not.toBeNull();
+  });
+
+  it("shows validation issues as a plain badge, not a clickable list", async () => {
+    const element = await mount();
+    // the recursive Formula bottoms out its own required `inner` as null - a real issue.
+    await selectType(element, "tariff");
+
+    const badge = element.shadowRoot!.querySelector("wa-badge");
+    expect(badge).not.toBeNull();
+    expect(badge!.getAttribute("variant")).toBe("danger");
+    expect(badge!.textContent).toMatch(/blocks? saving/);
+    expect(element.shadowRoot!.querySelector("ul.issues")).toBeNull();
   });
 });

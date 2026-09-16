@@ -9,6 +9,7 @@ import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 import { CofyElement } from "../../cofy-element.js";
 import { communityStoreContext } from "../../context.js";
 import { tableStyles } from "../../theme/table.js";
+import { utilityStyles } from "../../theme/utility-styles.js";
 import "../layout/cofy-heading.js";
 import "../cofy-problem-details.js";
 
@@ -23,17 +24,10 @@ import "../cofy-problem-details.js";
 export class CofyCommunityList extends CofyElement {
   public static override styles = [
     tableStyles,
+    utilityStyles,
     css`
       :host {
         display: block;
-      }
-      cofy-heading {
-        margin-block-end: var(--wa-space-m);
-      }
-      .skeleton {
-        display: flex;
-        flex-direction: column;
-        gap: var(--wa-space-s);
       }
     `,
   ];
@@ -53,33 +47,35 @@ export class CofyCommunityList extends CofyElement {
 
     if (error !== null) return html`<cofy-problem-details .problem=${error}></cofy-problem-details>`;
     if (loading && !loaded) {
-      return html`<div class="skeleton">
+      return html`<div class="wa-stack">
         ${Array.from({ length: 4 }, () => html`<wa-skeleton></wa-skeleton>`)}
       </div>`;
     }
 
     return html`
-      <cofy-heading>
-        <span slot="title">${this.t("communityList.title")}</span>
-        <span slot="description">${this.t("communityList.description")}</span>
-      </cofy-heading>
+      <div class="wa-stack">
+        <cofy-heading>
+          <span slot="title">${this.t("communityList.title")}</span>
+          <span slot="description">${this.t("communityList.description")}</span>
+        </cofy-heading>
 
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">${this.t("communityList.columns.community")}</th>
-            <th scope="col">${this.t("communityList.columns.slug")}</th>
-            <th scope="col">${this.t("communityList.columns.modules")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${communities.length === 0
-            ? html`<tr class="empty">
-                <td class="secondary" colspan="3">${this.t("communityList.empty")}</td>
-              </tr>`
-            : communities.map((community): TemplateResult => this.row(community))}
-        </tbody>
-      </table>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">${this.t("communityList.columns.community")}</th>
+              <th scope="col">${this.t("communityList.columns.slug")}</th>
+              <th scope="col">${this.t("communityList.columns.modules")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${communities.length === 0
+              ? html`<tr class="empty">
+                  <td class="secondary" colspan="3">${this.t("communityList.empty")}</td>
+                </tr>`
+              : communities.map((community): TemplateResult => this.row(community))}
+          </tbody>
+        </table>
+      </div>
     `;
   }
 

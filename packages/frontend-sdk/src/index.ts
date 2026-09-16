@@ -13,5 +13,6 @@ export { narrowToInstance, validate, type JsonSchema, type ValidationIssue } fro
 export { CommunityStore } from "./stores/community-store.js";
 export { ModuleStore } from "./stores/module-store.js";
 export { AllowedModulesStore } from "./stores/allowed-modules-store.js";
+export { EditableValue } from "./drafts/editable-value.js";
 export { ModuleDraft } from "./drafts/module-draft.js";
 export type { components, operations, paths } from "./generated/api.js";

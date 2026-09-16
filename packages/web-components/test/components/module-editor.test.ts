@@ -3,7 +3,6 @@ import { AllowedModulesStore, ApiClient, ModuleStore, type ModuleSettings } from
 
 import { CofyModuleEditor } from "../../src/components/module/cofy-module-editor.js";
 import { testI18n } from "../support/i18n.js";
-import type { YamlEditorChange } from "../../src/components/editor/cofy-yaml-editor.js";
 
 const stored: ModuleSettings = {
   type: "tariff",
@@ -15,11 +14,11 @@ const stored: ModuleSettings = {
 
 const catalog = [{ type: "tariff", description: "Tariff", schema: { type: "object" } }];
 
-function stubApi(): ApiClient {
+function stubApi(allowedModules: unknown = catalog): ApiClient {
   const fetchStub = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const request = input instanceof Request ? input : new Request(input, init);
     const path = new URL(request.url).pathname;
-    const body = path.endsWith("/allowed-modules") ? catalog : [stored];
+    const body = path.endsWith("/allowed-modules") ? allowedModules : [stored];
     return Promise.resolve(
       new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } }),
     );
@@ -27,8 +26,8 @@ function stubApi(): ApiClient {
   return new ApiClient({ fetch: fetchStub, baseUrl: "http://localhost" });
 }
 
-async function mount(): Promise<CofyModuleEditor> {
-  const api = stubApi();
+async function mount(allowedModules?: unknown): Promise<CofyModuleEditor> {
+  const api = stubApi(allowedModules);
   const element = new CofyModuleEditor();
   element.i18n = await testI18n();
   element.moduleStore = new ModuleStore(api);
@@ -42,12 +41,16 @@ async function mount(): Promise<CofyModuleEditor> {
   return element;
 }
 
-/** What the editor would report after someone typed *text*. */
-function type(element: CofyModuleEditor, text: string): void {
-  const detail: YamlEditorChange = { text, value: { type: "tariff", name: "spot", edited: true }, syntaxErrors: [] };
+/** What `cofy-module-form` would report after an edit, however it was made (form or YAML). */
+function edit(element: CofyModuleEditor, value: ModuleSettings): void {
   element.shadowRoot!
-    .querySelector("cofy-yaml-editor")!
-    .dispatchEvent(new CustomEvent<YamlEditorChange>("yaml-change", { detail }));
+    .querySelector("cofy-module-form")!
+    .dispatchEvent(new CustomEvent("module-form-change", { detail: { value }, bubbles: true, composed: true }));
+}
+
+/** Save/Discard, scoped to the footer - the heading's own view-toggle is also a `wa-button`. */
+function footerButtons(element: CofyModuleEditor): NodeListOf<Element> {
+  return element.shadowRoot!.querySelectorAll("footer wa-button");
 }
 
 describe("cofy-module-editor", () => {
@@ -55,43 +58,98 @@ describe("cofy-module-editor", () => {
     document.body.replaceChildren();
   });
 
-  it("shows the stored module, with unset fields left out", async () => {
+  it("shows a fixed title in its heading, with the view toggle beside it as an action", async () => {
     const element = await mount();
 
-    const text = element.shadowRoot!.querySelector("cofy-yaml-editor")!.text;
-
-    expect(text).toContain("name: spot");
-    expect(text).not.toContain("display_name");
-    expect(text).not.toContain("null");
+    expect(element.shadowRoot!.querySelector('cofy-heading [slot="title"]')?.textContent?.trim()).toBe(
+      "Edit module",
+    );
+    expect(element.shadowRoot!.querySelector('cofy-heading wa-button[slot="actions"]')).not.toBeNull();
   });
 
-  it("puts the original document back into the editor on discard", async () => {
-    // The host has to track what the editor holds; otherwise discarding sets the property to
-    // the value it already had, Lit sees no change, and the edits stay on screen.
+  it("toggles the form to YAML from the heading, reflecting the current value without saving", async () => {
     const element = await mount();
-    const original = element.shadowRoot!.querySelector("cofy-yaml-editor")!.text;
-
-    type(element, "type: tariff\nname: spot\nedited: true\n");
-    await element.updateComplete;
-    expect(element.shadowRoot!.querySelector("cofy-yaml-editor")!.text).toContain("edited");
-
-    element.shadowRoot!.querySelectorAll("wa-button")[1]!.dispatchEvent(new MouseEvent("click"));
+    edit(element, { ...stored, display_name: "Spot prices" });
     await element.updateComplete;
 
-    expect(element.shadowRoot!.querySelector("cofy-yaml-editor")!.text).toBe(original);
+    element.shadowRoot!
+      .querySelector<HTMLElement>('cofy-heading wa-button[slot="actions"]')!
+      .dispatchEvent(new MouseEvent("click"));
+    await element.updateComplete;
+
+    const moduleForm = element.shadowRoot!.querySelector("cofy-module-form")!;
+    expect(moduleForm.mode).toBe("yaml");
+    expect(moduleForm.shadowRoot!.querySelector("cofy-yaml-editor")!.text).toContain("display_name: Spot prices");
+  });
+
+  it("hides the type picker once viewing YAML - it is already part of that text", async () => {
+    const element = await mount();
+    const moduleForm = element.shadowRoot!.querySelector("cofy-module-form")!;
+    expect(moduleForm.shadowRoot!.querySelector("wa-select")).not.toBeNull();
+
+    element.shadowRoot!
+      .querySelector<HTMLElement>('cofy-heading wa-button[slot="actions"]')!
+      .dispatchEvent(new MouseEvent("click"));
+    await element.updateComplete;
+
+    expect(moduleForm.shadowRoot!.querySelector("wa-select")).toBeNull();
+  });
+
+  it("passes the stored module's value down to the form", async () => {
+    const element = await mount();
+
+    const value = element.shadowRoot!.querySelector("cofy-module-form")!.value as ModuleSettings;
+
+    expect(value).toEqual(stored);
+  });
+
+  it("puts the original value back into the form on discard", async () => {
+    const element = await mount();
+
+    edit(element, { ...stored, display_name: "Spot prices" });
+    await element.updateComplete;
+    expect((element.shadowRoot!.querySelector("cofy-module-form")!.value as ModuleSettings).display_name).toBe(
+      "Spot prices",
+    );
+
+    footerButtons(element)[1]!.dispatchEvent(new MouseEvent("click"));
+    await element.updateComplete;
+
+    expect(element.shadowRoot!.querySelector("cofy-module-form")!.value).toEqual(stored);
   });
 
   it("enables the actions only once there is something to save", async () => {
     const element = await mount();
-    const buttons = (): NodeListOf<Element> => element.shadowRoot!.querySelectorAll("wa-button");
 
-    expect(buttons()[0]!.hasAttribute("disabled")).toBe(true);
-    expect(buttons()[1]!.hasAttribute("disabled")).toBe(true);
+    expect(footerButtons(element)[0]!.hasAttribute("disabled")).toBe(true);
+    expect(footerButtons(element)[1]!.hasAttribute("disabled")).toBe(true);
 
-    type(element, "type: tariff\nname: spot\nedited: true\n");
+    edit(element, { ...stored, display_name: "Spot prices" });
     await element.updateComplete;
 
-    expect(buttons()[0]!.hasAttribute("disabled")).toBe(false);
-    expect(buttons()[1]!.hasAttribute("disabled")).toBe(false);
+    expect(footerButtons(element)[0]!.hasAttribute("disabled")).toBe(false);
+    expect(footerButtons(element)[1]!.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("blocks save when the edit changes the module's identity", async () => {
+    const element = await mount();
+
+    edit(element, { ...stored, name: "renamed" });
+    await element.updateComplete;
+
+    expect(footerButtons(element)[0]!.hasAttribute("disabled")).toBe(true);
+  });
+
+  it("shows validation issues as a plain badge, not a clickable list", async () => {
+    const brokenCatalog = [
+      { type: "tariff", description: "Tariff", schema: { type: "object", required: ["missing"] } },
+    ];
+    const element = await mount(brokenCatalog);
+
+    const badge = element.shadowRoot!.querySelector("wa-badge");
+    expect(badge).not.toBeNull();
+    expect(badge!.getAttribute("variant")).toBe("danger");
+    expect(badge!.textContent).toMatch(/blocks? saving/);
+    expect(element.shadowRoot!.querySelector("ul.issues")).toBeNull();
   });
 });

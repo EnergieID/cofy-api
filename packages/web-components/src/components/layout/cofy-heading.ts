@@ -3,8 +3,8 @@ import type { TemplateResult } from "lit";
 import { customElement } from "lit/decorators.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { layoutStyles } from "../../theme/layout-styles.js";
 import { nativeStyles } from "../../theme/native-styles.js";
+import { utilityStyles } from "../../theme/utility-styles.js";
 
 /**
  * A section heading: a title, a description beneath it, and optional actions on the far side -
@@ -18,19 +18,10 @@ import { nativeStyles } from "../../theme/native-styles.js";
 export class CofyHeading extends CofyElement {
   public static override styles = [
     nativeStyles,
-    layoutStyles,
+    utilityStyles,
     css`
       :host {
         display: block;
-      }
-      p {
-        /* Inherited by the slotted text, same as any other CSS property. */
-        color: var(--wa-color-text-quiet);
-      }
-      .text {
-        /* wa-stack's own gap reads as two stacked blocks; a title and its description read as
-           one. */
-        gap: var(--wa-space-3xs);
       }
     `,
   ];
@@ -38,9 +29,9 @@ export class CofyHeading extends CofyElement {
   public override render(): TemplateResult {
     return html`
       <div class="wa-split">
-        <div class="wa-stack text">
+        <div class="wa-stack wa-gap-3xs">
           <h3><slot name="title"></slot></h3>
-          <p><slot name="description"></slot></p>
+          <p class="wa-color-text-quiet"><slot name="description"></slot></p>
         </div>
         <slot name="actions"></slot>
       </div>

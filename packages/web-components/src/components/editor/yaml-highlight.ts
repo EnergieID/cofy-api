@@ -39,25 +39,30 @@ const highlight = HighlightStyle.define([
 const chrome = EditorView.theme({
   "&": {
     color: "var(--wa-color-text-normal)",
-    backgroundColor: "var(--wa-color-surface-lowered)",
+    backgroundColor: "var(--wa-form-control-background-color)",
   },
   ".cm-content": {
     caretColor: "var(--wa-color-text-normal)",
     fontFamily: "var(--wa-font-family-code, monospace)",
+    // Same inset as every other control's own value from its border - `wa-textarea`'s own.
+    padding: "var(--wa-form-control-padding-block) var(--wa-form-control-padding-inline)",
   },
   ".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--wa-color-text-normal)" },
-  "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
-    backgroundColor: "var(--wa-color-brand-fill-quiet)",
+  "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection": {
+    backgroundColor: "var(--wa-color-brand-fill-quiet) !important",
   },
-  ".cm-activeLine": { backgroundColor: "var(--wa-color-surface-raised)" },
+  // "-surface-raised" happens to equal the editor's own background in light theme (both plain
+  // white), so the active line disappeared there; "-surface-lowered" differs from it in both.
+  ".cm-activeLine": { backgroundColor: "var(--wa-color-surface-lowered)" },
   ".cm-gutters": {
-    backgroundColor: "var(--wa-color-surface-lowered)",
+    backgroundColor: "var(--wa-form-control-background-color)",
     color: "var(--wa-color-text-quiet)",
     border: "none",
-    borderInlineEnd: "1px solid var(--wa-color-surface-border)",
+    borderInlineEnd: "var(--wa-border-width-s) solid var(--wa-color-surface-border)",
+    paddingInlineStart: "var(--wa-form-control-padding-inline)",
   },
   ".cm-activeLineGutter": {
-    backgroundColor: "var(--wa-color-surface-raised)",
+    backgroundColor: "var(--wa-color-surface-lowered)",
     color: "var(--wa-color-text-normal)",
   },
   ".cm-foldPlaceholder": {
@@ -68,7 +73,7 @@ const chrome = EditorView.theme({
   ".cm-tooltip": {
     backgroundColor: "var(--wa-color-surface-raised)",
     color: "var(--wa-color-text-normal)",
-    border: "1px solid var(--wa-color-surface-border)",
+    border: "var(--wa-border-width-s) solid var(--wa-color-surface-border)",
   },
   ".cm-diagnostic-error": { borderInlineStartColor: "var(--wa-color-danger-border-loud)" },
   ".cm-lintRange-error": {

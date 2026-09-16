@@ -12,7 +12,7 @@ import { CofyElement } from "../../cofy-element.js";
 import "./cofy-locale-picker.js";
 import "./cofy-theme-picker.js";
 import { nativeStyles } from "../../theme/native-styles.js";
-import { layoutStyles } from "../../theme/layout-styles.js";
+import { utilityStyles } from "../../theme/utility-styles.js";
 
 /**
  * The console's global settings, behind one header action.
@@ -29,7 +29,7 @@ import { layoutStyles } from "../../theme/layout-styles.js";
 export class CofySettingsPanel extends CofyElement {
   public static override styles = [
     nativeStyles,
-    layoutStyles,
+    utilityStyles,
     css`
     :host {
       display: contents;

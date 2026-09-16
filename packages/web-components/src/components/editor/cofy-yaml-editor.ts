@@ -10,7 +10,9 @@ import type { TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 import { CofyElement } from "../../cofy-element.js";
+import { nativeStyles } from "../../theme/native-styles.js";
 import { parseDocument } from "yaml";
+import { parsePointer } from "../form/pointer.js";
 
 /** What the editor's current text means, recomputed on every change. */
 export interface YamlEditorChange {
@@ -37,22 +39,28 @@ export interface YamlEditorIssue {
  */
 @customElement("cofy-yaml-editor")
 export class CofyYamlEditor extends CofyElement {
-  public static override styles = css`
-    :host {
-      display: block;
-    }
-    .editor {
-      border: 1px solid var(--wa-color-surface-border);
-      background: var(--wa-color-surface-lowered);
-    }
-    .cm-editor {
-      max-block-size: 60vh;
-    }
-    .cm-editor.cm-focused {
-      outline: 2px solid var(--wa-color-focus);
-      outline-offset: -2px;
-    }
-  `;
+  public static override styles = [
+    nativeStyles,
+    css`
+      :host {
+        display: block;
+      }
+      .editor {
+        border: var(--wa-form-control-border-width) var(--wa-form-control-border-style) var(--wa-form-control-border-color);
+        border-radius: var(--wa-form-control-border-radius);
+        background: var(--wa-form-control-background-color);
+        /* CodeMirror's own box is square-cornered; clip it to the rounded border around it. */
+        overflow: hidden;
+      }
+      .cm-editor {
+        max-block-size: 60vh;
+      }
+      .editor:focus-within {
+        outline: var(--wa-focus-ring-style) var(--wa-focus-ring-width) var(--wa-color-focus);
+        outline-offset: var(--wa-focus-ring-offset);
+      }
+    `,
+  ];
 
   /** The document to edit. Assigning replaces the editor's contents. */
   @property({ type: String }) public text = "";
@@ -94,18 +102,6 @@ export class CofyYamlEditor extends CofyElement {
     super.disconnectedCallback();
     this.view?.destroy();
     this.view = null;
-  }
-
-  /** Move the cursor to the value a pointer addresses, and focus the editor. */
-  public revealPointer(pointer: string): void {
-    const view = this.view;
-    if (view === null) return;
-
-    const range = locate(view.state.doc.toString(), pointer);
-    if (range === null) return;
-
-    view.dispatch({ selection: { anchor: range[0] }, scrollIntoView: true });
-    view.focus();
   }
 
   private extensions(): Extension[] {
@@ -165,15 +161,7 @@ export function locate(text: string, pointer: string): [number, number] | null {
   const document = parseDocument(text);
   if (document.errors.length > 0) return null;
 
-  const path = pointer
-    .slice(1)
-    .split("/")
-    .map((part) => part.replace(/~1/g, "/").replace(/~0/g, "~"));
-
-  const node = document.getIn(
-    path.map((part) => (/^\d+$/.test(part) ? Number(part) : part)),
-    true,
-  ) as { range?: [number, number, number] } | undefined;
+  const node = document.getIn(parsePointer(pointer), true) as { range?: [number, number, number] } | undefined;
 
   if (node?.range === undefined) return null;
   return [node.range[0], node.range[1]];
