@@ -1,6 +1,6 @@
 auth:
   tokens:
-    foo:
+    demo:
       name: Demo User
   type: token
 debug_mode: true
@@ -38,5 +38,5 @@ modules:
   type: tariff
 - name: default
   type: billing
-title: foo
+title: demo
 type: cofy_api

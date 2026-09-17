@@ -12,8 +12,10 @@
             "python": "${workspaceFolder}/packages/api/.venv/bin/python",
             "module": "uvicorn",
             "args": [
-                "demo.main:app",
-                "--reload"
+                "demo_cofy_api.main:app",
+                "--reload",
+                "--app-dir",
+                "apps"
             ],
             "jinja": true,
             "envFile": "${workspaceFolder}/.env.local",
@@ -35,7 +37,8 @@
             "jinja": true,
             "envFile": "${workspaceFolder}/.env.local",
             "env": {
-                "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache"
+                "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache",
+                "COFY_MANAGEMENT_DATA_DIR": "${workspaceFolder}/apps/demo_multitenant/.data"
             },
             "justMyCode": false
         }

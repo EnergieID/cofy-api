@@ -11,7 +11,7 @@ from cofy.modules.directive import DirectiveModule, DirectiveSource
 from cofy.modules.members import MembersFileSource, MembersModule
 from cofy.modules.production import EnergyIDProduction, ProductionModule
 from cofy.modules.tariff import EnergyCostTariffSource, EntsoeDayAheadTariffSource, KiwattFormat, TariffModule
-from demo.members.load_from_csv import example_load_members_from_file
+from demo_cofy_api.members.load_from_csv import example_load_members_from_file
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 

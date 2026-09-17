@@ -23,7 +23,6 @@ from yaml.representer import RepresenterError
 from cofy.management.errors import ResourceAlreadyExistsError
 from cofy.management.persitance.file.base import (
     DATA_DIR_ENV_VAR,
-    PACKAGED_BASE_PATH,
     default_base_path,
 )
 from cofy.management.persitance.file.modules import FileModulesPersistence
@@ -292,10 +291,11 @@ def test_community_path_accepts_the_documented_slug_characters(tmp_data: Path):
 # ── where the data directory comes from ───────────────────────────────────
 
 
-def test_data_directory_defaults_to_the_packaged_samples(monkeypatch: pytest.MonkeyPatch):
+def test_data_directory_is_required(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv(DATA_DIR_ENV_VAR, raising=False)
 
-    assert default_base_path() == PACKAGED_BASE_PATH
+    with pytest.raises(RuntimeError, match=DATA_DIR_ENV_VAR):
+        default_base_path()
 
 
 def test_data_directory_can_be_configured(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):

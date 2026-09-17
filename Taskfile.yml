@@ -70,25 +70,32 @@ tasks:
           (cd "$pkg" && npm install) || exit 1
         done'
 
-  demo:
-    desc: Run the demo API locally
+  demo-cofy-api:
+    desc: Run the Python-defined cofy-api demo locally
     dotenv: ['.env.local']
     cmds:
-      - uv run --project packages/api fastapi dev demo/main.py
+      - uv run --project packages/api fastapi dev apps/demo_cofy_api/main.py
 
-  from_settings:
-    desc: Run the from_settings demo locally
+  demo-cofy-api-settings:
+    desc: Run the settings-file cofy-api demo locally
     dotenv: ['.env.local']
     cmds:
-      - uv run --project packages/api fastapi dev demo/from_settings.py
+      - uv run --project packages/api fastapi dev apps/demo_cofy_api_settings/main.py
 
-  management:
-    desc: Run the management API locally
+  demo-multitenant-reset:
+    desc: Reset the multitenant demo's local data back to its committed seed
+    cmds:
+      - python3 apps/demo_multitenant/scripts/reset.py
+
+  demo-multitenant-api:
+    desc: Run the management API for the multitenant demo locally
+    env:
+      COFY_MANAGEMENT_DATA_DIR: '{{.ROOT_DIR}}/apps/demo_multitenant/.data'
     cmds:
       - uv run --project packages/management-api --directory packages/management-api poe run
 
-  web:
-    desc: Run the management console locally (expects `task management` on :8000)
+  demo-multitenant-web:
+    desc: Run the management console locally (expects `task demo-multitenant-api` on :8000)
     cmds:
       - bash -c '{{.WITH_NODE}} cd apps/management-web && npm run dev'
 

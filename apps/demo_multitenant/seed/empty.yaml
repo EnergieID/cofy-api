@@ -1,4 +1,4 @@
 type: cofy_api
-title: bar
+title: empty
 modules:
   - type: billing

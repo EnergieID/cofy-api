@@ -34,4 +34,4 @@ ARG VERSION=dev
 ENV APP_VERSION=${VERSION}
 
 # Most cloud platforms inject a PORT env var — default to 8080 locally
-CMD ["sh", "-c", "/app/packages/api/.venv/bin/uvicorn demo.main:cofy --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["sh", "-c", "/app/packages/api/.venv/bin/uvicorn demo_cofy_api.main:cofy --app-dir apps --host 0.0.0.0 --port ${PORT:-8080}"]

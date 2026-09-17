@@ -3,7 +3,6 @@ import os
 import re
 from collections.abc import Generator
 from contextlib import contextmanager
-from importlib import resources
 from pathlib import Path
 from typing import Literal
 
@@ -11,9 +10,6 @@ import yaml
 from cofy.api.cofy_api import CofyAPISettings
 
 from ...errors import ResourceNotFoundError
-
-PACKAGED_BASE_PATH = Path(str(resources.files("cofy.management.persitance.file") / "data"))
-"""Sample communities shipped with the package, used when no data directory is configured."""
 
 DATA_DIR_ENV_VAR = "COFY_MANAGEMENT_DATA_DIR"
 
@@ -24,12 +20,13 @@ SLUG_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 def default_base_path() -> Path:
     """Where community configs live.
 
-    The packaged samples are fine to read but not to write - that path is inside the
-    installed distribution - so a deployment that edits communities must set the
-    environment variable.
+    There is no built-in default: this is a deployment's writable state, not something the
+    library can guess at or ship a sample of, so the environment variable is required.
     """
     configured = os.environ.get(DATA_DIR_ENV_VAR)
-    return Path(configured) if configured else PACKAGED_BASE_PATH
+    if not configured:
+        raise RuntimeError(f"{DATA_DIR_ENV_VAR} must be set to a writable directory for community configs")
+    return Path(configured)
 
 
 class FilePersistence:

@@ -29,9 +29,6 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 namespaces = true
 
-[tool.setuptools.package-data]
-"cofy.management.persitance.file" = ["data/*.yaml"]
-
 [dependency-groups]
 dev = [
     "cofy-management-api",
