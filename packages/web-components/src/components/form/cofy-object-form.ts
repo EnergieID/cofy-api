@@ -142,6 +142,7 @@ export class CofyObjectForm extends CofyFormField {
           appearance="outlined"
           summary=${this.t("form.create")}
           @wa-show=${(event: CustomEvent): void => {
+            event.stopPropagation();
             event.preventDefault();
             this.add();
           }}

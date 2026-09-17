@@ -55,3 +55,8 @@ export function tagSummary(value: unknown, node: JsonSchema): string | undefined
 export function arraySummary(value: unknown): string | undefined {
   return Array.isArray(value) ? value.length.toString() : undefined;
 }
+
+/** A dict's own entry count, as a one-line stand-in for a collapsed dict. */
+export function dictSummary(value: unknown): string | undefined {
+  return isRecord(value) ? Object.keys(value).length.toString() : undefined;
+}

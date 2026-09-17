@@ -115,6 +115,7 @@ export class CofyListForm extends CofyFormField {
 
   /** The "Add" item is a fake: cancel its own expand and append a fresh element instead. */
   private onExpand(event: CustomEvent<{ item: Element }>, itemsSchema: Record<string, unknown>): void {
+    event.stopPropagation();
     if (event.detail.item.classList.contains("cofy-list-add")) {
       event.preventDefault();
       this.add(itemsSchema);
@@ -124,6 +125,7 @@ export class CofyListForm extends CofyFormField {
   }
 
   private onCollapse(event: CustomEvent<{ item: Element }>): void {
+    event.stopPropagation();
     this.setExpanded(event.detail.item, false);
   }
 

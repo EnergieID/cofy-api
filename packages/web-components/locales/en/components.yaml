@@ -46,6 +46,7 @@ form:
   add: Add
   create: Create
   remove: Remove
+  key: Key
   choose: Choose
   type: Type
   moduleType: Module type

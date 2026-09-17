@@ -2,6 +2,7 @@ import type { JsonSchema } from "@cofy/frontend-sdk";
 
 // Registers every tag `defaultFieldMappers` below names
 import "./cofy-object-form.js";
+import "./cofy-dict-form.js";
 import "./cofy-list-form.js";
 import "./cofy-union-form.js";
 import "./cofy-string-form.js";
@@ -13,7 +14,7 @@ import "./cofy-const-form.js";
 
 import { isRecord } from "./schema/ref.js";
 import { resolveNode, unionBranches } from "./schema/resolve.js";
-import { arraySummary, primitiveText, tagSummary } from "./schema/summary.js";
+import { arraySummary, dictSummary, primitiveText, tagSummary } from "./schema/summary.js";
 
 /**
  * One entry in a {@link FieldRegistry}.
@@ -25,8 +26,7 @@ import { arraySummary, primitiveText, tagSummary } from "./schema/summary.js";
  *
  * `summarize`, if given, is a one-line stand-in for the full control - what a list item or a
  * collapsed details shows without mounting the real field. Optional: a mapper with nothing
- * sensible to show (a `dict[str, X]` fallback, an array) just omits it, the same as a schema no
- * mapper matches at all.
+ * sensible to show (a secret) just omits it, the same as a schema no mapper matches at all.
  */
 export interface FieldMapper {
   matches(node: JsonSchema, root: JsonSchema): boolean;
@@ -82,11 +82,18 @@ export const defaultFieldMappers: readonly FieldMapper[] = [
   },
   {
     tag: "cofy-object-form",
-    // A `dict[str, X]` schema (`additionalProperties`, no fixed `properties`) has no keys the
-    // generic object renderer could draw a field for - left to the unknown-schema fallback
-    // rather than silently rendering nothing.
+    // Requires a fixed `properties` key to draw fields for - a `dict[str, X]` schema
+    // (`additionalProperties`, no `properties`) is handled by `cofy-dict-form` below instead.
     matches: (node: JsonSchema): boolean => node["type"] === "object" && isRecord(node["properties"]),
     summarize: tagSummary,
+  },
+  {
+    tag: "cofy-dict-form",
+    // The opposite shape: no fixed `properties`, but a schema for every value via
+    // `additionalProperties` - e.g. pydantic's `dict[str, Formula]`.
+    matches: (node: JsonSchema): boolean =>
+      node["type"] === "object" && !isRecord(node["properties"]) && isRecord(node["additionalProperties"]),
+    summarize: dictSummary,
   },
   {
     tag: "cofy-list-form",

@@ -43,11 +43,10 @@ describe("defaultFieldRegistry", () => {
     expect(dispatch(schema)).toEqual({ tag: "cofy-object-form", schema });
   });
 
-  it("leaves a dict-shaped object (additionalProperties, no fixed properties) unmatched", () => {
-    // `dict[str, Formula]` - no `properties` key for the object renderer to draw a field for -
-    // left to `cofy-any-form`'s own `cofy-unknown-form` fallback.
+  it("dispatches a dict-shaped object (additionalProperties, no fixed properties), carrying the resolved node", () => {
+    // `dict[str, Formula]` - no `properties` key for the object renderer to draw a field for.
     const schema = { type: "object", additionalProperties: { oneOf: [{ type: "string" }] } };
-    expect(dispatch(schema)).toBeUndefined();
+    expect(dispatch(schema)).toEqual({ tag: "cofy-dict-form", schema });
   });
 
   it("dispatches an array, carrying the resolved node", () => {
@@ -162,6 +161,11 @@ describe("FieldRegistry.getSummary", () => {
 
   it("summarizes an array by its own length", () => {
     expect(defaultFieldRegistry.getSummary({ type: "array", items: { type: "string" } }, {}, ["a"])).toBe("1");
+  });
+
+  it("summarizes a dict by its own entry count", () => {
+    const schema = { type: "object", additionalProperties: { type: "string" } };
+    expect(defaultFieldRegistry.getSummary(schema, {}, { peak: "flat", off_peak: "flat" })).toBe("2");
   });
 });
 

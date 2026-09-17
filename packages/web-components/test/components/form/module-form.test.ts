@@ -653,6 +653,42 @@ describe("the generic form family, mounted end to end", () => {
     expect(items[0]!.expanded).toBe(true);
   });
 
+  it("does not trigger an ancestor list's own add when a nested list's own add item fires wa-expand", async () => {
+    // wa-expand bubbles across shadow boundaries (composed: true) - a naive listener on the
+    // outer accordion would see the inner list's own ".cofy-list-add" item bubble past it and
+    // mistake it for its own, adding a row to the outer array too.
+    const outerSchema: JsonSchema = { type: "array", items: { type: "array", items: { type: "string" } } };
+    const element = document.createElement("cofy-list-form");
+    await provideI18n(element);
+    element.schema = outerSchema;
+    element.root = outerSchema;
+    element.pointer = "/rows";
+    element.value = [["a"]];
+    document.body.append(element);
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const emitted: Array<{ pointer: string; value: unknown }> = [];
+    element.addEventListener("field-change", (event) => {
+      emitted.push((event as CustomEvent<{ pointer: string; value: unknown }>).detail);
+    });
+
+    const accordions = deepQueryAll(element.shadowRoot!, "wa-accordion");
+    expect(accordions).toHaveLength(2);
+    const innerAccordion = accordions[1]!;
+    innerAccordion.dispatchEvent(
+      new CustomEvent("wa-expand", {
+        detail: { item: innerAccordion.querySelector(".cofy-list-add") },
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      }),
+    );
+
+    // Only the inner list's own field-change fired - the outer never saw its own add triggered.
+    expect(emitted).toEqual([{ pointer: "/rows/0", value: ["a", ""] }]);
+  });
+
   it("shows a list's own issue after the accordion, matching where a leaf field shows its own", async () => {
     const issues: ValidationIssue[] = [{ pointer: "/tags", message: "too many", keyword: "maxItems" }];
     const element = await mountObjectForm({ issues });
@@ -891,7 +927,7 @@ describe("the generic form family, mounted end to end", () => {
     expect(deepQuery(item, ".wa-form-control-label")).toBeNull();
   });
 
-  it("renders a dict-shaped object (additionalProperties, no fixed properties) as a YAML editor, not an empty card", async () => {
+  it("renders a dict-shaped object (additionalProperties, no fixed properties) as an accordion, not a YAML editor", async () => {
     // The shape of energy_cost's TariffVersion.injection/consumption/fixed/capacity -
     // `dict[str, Formula]`, no `properties` key at all for cofy-object-form to draw a field for.
     const parentSchema: JsonSchema = {
@@ -915,9 +951,227 @@ describe("the generic form family, mounted end to end", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const field = fieldAt(element, "/injection")!;
-    expect(field.querySelector("wa-button")).toBeNull();
-    expect(field.querySelector("cofy-yaml-editor")).not.toBeNull();
+    expect(field.querySelector("cofy-yaml-editor")).toBeNull();
+    expect(field.querySelector("wa-accordion")).not.toBeNull();
     expect(field.shadowRoot!.querySelector(".wa-form-control-label")?.textContent).toBe("Injection");
+  });
+});
+
+describe("cofy-dict-form", () => {
+  it("wraps a dict in an accordion, with its label above (not a card - the accordion is its own boundary)", async () => {
+    const dictSchema: JsonSchema = { title: "Tariffs", type: "object", additionalProperties: { type: "string" } };
+    const element = document.createElement("cofy-dict-form");
+    await provideI18n(element);
+    element.schema = dictSchema;
+    element.root = dictSchema;
+    element.pointer = "/tariffs";
+    element.value = { peak: "flat" };
+    element.label = "Tariffs";
+    document.body.append(element);
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const shell = element.shadowRoot!.querySelector("cofy-field-shell")!;
+    expect(shell.shadowRoot!.querySelector(".wa-form-control-label")?.textContent).toBe("Tariffs");
+    expect(shell.querySelector("wa-accordion")).not.toBeNull();
+  });
+
+  it("appends a trailing 'Add' accordion item with a plus icon in place of the expand chevron", async () => {
+    const dictSchema: JsonSchema = { type: "object", additionalProperties: { type: "string" } };
+    const element = document.createElement("cofy-dict-form");
+    await provideI18n(element);
+    element.schema = dictSchema;
+    element.root = dictSchema;
+    element.pointer = "/tariffs";
+    element.value = { peak: "flat" };
+    document.body.append(element);
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // A standalone mount has no ancestor to provide i18n context to (the same host can't be
+    // both consumer and provider of its own - see `provideI18n`'s own docstring), so the label
+    // text itself is not checked here, the same as every other raw-mounted-field test in this
+    // file; the class and icon are what identify the "Add" item to `cofy-dict-form` itself.
+    const addItem = element.shadowRoot!.querySelector(".cofy-dict-add")!;
+    expect(addItem).not.toBeNull();
+    expect(addItem.querySelector('[slot="icon"]')?.getAttribute("name")).toBe("plus");
+  });
+
+  it("collapses each entry by default, labelled 'key: value summary', with a delete action", async () => {
+    const dictSchema: JsonSchema = { type: "object", additionalProperties: { type: "string" } };
+    const element = document.createElement("cofy-dict-form");
+    await provideI18n(element);
+    element.schema = dictSchema;
+    element.root = dictSchema;
+    element.pointer = "/tariffs";
+    element.value = { peak: "flat", off_peak: "low" };
+    document.body.append(element);
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const items = element.shadowRoot!.querySelectorAll<HTMLElement & { expanded: boolean }>(
+      "wa-accordion-item:not(.cofy-dict-add)",
+    );
+    expect(items).toHaveLength(2);
+    expect(Array.from(items).every((item) => !item.expanded)).toBe(true);
+    expect(items[0]!.querySelector('[slot="label"]')?.textContent).toContain("peak: flat");
+    expect(items[1]!.querySelector('[slot="label"]')?.textContent).toContain("off_peak: low");
+  });
+
+  it("renders the key input, then the bare value form inside each entry", async () => {
+    const dictSchema: JsonSchema = { type: "object", additionalProperties: { type: "string" } };
+    const element = document.createElement("cofy-dict-form");
+    await provideI18n(element);
+    element.schema = dictSchema;
+    element.root = dictSchema;
+    element.pointer = "/tariffs";
+    element.value = { peak: "flat" };
+    document.body.append(element);
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const item = element.shadowRoot!.querySelector("wa-accordion-item:not(.cofy-dict-add)")!;
+    const children = Array.from(item.querySelector(".wa-stack")!.children).map((child) => child.tagName.toLowerCase());
+    expect(children).toEqual(["wa-input", "cofy-any-form"]);
+    expect((item.querySelector("wa-input") as HTMLElement & { value: string }).value).toBe("peak");
+  });
+
+  it("opens a newly added entry automatically, under a generated unique key", async () => {
+    const dictSchema: JsonSchema = { type: "object", additionalProperties: { type: "string" } };
+    const element = document.createElement("cofy-dict-form");
+    await provideI18n(element);
+    element.schema = dictSchema;
+    element.root = dictSchema;
+    element.pointer = "/tariffs";
+    element.value = { key: "flat" };
+    document.body.append(element);
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    let emitted: unknown;
+    element.addEventListener("field-change", (event) => {
+      emitted = (event as CustomEvent<{ value: unknown }>).detail.value;
+    });
+    const accordion = element.shadowRoot!.querySelector("wa-accordion")!;
+    accordion.dispatchEvent(
+      new CustomEvent("wa-expand", { detail: { item: accordion.querySelector(".cofy-dict-add") }, cancelable: true }),
+    );
+
+    // A generated key never collides with an existing one - "key" is already taken here.
+    expect(emitted).toEqual({ key: "flat", key1: "" });
+
+    element.value = emitted;
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const newItem = element.shadowRoot!.querySelectorAll<HTMLElement & { expanded: boolean }>(
+      "wa-accordion-item:not(.cofy-dict-add)",
+    )[1]!;
+    expect(newItem.expanded).toBe(true);
+  });
+
+  it("removes an entry when its delete link is activated", async () => {
+    const dictSchema: JsonSchema = { type: "object", additionalProperties: { type: "string" } };
+    const element = document.createElement("cofy-dict-form");
+    await provideI18n(element);
+    element.schema = dictSchema;
+    element.root = dictSchema;
+    element.pointer = "/tariffs";
+    element.value = { peak: "flat", off_peak: "low" };
+    document.body.append(element);
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    let emitted: unknown;
+    element.addEventListener("field-change", (event) => {
+      emitted = (event as CustomEvent<{ value: unknown }>).detail.value;
+    });
+    const remove = element.shadowRoot!.querySelector<HTMLElement>('[slot="label"] a')!;
+    remove.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(emitted).toEqual({ off_peak: "low" });
+  });
+
+  it("renames a key by rewriting the entry, keeping its value and open state", async () => {
+    const dictSchema: JsonSchema = { type: "object", additionalProperties: { type: "string" } };
+    const element = document.createElement("cofy-dict-form");
+    await provideI18n(element);
+    element.schema = dictSchema;
+    element.root = dictSchema;
+    element.pointer = "/tariffs";
+    element.value = { peak: "flat" };
+    document.body.append(element);
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    let emitted: unknown;
+    element.addEventListener("field-change", (event) => {
+      emitted = (event as CustomEvent<{ value: unknown }>).detail.value;
+    });
+    const input = element.shadowRoot!.querySelector("wa-input") as HTMLElement & { value: string };
+    input.value = "off_peak";
+    input.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+
+    expect(emitted).toEqual({ off_peak: "flat" });
+  });
+
+  it("leaves a rename unapplied when the new key collides with another entry", async () => {
+    const dictSchema: JsonSchema = { type: "object", additionalProperties: { type: "string" } };
+    const element = document.createElement("cofy-dict-form");
+    await provideI18n(element);
+    element.schema = dictSchema;
+    element.root = dictSchema;
+    element.pointer = "/tariffs";
+    element.value = { peak: "flat", off_peak: "low" };
+    document.body.append(element);
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    let emitted: unknown;
+    element.addEventListener("field-change", (event) => {
+      emitted = (event as CustomEvent<{ value: unknown }>).detail.value;
+    });
+    const input = element.shadowRoot!.querySelector("wa-input") as HTMLElement & { value: string };
+    input.value = "off_peak";
+    input.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+
+    expect(emitted).toBeUndefined();
+  });
+
+  it("does not trigger an ancestor dict's own add when a nested dict's own add item fires wa-expand", async () => {
+    // Same bubbling hazard as cofy-list-form: wa-expand crosses shadow boundaries (composed:
+    // true), so a naive listener on the outer accordion would see the inner dict's own
+    // ".cofy-dict-add" item bubble past it and mistake it for its own.
+    const dictSchema: JsonSchema = { type: "object", additionalProperties: { type: "object", additionalProperties: { type: "string" } } };
+    const element = document.createElement("cofy-dict-form");
+    await provideI18n(element);
+    element.schema = dictSchema;
+    element.root = dictSchema;
+    element.pointer = "/tariffs";
+    element.value = { peak: { off_peak: "low" } };
+    document.body.append(element);
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const emitted: Array<{ pointer: string; value: unknown }> = [];
+    element.addEventListener("field-change", (event) => {
+      emitted.push((event as CustomEvent<{ pointer: string; value: unknown }>).detail);
+    });
+
+    const accordions = deepQueryAll(element.shadowRoot!, "wa-accordion");
+    expect(accordions).toHaveLength(2);
+    const innerAccordion = accordions[1]!;
+    innerAccordion.dispatchEvent(
+      new CustomEvent("wa-expand", {
+        detail: { item: innerAccordion.querySelector(".cofy-dict-add") },
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      }),
+    );
+
+    // Only the inner dict's own field-change fired - the outer never saw its own add triggered.
+    expect(emitted).toEqual([{ pointer: "/tariffs/peak", value: { off_peak: "low", key: "" } }]);
   });
 });
 
