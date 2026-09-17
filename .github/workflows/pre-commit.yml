@@ -25,5 +25,16 @@ jobs:
         uses: arduino/setup-task@v2
         with:
           version: '3.x'
+      - name: Install Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: |
+            packages/frontend-sdk/package-lock.json
+            packages/web-components/package-lock.json
+            apps/management-web/package-lock.json
+      - name: Install frontend dependencies
+        run: task install
       - name: Run pre-commit hooks
         run: pre-commit run --all-files
