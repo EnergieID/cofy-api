@@ -1,0 +1,55 @@
+{
+  "name": "@cofy/frontend-sdk",
+  "version": "0.0.0",
+  "description": "Typed client and reactive stores for the Cofy management API.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EnergieID/cofy-api",
+    "directory": "packages/frontend-sdk"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "format": "eslint . --fix",
+    "test": "vitest run",
+    "generate": "node scripts/generate-types.js"
+  },
+  "dependencies": {
+    "@cfworker/json-schema": "^4.1.1",
+    "openapi-fetch": "^0.17.0",
+    "openapi-typescript-helpers": "^0.1.0"
+  },
+  "peerDependencies": {
+    "@dodona/lit-state": "^1.3.0",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "@dodona/lit-state": "^1.3.0",
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^24.0.0",
+    "eslint": "^9.0.0",
+    "lit": "^3.3.3",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^5.0.0"
+  }
+}

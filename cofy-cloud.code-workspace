@@ -1,7 +1,28 @@
 {
     "folders": [
-        { "name": "cofy-cloud", "path": "." },
-        { "name": "api", "path": "packages/api" },
-        { "name": "management-api", "path": "packages/management-api" }
+        {
+            "name": "cofy-cloud",
+            "path": "."
+        },
+        {
+            "name": "api",
+            "path": "packages/api"
+        },
+        {
+            "name": "management-api",
+            "path": "packages/management-api"
+        },
+        {
+            "name": "frontend-sdk",
+            "path": "packages/frontend-sdk"
+        },
+        {
+            "name": "web-components",
+            "path": "packages/web-components"
+        },
+        {
+            "name": "management-web",
+            "path": "apps/management-web"
+        }
     ]
 }

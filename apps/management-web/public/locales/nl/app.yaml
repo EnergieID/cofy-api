@@ -1,0 +1,9 @@
+title: Cofy-beheer
+product: Cofy
+subtitle: beheer
+
+newModule:
+  crumb: Nieuwe module
+  heading: Module toevoegen
+
+notFound: Geen pagina voor {{path}}.

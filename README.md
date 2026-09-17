@@ -8,26 +8,25 @@ This repository uses a monorepo structure with separate packages. Each package h
 
 - Runtime API package: [packages/api](packages/api)
 - Management API package: [packages/management-api](packages/management-api)
-- Demo application: [demo](demo)
+- Demo applications: [apps/demo_cofy_api](apps/demo_cofy_api), [apps/demo_cofy_api_settings](apps/demo_cofy_api_settings), [apps/demo_multitenant](apps/demo_multitenant)
 - Architecture and planning specs: [specs](specs)
 
 ## Quick Start (Repository)
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and [Task](https://taskfile.dev/installation/), used to run cross-package commands.
 
-Run the demo API:
+Three demo deployments are available, each usable as a worked example or for local development:
 
 ```sh
-task demo
+task demo-cofy-api             # cofy-api assembled in Python
+task demo-cofy-api-settings    # cofy-api assembled from a settings file
+task demo-multitenant-reset    # first run only: seed the multitenant demo's local data
+task demo-multitenant-api      # management API, backing the multitenant demo
+task demo-multitenant-web      # management console, talking to the API above
 ```
 
-Run the management API:
-
-```sh
-task management
-```
-
-The demo API is available at http://127.0.0.1:8000 with docs at /docs.
+The `demo-cofy-api*` tasks serve their API at http://127.0.0.1:8000 with docs at `/docs`. See
+each app's own README for details.
 
 ## Development Commands
 

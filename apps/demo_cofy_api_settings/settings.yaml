@@ -1,0 +1,76 @@
+type: cofy_api
+debug_mode: true
+
+auth:
+  type: token
+  tokens:
+    ${COFY_API_TOKEN}:
+      name: Demo User
+
+modules:
+  - type: tariff
+    name: entsoe
+    source:
+      type: entsoe_day_ahead
+      api_key: ${ENTSOE_API_KEY}
+
+  - type: tariff
+    name: kiwatt
+    source:
+      type: entsoe_day_ahead
+      country_code: NL
+      api_key: ${ENTSOE_API_KEY}
+    formats:
+      - type: kiwatt
+
+  - type: tariff
+    name: dynamic
+    description: Our dynamic tariff tracking the Belpex.
+    source:
+      type: energy_cost
+      # see https://github.com/EnergieID/energy-cost for more details on the tariff configuration format
+      tariff:
+        - start: 2024-01-01T00:00:00+01:00
+          consumption:
+            constant_cost: 10.0
+            variable_costs:
+              - index: Belpex15min
+                scalar: 1.05
+          injection:
+            constant_cost: 14.56
+            variable_costs:
+              - index: Belpex15min
+                scalar: -0.9876
+        - start: 2026-01-01T00:00:00+01:00
+          consumption:
+            constant_cost: 12.0
+            variable_costs:
+              - index: Belpex15min
+                scalar: 1.10
+          injection:
+            constant_cost: 14.56
+            variable_costs:
+              - index: Belpex15min
+                scalar: -0.9876
+
+  - type: billing
+
+  - type: production
+    name: wind
+    source:
+      type: energyid_production
+      api_key: ${ENERGY_ID_API_KEY}
+      record_id: ${ENERGY_ID_RECORD_ID}
+
+  - type: directive
+    name: entsoe
+    description: A directive module based on the entsoe day-ahead prices, with custom boundaries.
+    source:
+      type: directive
+      source:
+        type: entsoe_day_ahead
+        api_key: ${ENTSOE_API_KEY}
+      boundaries: [0, 10, 25, 50]
+      reverse: true
+    formats:
+      - type: directive

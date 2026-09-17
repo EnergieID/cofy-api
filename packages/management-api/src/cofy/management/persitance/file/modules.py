@@ -1,4 +1,5 @@
 from cofy.api.module import ModuleSettings
+from cofy.api.secret import restore_masked_secrets
 
 from ...errors import ResourceAlreadyExistsError, ResourceNotFoundError
 from ..modules import ModulesPersistence
@@ -39,6 +40,11 @@ class FileModulesPersistence(FilePersistence, ModulesPersistence):
             )
             if collides_with_other:
                 raise ResourceAlreadyExistsError(f"Module {module.type}:{module.name} already exists")
+
+            # The client built this payload from a masked read, so any secret it did not
+            # deliberately change still carries the placeholder. Substitute the stored values
+            # while the module being replaced is still in hand and the lock is held.
+            restore_masked_secrets(module, config.modules[target_index])
 
             config.modules[target_index] = module
             return module

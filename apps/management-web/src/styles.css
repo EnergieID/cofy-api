@@ -1,0 +1,11 @@
+/*
+ * The app's own document-level rules.
+ *
+ * Web Awesome's theme already paints `body` from `--wa-color-surface-default` and
+ * `--wa-color-text-normal` and sets the font, so there is very little left to say here. The
+ * colour scheme is a class on the root element, applied by `ThemeState`, not a rule in this
+ * file.
+ */
+body {
+  margin: 0;
+}

@@ -1,0 +1,17 @@
+# Cofy API demo (Python)
+
+A `cofy-api` instance assembled in Python: modules and sources are constructed directly and
+registered on a `CofyAPI()`. See [main.py](main.py).
+
+## Running
+
+```sh
+task demo-cofy-api
+```
+
+The API is available at http://127.0.0.1:8000 with docs at `/docs`.
+
+## Data
+
+`data/` holds committed, read-only example config (tariffs, a members CSV, a monthly index) that
+`main.py` loads at startup. Nothing here is written to at runtime.
