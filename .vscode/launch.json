@@ -6,7 +6,7 @@
     "configurations": [
         {"name":"Python Debugger: Current File","type":"debugpy","request":"launch","program":"${file}","console":"integratedTerminal","env":{"PYTHONPYCACHEPREFIX":"${workspaceFolder}/.pycache"}},
         {
-            "name": "Python Debugger: FastAPI",
+            "name": "Demo: cofy-api (Python)",
             "type": "debugpy",
             "request": "launch",
             "python": "${workspaceFolder}/packages/api/.venv/bin/python",
@@ -25,7 +25,26 @@
             "justMyCode": false
         },
         {
-            "name": "Python Debugger: Management API",
+            "name": "Demo: cofy-api (settings)",
+            "type": "debugpy",
+            "request": "launch",
+            "python": "${workspaceFolder}/packages/api/.venv/bin/python",
+            "module": "uvicorn",
+            "args": [
+                "demo_cofy_api_settings.main:app",
+                "--reload",
+                "--app-dir",
+                "apps"
+            ],
+            "jinja": true,
+            "envFile": "${workspaceFolder}/.env.local",
+            "env": {
+                "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache"
+            },
+            "justMyCode": false
+        },
+        {
+            "name": "Demo: multitenant (management API)",
             "type": "debugpy",
             "request": "launch",
             "python": "${workspaceFolder}/packages/management-api/.venv/bin/python",
@@ -41,6 +60,23 @@
                 "COFY_MANAGEMENT_DATA_DIR": "${workspaceFolder}/apps/demo_multitenant/.data"
             },
             "justMyCode": false
+        },
+        {
+            "name": "Demo: multitenant (console)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "task demo-multitenant-web",
+            "cwd": "${workspaceFolder}"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Demo: multitenant (API + console)",
+            "configurations": [
+                "Demo: multitenant (management API)",
+                "Demo: multitenant (console)"
+            ],
+            "stopAll": true
         }
     ]
 }
