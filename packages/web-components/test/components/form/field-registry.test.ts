@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { JsonSchema } from "@cofy/frontend-sdk";
 
 import { defaultFieldRegistry, FieldRegistry } from "../../../src/components/form/field-registry.js";
-import { resolveNode } from "../../../src/components/form/schema-dispatch.js";
+import { resolveNode } from "../../../src/components/form/schema/resolve.js";
 
 /** Dispatches *schema* through *registry*, the same way `cofy-any-form` does - the mounted tag always gets the resolved node. */
 function dispatch(
@@ -126,19 +126,19 @@ describe("FieldRegistry.getSummary", () => {
     expect(defaultFieldRegistry.getSummary(schema, {}, "hunter2")).toBeUndefined();
   });
 
-  it("summarizes an object by its own `type` value, read directly rather than scanned from the schema's own const declarations", () => {
+  it("summarizes an object by its own `type` value, title-cased, read directly rather than scanned from the schema's own const declarations", () => {
     const schema = { type: "object", properties: { type: { const: "csv" }, name: { type: "string" } } };
-    expect(defaultFieldRegistry.getSummary(schema, {}, { type: "csv", name: "report.csv" })).toBe("csv");
+    expect(defaultFieldRegistry.getSummary(schema, {}, { type: "csv", name: "report.csv" })).toBe("Csv");
   });
 
   it("prefers `type` over `kind` when a value somehow has both", () => {
     const schema = { type: "object", properties: {} };
-    expect(defaultFieldRegistry.getSummary(schema, {}, { type: "a", kind: "b" })).toBe("a");
+    expect(defaultFieldRegistry.getSummary(schema, {}, { type: "a", kind: "b" })).toBe("A");
   });
 
   it("falls back to `kind` when there is no `type`", () => {
     const schema = { type: "object", properties: {} };
-    expect(defaultFieldRegistry.getSummary(schema, {}, { kind: "index" })).toBe("index");
+    expect(defaultFieldRegistry.getSummary(schema, {}, { kind: "index" })).toBe("Index");
   });
 
   it("returns undefined for an object with neither tag", () => {
@@ -148,7 +148,7 @@ describe("FieldRegistry.getSummary", () => {
 
   it("summarizes a union the same way, since its value already carries whichever branch's tag is chosen", () => {
     const schema = { oneOf: [{ $ref: "#/$defs/A" }, { $ref: "#/$defs/B" }] };
-    expect(defaultFieldRegistry.getSummary(schema, {}, { type: "b" })).toBe("b");
+    expect(defaultFieldRegistry.getSummary(schema, {}, { type: "b" })).toBe("B");
   });
 
   it("returns undefined for a union with nothing chosen yet", () => {

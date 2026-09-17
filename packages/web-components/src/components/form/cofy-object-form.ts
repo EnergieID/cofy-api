@@ -10,14 +10,14 @@ import "./cofy-field-shell.js";
 import "../../icons.js";
 
 import { fieldRegistryContext } from "../../context.js";
-import { seedFromSchema } from "../../schema-defaults.js";
-import { isRecord } from "../../schema-ref.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import type { FieldRegistry } from "./field-registry.js";
 import { defaultFieldRegistry } from "./field-registry.js";
 import { CofyFormField } from "./form-field.js";
-import { pointerFor } from "./pointer.js";
+import { seedFromSchema } from "./schema/defaults.js";
+import { pointerFor } from "./schema/pointer.js";
+import { isRecord } from "./schema/ref.js";
 
 /**
  * An object's own properties, each rendered by a child `cofy-any-form`.

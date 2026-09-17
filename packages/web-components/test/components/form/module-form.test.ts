@@ -453,7 +453,7 @@ describe("the generic form family, mounted end to end", () => {
 
     const shell = fieldAt(element, "/thing")!;
     const summary = shell.querySelector('wa-details [slot="summary"] span')!;
-    expect(summary.textContent).toBe("widget");
+    expect(summary.textContent).toBe("Widget");
   });
 
   it("hides the delete link for a required nested object", async () => {
@@ -590,7 +590,7 @@ describe("the generic form family, mounted end to end", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const item = element.shadowRoot!.querySelector("wa-accordion-item:not(.cofy-list-add)")!;
-    expect(item.querySelector('[slot="label"]')?.textContent).toContain("csv");
+    expect(item.querySelector('[slot="label"]')?.textContent).toContain("Csv");
   });
 
   it("opens a newly added item automatically, without needing another click", async () => {
@@ -753,7 +753,7 @@ describe("the generic form family, mounted end to end", () => {
 
     const shell = fieldAt(element, "/pick")!;
     const summary = shell.querySelector('wa-details [slot="summary"] span')!;
-    expect(summary.textContent).toBe("a");
+    expect(summary.textContent).toBe("A");
   });
 
   it("does not show a delete link for a union with nothing chosen yet - there is nothing to clear", async () => {

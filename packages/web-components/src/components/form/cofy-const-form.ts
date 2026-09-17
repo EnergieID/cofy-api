@@ -5,8 +5,8 @@ import { customElement } from "lit/decorators.js";
 import "./cofy-field-shell.js";
 
 import { utilityStyles } from "../../theme/utility-styles.js";
-import { primitiveText } from "./field-shell.js";
 import { CofyFormField } from "./form-field.js";
+import { primitiveText } from "./schema/summary.js";
 
 /**
  * A `const`-only field, such as the `type` discriminator - fixed by the schema, so it renders

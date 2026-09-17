@@ -12,7 +12,7 @@ import { customElement, property } from "lit/decorators.js";
 import { CofyElement } from "../../cofy-element.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { parseDocument } from "yaml";
-import { parsePointer } from "../form/pointer.js";
+import { parsePointer } from "../form/schema/pointer.js";
 
 /** What the editor's current text means, recomputed on every change. */
 export interface YamlEditorChange {

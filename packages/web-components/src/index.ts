@@ -7,7 +7,7 @@ export {
   themeStateContext,
 } from "./context.js";
 export { CofyElement } from "./cofy-element.js";
-export { seedFromSchema } from "./schema-defaults.js";
+export { seedFromSchema } from "./components/form/schema/defaults.js";
 export { toYaml, withoutNulls } from "./yaml.js";
 
 export {

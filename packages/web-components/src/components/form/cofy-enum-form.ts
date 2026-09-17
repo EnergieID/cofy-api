@@ -8,8 +8,8 @@ import "@awesome.me/webawesome/dist/components/option/option.js";
 import "@awesome.me/webawesome/dist/components/select/select.js";
 import "./cofy-field-shell.js";
 
-import { primitiveText } from "./field-shell.js";
 import { CofyFormField } from "./form-field.js";
+import { primitiveText } from "./schema/summary.js";
 
 /** An `enum` field, rendered as a `wa-select`. */
 @customElement("cofy-enum-form")

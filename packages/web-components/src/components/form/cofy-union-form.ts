@@ -12,14 +12,21 @@ import "./cofy-any-form.js";
 import "./cofy-field-shell.js";
 
 import { fieldRegistryContext } from "../../context.js";
-import { seedFromSchema } from "../../schema-defaults.js";
-import { deref, isRecord } from "../../schema-ref.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import type { FieldRegistry } from "./field-registry.js";
 import { defaultFieldRegistry } from "./field-registry.js";
 import { CofyFormField } from "./form-field.js";
-import { discriminatorOf, schemaTypeName, unionBranches, type Discriminator } from "./schema-dispatch.js";
+import { isRecord } from "./schema/ref.js";
+import { seedFromSchema } from "./schema/defaults.js";
+import {
+  discriminatorOf,
+  matchBranch,
+  schemaTypeName,
+  unionBranches,
+  type Discriminator,
+} from "./schema/resolve.js";
+import { titleCase } from "./schema/summary.js";
 
 /**
  * A `oneOf`/multi-branch `anyOf` field: its own label and details, a branch picker inside it,
@@ -147,7 +154,7 @@ export class CofyUnionForm extends CofyFormField {
         ${repeat(
           options,
           (option) => option,
-          (option) => html`<wa-option value=${option}>${readable(option)}</wa-option>`,
+          (option) => html`<wa-option value=${option}>${titleCase(option)}</wa-option>`,
         )}
       </wa-select>
     `;
@@ -169,7 +176,7 @@ export class CofyUnionForm extends CofyFormField {
         ${repeat(
           branches,
           (branch) => schemaTypeName(branch) ?? "",
-          (branch) => html`<wa-option value=${schemaTypeName(branch) ?? ""}>${readable(schemaTypeName(branch) ?? "?")}</wa-option>`,
+          (branch) => html`<wa-option value=${schemaTypeName(branch) ?? ""}>${titleCase(schemaTypeName(branch) ?? "?")}</wa-option>`,
         )}
       </wa-select>
     `;
@@ -205,37 +212,6 @@ export class CofyUnionForm extends CofyFormField {
       new CustomEvent("field-change", { bubbles: true, composed: true, detail: { pointer: this.pointer, value } }),
     );
   }
-}
-
-/**
- * A best-effort guess at which branch *value* already matches. Defaults to the first.
- *
- * A branch whose own `const`-tagged property matches the value's is preferred - that is what a
- * `kind`/`type`-style tag actually looks like once resolved, and it is far more specific than
- * "has the same required keys," which every sibling branch sharing a common field would also
- * satisfy (a `kind: "index"` value still lists `kind` as a required key of every other branch).
- */
-function matchBranch(value: unknown, branches: readonly JsonSchema[], root: JsonSchema): number {
-  if (!isRecord(value)) return 0;
-
-  const byTag = branches.findIndex((branch) => {
-    const properties = deref(branch, root)["properties"];
-    if (!isRecord(properties)) return false;
-    return Object.entries(properties).some(
-      ([key, propSchema]) => isRecord(propSchema) && "const" in propSchema && value[key] === propSchema["const"],
-    );
-  });
-  if (byTag !== -1) return byTag;
-
-  const byRequired = branches.findIndex((branch) => {
-    const required = deref(branch, root)["required"];
-    return Array.isArray(required) && required.length > 0 && required.every((key) => key in value);
-  });
-  return byRequired === -1 ? 0 : byRequired;
-}
-
-function readable(tag: string): string {
-  return tag.replace(/_/g, " ");
 }
 
 declare global {

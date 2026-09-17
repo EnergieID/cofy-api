@@ -11,15 +11,15 @@ import "./cofy-boolean-form.js";
 import "./cofy-enum-form.js";
 import "./cofy-const-form.js";
 
-import { isRecord } from "../../schema-ref.js";
-import { primitiveText } from "./field-shell.js";
-import { resolveNode, unionBranches } from "./schema-dispatch.js";
+import { isRecord } from "./schema/ref.js";
+import { resolveNode, unionBranches } from "./schema/resolve.js";
+import { arraySummary, primitiveText, tagSummary } from "./schema/summary.js";
 
 /**
  * One entry in a {@link FieldRegistry}.
  *
  * `matches` is checked against *node* - the field's own schema, resolved past its own `$ref`/
- * `Optional`-wrapping (see `resolveNode` in `schema-dispatch.js`). It is also what the mounted
+ * `Optional`-wrapping (see `resolveNode` in `schema/resolve.js`). It is also what the mounted
  * tag receives as its own `.schema` - label/description travel separately, as their own props,
  * so a mapper only ever has to decide yes/no.
  *
@@ -35,20 +35,6 @@ export interface FieldMapper {
   tag: string;
 
   summarize?(value: unknown, node: JsonSchema, root: JsonSchema): string | undefined;
-}
-
-function readable(tag: string): string {
-  return tag.replace(/_/g, " ");
-}
-
-function tagSummary(value: unknown, node: JsonSchema): string | undefined {
-  if (!isRecord(value)) return undefined;
-  const tag = value["type"] ?? value["kind"];
-  if (typeof tag === "string") return readable(tag)
-  const classname = node["title"]
-  if (typeof classname == "string") return classname
-
-  return undefined
 }
 
 /**
@@ -105,10 +91,7 @@ export const defaultFieldMappers: readonly FieldMapper[] = [
   {
     tag: "cofy-list-form",
     matches: (node: JsonSchema): boolean => node["type"] === "array",
-    summarize: (value: unknown): string | undefined => {
-      if (!Array.isArray(value)) return undefined
-      return value.length.toString()
-    }
+    summarize: arraySummary,
   },
 ];
 
