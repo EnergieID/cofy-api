@@ -8,24 +8,20 @@ import "@awesome.me/webawesome/dist/components/option/option.js";
 import "@awesome.me/webawesome/dist/components/select/select.js";
 import "./cofy-field-shell.js";
 
-import { deref } from "../../schema-ref.js";
-import { fieldLabel, primitiveText } from "./field-shell.js";
+import { primitiveText } from "./field-shell.js";
 import { CofyFormField } from "./form-field.js";
-import { issuesAt } from "./issues.js";
 
 /** An `enum` field, rendered as a `wa-select`. */
 @customElement("cofy-enum-form")
 export class CofyEnumForm extends CofyFormField {
   public override render(): TemplateResult {
-    const node = deref(this.schema, this.root);
-    const description = typeof node["description"] === "string" ? node["description"] : undefined;
-    const values = Array.isArray(node["enum"]) ? (node["enum"] as unknown[]) : [];
+    const values = Array.isArray(this.schema["enum"]) ? (this.schema["enum"] as unknown[]) : [];
 
     return html`
-      <cofy-field-shell data-pointer=${this.pointer} .issues=${issuesAt(this.issues, this.pointer)}>
+      <cofy-field-shell data-pointer=${this.pointer} .issues=${this.ownIssues}>
         <wa-select
-          label=${fieldLabel(node, this.pointer)}
-          hint=${ifDefined(description)}
+          label=${this.label}
+          hint=${ifDefined(this.description || undefined)}
           .value=${primitiveText(this.value)}
           lang=${this.i18n?.resolvedLanguage ?? "en"}
           ?required=${this.required}

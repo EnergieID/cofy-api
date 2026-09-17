@@ -1,3 +1,4 @@
+import { consume } from "@lit/context";
 import { css, html } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
@@ -9,13 +10,14 @@ import "./cofy-any-form.js";
 import "./cofy-field-shell.js";
 import "../../icons.js";
 
+import { fieldRegistryContext } from "../../context.js";
 import { seedFromSchema } from "../../schema-defaults.js";
-import { deref, isRecord } from "../../schema-ref.js";
+import { isRecord } from "../../schema-ref.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
-import { fieldLabel } from "./field-shell.js";
+import type { FieldRegistry } from "./field-registry.js";
+import { defaultFieldRegistry } from "./field-registry.js";
 import { CofyFormField } from "./form-field.js";
-import { issuesAt } from "./issues.js";
 import { pointerFor } from "./pointer.js";
 
 /**
@@ -46,17 +48,19 @@ export class CofyListForm extends CofyFormField {
     `,
   ];
 
+  @consume({ context: fieldRegistryContext, subscribe: true })
+  public fieldRegistry: FieldRegistry = defaultFieldRegistry;
+
   @state() private expandedIndices: ReadonlySet<number> = new Set();
 
   public override render(): TemplateResult {
-    const node = deref(this.schema, this.root);
-    const itemsSchema = isRecord(node["items"]) ? node["items"] : {};
+    const itemsSchema = isRecord(this.schema["items"]) ? this.schema["items"] : {};
     const items = Array.isArray(this.value) ? this.value : [];
-    const label = this.bare ? "" : fieldLabel(node, this.pointer);
-    const ownIssues = this.bare ? [] : issuesAt(this.issues, this.pointer);
+    const label = this.bare ? "" : this.label;
+    const description = this.bare ? "" : this.description;
 
     return html`
-      <cofy-field-shell data-pointer=${this.pointer} label=${label} .issues=${ownIssues}>
+      <cofy-field-shell data-pointer=${this.pointer} label=${label} description=${description} .issues=${this.ownIssues}>
         <wa-accordion
           appearance="outlined"
           @wa-expand=${(event: CustomEvent<{ item: Element }>): void => this.onExpand(event, itemsSchema)}
@@ -72,10 +76,12 @@ export class CofyListForm extends CofyFormField {
   }
 
   private renderItem(item: unknown, index: number, itemsSchema: Record<string, unknown>): TemplateResult {
+    const summary = this.fieldRegistry.getSummary(itemsSchema, this.root, item);
+
     return html`
       <wa-accordion-item data-segment=${index} ?expanded=${this.expandedIndices.has(index)}>
         <div slot="label" class="wa-split">
-          <span>${index + 1}</span>
+          <span>${index + 1}${summary ? html`. ${summary}` : ""}</span>
           <a
             class="wa-link-plain"
             role="button"

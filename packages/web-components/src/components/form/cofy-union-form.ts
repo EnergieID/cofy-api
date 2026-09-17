@@ -1,29 +1,40 @@
+import { consume } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import type { JsonSchema } from "@cofy/frontend-sdk";
 
-import "@awesome.me/webawesome/dist/components/card/card.js";
+import "@awesome.me/webawesome/dist/components/details/details.js";
 import "@awesome.me/webawesome/dist/components/option/option.js";
 import "@awesome.me/webawesome/dist/components/select/select.js";
 import "./cofy-any-form.js";
 import "./cofy-field-shell.js";
 
+import { fieldRegistryContext } from "../../context.js";
 import { seedFromSchema } from "../../schema-defaults.js";
 import { deref, isRecord } from "../../schema-ref.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
-import { fieldLabel } from "./field-shell.js";
+import type { FieldRegistry } from "./field-registry.js";
+import { defaultFieldRegistry } from "./field-registry.js";
 import { CofyFormField } from "./form-field.js";
-import { issuesAt } from "./issues.js";
-import { resolveFieldKind, schemaTypeName, type Discriminator } from "./schema-dispatch.js";
+import { discriminatorOf, schemaTypeName, unionBranches, type Discriminator } from "./schema-dispatch.js";
 
 /**
- * A `oneOf`/multi-branch `anyOf` field: its own label and card, a branch picker inside it, then
- * the chosen branch's own fields, also inside - a union is always grouped in one card, whatever
- * it resolves to. When that branch is itself an object (the common case), it renders without a
- * card of its own (`bare`): this card already is its visual boundary.
+ * A `oneOf`/multi-branch `anyOf` field: its own label and details, a branch picker inside it,
+ * then the chosen branch's own fields, also inside - a union is always grouped in one collapsible
+ * details, whatever it resolves to. When that branch is itself an object (the common case), it
+ * renders without a details of its own (`bare`): this one already is its visual boundary.
+ *
+ * `bare` also suppresses this union's *own* label/details, the same way `cofy-object-form` treats
+ * it - needed when a list/union mounts this as one of ITS OWN elements (a list of a union type,
+ * say): the accordion item/outer details is already that element's boundary, so a second one here
+ * would double up.
+ *
+ * A chosen, non-required branch can be cleared back to unchosen through a link in the details'
+ * own header - not offered when `required`, since clearing a required field would leave the
+ * document invalid with no schema-driven way back except choosing a branch again.
  *
  * The discriminator case (pydantic's `Field(discriminator=...)`) drives the picker from the
  * value's own tag property. The no-discriminator case - `energy_cost.Formula`, tagged by a
@@ -41,18 +52,22 @@ export class CofyUnionForm extends CofyFormField {
       :host {
         display: block;
       }
+      [slot="summary"] {
+        flex: 1;
+      }
     `,
   ];
 
-  public override render(): TemplateResult {
-    const kind = resolveFieldKind(this.schema, this.root);
-    if (kind.kind !== "union") return html``;
+  @consume({ context: fieldRegistryContext, subscribe: true })
+  public fieldRegistry: FieldRegistry = defaultFieldRegistry;
 
-    const ownIssues = issuesAt(this.issues, this.pointer);
-    const picker = kind.discriminator
-      ? this.renderDiscriminated(kind.discriminator)
-      : this.renderBareChoice(kind.branches);
-    const branch = this.resolveChosenBranch(kind.discriminator, kind.branches);
+  public override render(): TemplateResult {
+    const branches = unionBranches(this.schema, this.root);
+    if (branches === undefined) return html``;
+
+    const discriminator = discriminatorOf(this.schema);
+    const picker = discriminator ? this.renderDiscriminated(discriminator) : this.renderBareChoice(branches);
+    const branch = this.resolveChosenBranch(discriminator, branches);
 
     const body = html`
       <div class="wa-stack">
@@ -66,7 +81,7 @@ export class CofyUnionForm extends CofyFormField {
               .value=${this.value}
               ?required=${this.required}
               .issues=${this.issues}
-              .hide=${kind.discriminator ? [kind.discriminator.propertyName] : []}
+              .hide=${discriminator ? [discriminator.propertyName] : []}
               bare
             ></cofy-any-form>`}
       </div>
@@ -75,11 +90,44 @@ export class CofyUnionForm extends CofyFormField {
     return html`
       <cofy-field-shell
         data-pointer=${this.pointer}
-        label=${fieldLabel(deref(this.schema, this.root), this.pointer)}
-        .issues=${ownIssues}
+        label=${this.bare ? "" : this.label}
+        description=${this.bare ? "" : this.description}
+        .issues=${this.ownIssues}
       >
-        <wa-card appearance="outlined">${body}</wa-card>
+        ${this.bare ? body : this.renderDetails(body, branch !== undefined)}
       </cofy-field-shell>
+    `;
+  }
+
+  private renderDetails(body: TemplateResult, chosen: boolean): TemplateResult {
+    const summary = this.fieldRegistry.getSummary(this.schema, this.root, this.value);
+
+    return html`
+      <wa-details appearance="outlined" open>
+        <div slot="summary" class="wa-split">
+          <span>${summary ?? ""}</span>
+          ${chosen && !this.required
+            ? html`<a
+                class="wa-link-plain"
+                role="button"
+                tabindex="0"
+                @click=${(event: MouseEvent): void => {
+                  event.stopPropagation();
+                  this.emit(null);
+                }}
+                @keydown=${(event: KeyboardEvent): void => {
+                  if (event.key !== "Enter" && event.key !== " ") return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  this.emit(null);
+                }}
+              >
+                ${this.t("form.remove")}
+              </a>`
+            : nothing}
+        </div>
+        ${body}
+      </wa-details>
     `;
   }
 

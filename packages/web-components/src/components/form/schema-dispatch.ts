@@ -9,85 +9,49 @@ export interface Discriminator {
 }
 
 /**
- * What kind of control a schema node should render as.
- *
- * `schema` on a variant is the node the next step should render - already resolved past this
- * node's own `$ref`/`anyOf`-nullable-unwrap, so a caller never has to re-derive it.
+ * *schema* resolved past its own `$ref` and, if it is `Optional[X]` (an `anyOf` with exactly one
+ * non-`null` branch), past that wrapper too - recursively, so however deep the `Optional`/`$ref`
+ * nesting goes, the result still bottoms out. What is left is either a concrete leaf/object/array
+ * node, or a genuine union (`oneOf`, or an `anyOf` with more than one non-`null` branch) - the
+ * shape every field mapper and container field actually needs to inspect.
  */
-export type FieldKind =
-  | { kind: "union"; schema: JsonSchema; branches: readonly JsonSchema[]; discriminator?: Discriminator }
-  | { kind: "enum"; schema: JsonSchema; values: readonly unknown[] }
-  | { kind: "const"; value: unknown }
-  | { kind: "secret" }
-  | { kind: "string" }
-  | { kind: "number" }
-  | { kind: "boolean" }
-  | { kind: "object"; schema: JsonSchema }
-  | { kind: "array"; schema: JsonSchema; items: JsonSchema }
-  | { kind: "unknown"; schema: JsonSchema };
-
-/**
- * Decide how a schema node should render, resolving its own `$ref` first.
- *
- * `oneOf` and a multi-branch `anyOf` both render as a union - pydantic only ever puts a
- * `discriminator` beside `oneOf`, so `anyOf` unions render as the no-discriminator fallback.
- * An `anyOf` with exactly one non-null branch is `Optional[X]`: it is not a union at all, it
- * unwraps straight through to whatever `X` resolves to.
- */
-export function resolveFieldKind(schema: JsonSchema, root: JsonSchema): FieldKind {
+export function resolveNode(schema: JsonSchema, root: JsonSchema): JsonSchema {
   const node = deref(schema, root);
 
-  const oneOf = node["oneOf"];
-  if (Array.isArray(oneOf) && oneOf.length > 0) {
-    return { kind: "union", schema: node, branches: oneOf as JsonSchema[], discriminator: discriminatorOf(node) };
-  }
+  if (Array.isArray(node["oneOf"]) && (node["oneOf"] as unknown[]).length > 0) return node;
 
   const anyOf = node["anyOf"];
   if (Array.isArray(anyOf) && anyOf.length > 0) {
     const nonNull = (anyOf as JsonSchema[]).filter((branch) => deref(branch, root)["type"] !== "null");
-    if (nonNull.length > 1) return { kind: "union", schema: node, branches: nonNull };
-    if (nonNull.length === 1) return resolveFieldKind(nonNull[0]!, root);
+    if (nonNull.length === 1) return resolveNode(nonNull[0]!, root);
+    if (nonNull.length > 1) return node;
   }
 
-  if (Array.isArray(node["enum"])) return { kind: "enum", schema: node, values: node["enum"] as unknown[] };
-  if ("const" in node) return { kind: "const", value: node["const"] };
-  if (node["type"] === "string" && node["format"] === "password" && node["writeOnly"] === true) {
-    return { kind: "secret" };
-  }
-
-  switch (node["type"]) {
-    case "string":
-      return { kind: "string" };
-    case "integer":
-    case "number":
-      return { kind: "number" };
-    case "boolean":
-      return { kind: "boolean" };
-    case "object":
-      // A `dict[str, X]` schema (`additionalProperties`, no fixed `properties`) has no keys the
-      // generic object renderer could draw a field for - shown as raw YAML until a dedicated
-      // field exists for it, rather than silently rendering nothing.
-      return isRecord(node["properties"]) ? { kind: "object", schema: node } : { kind: "unknown", schema: node };
-    case "array": {
-      const items = node["items"];
-      return { kind: "array", schema: node, items: isRecord(items) ? items : {} };
-    }
-    default:
-      return { kind: "unknown", schema: node };
-  }
+  return node;
 }
 
 /**
- * The name a custom field registry would key this schema under - its own `$ref`'s `$defs`
- * entry, or its own `title` for an inline schema with no `$ref`.
+ * *node*'s own union branches - `oneOf`, or an `anyOf` with more than one non-`null` branch - or
+ * `undefined` if it isn't one. Expects *node* already resolved by {@link resolveNode}.
  */
-export function schemaTypeName(schema: JsonSchema): string | undefined {
-  const ref = refOf(schema);
-  if (ref !== undefined) return ref.split("/").pop();
-  return typeof schema["title"] === "string" ? schema["title"] : undefined;
+export function unionBranches(node: JsonSchema, root: JsonSchema): readonly JsonSchema[] | undefined {
+  const oneOf = node["oneOf"];
+  if (Array.isArray(oneOf) && oneOf.length > 0) return oneOf as JsonSchema[];
+
+  const anyOf = node["anyOf"];
+  if (Array.isArray(anyOf)) {
+    const nonNull = (anyOf as JsonSchema[]).filter((branch) => deref(branch, root)["type"] !== "null");
+    if (nonNull.length > 1) return nonNull;
+  }
+
+  return undefined;
 }
 
-function discriminatorOf(node: JsonSchema): Discriminator | undefined {
+/**
+ * *node*'s own discriminator, if it has one - pydantic only ever puts a `discriminator` beside
+ * `oneOf`, never a bare `anyOf` union.
+ */
+export function discriminatorOf(node: JsonSchema): Discriminator | undefined {
   const discriminator = node["discriminator"];
   if (!isRecord(discriminator)) return undefined;
 
@@ -96,4 +60,16 @@ function discriminatorOf(node: JsonSchema): Discriminator | undefined {
   if (typeof propertyName !== "string" || !isRecord(mapping)) return undefined;
 
   return { propertyName, mapping: mapping as Record<string, string> };
+}
+
+/**
+ * The name a custom field mapper would key this schema under - its own `$ref`'s `$defs` entry,
+ * or its own `title` for an inline schema with no `$ref`. Checked against *schema* as handed
+ * down, before {@link resolveNode} resolves it - the identity a `$ref` carries (`TimeseriesSource`,
+ * `Formula`, ...) is exactly what resolving it throws away.
+ */
+export function schemaTypeName(schema: JsonSchema): string | undefined {
+  const ref = refOf(schema);
+  if (ref !== undefined) return ref.split("/").pop();
+  return typeof schema["title"] === "string" ? schema["title"] : undefined;
 }

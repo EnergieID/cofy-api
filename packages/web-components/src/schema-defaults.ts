@@ -1,6 +1,6 @@
 import type { JsonSchema } from "@cofy/frontend-sdk";
 
-import { deref, isRecord, noneExpanding, refOf, type RefGuard } from "./schema-ref.js";
+import { deref, isRecord, noneExpanding, type RefGuard } from "./schema-ref.js";
 
 /**
  * Build the smallest object that a schema would plausibly accept.
@@ -16,18 +16,17 @@ export function seedFromSchema(schema: JsonSchema, root: JsonSchema = schema): u
 }
 
 /**
- * *expanding* holds the `$ref`s already being expanded on this path.
+ * *expanding* holds the resolved nodes already being expanded on this path.
  *
  * These schemas are recursive - a tariff formula can contain further formulas, and a module's
  * source can lead back to one - and unlike validation, which walks a finite instance, seeding
  * walks the schema itself. Without this the walk never bottoms out.
  */
 function seed(schema: JsonSchema, root: JsonSchema, expanding: RefGuard): unknown {
-  const ref = refOf(schema);
-  if (ref !== undefined && expanding.has(ref)) return null;
-
-  const path = ref === undefined ? expanding : new Set([...expanding, ref]);
   const node = deref(schema, root);
+  if (expanding.has(node)) return null;
+
+  const path = new Set([...expanding, node]);
 
   if ("default" in node) return node["default"];
 

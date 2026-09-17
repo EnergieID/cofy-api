@@ -1,7 +1,7 @@
 import { createContext } from "@lit/context";
 import type { AllowedModulesStore, CommunityStore, ModuleStore } from "@cofy/frontend-sdk";
 
-import type { FieldRegistry } from "./components/form/custom-fields.js";
+import type { FieldRegistry } from "./components/form/field-registry.js";
 import type { CofyI18n } from "./i18n/cofy-i18n.js";
 import type { ThemeState } from "./theme/theme-state.js";
 
@@ -23,9 +23,10 @@ export const i18nContext = createContext<CofyI18n>(Symbol("cofy-i18n"));
 export const themeStateContext = createContext<ThemeState>(Symbol("cofy-theme-state"));
 
 /**
- * Which schema type names get a hand-written field instead of the generic form dispatch.
+ * The registry of mappers `cofy-any-form` dispatches a schema node through.
  *
- * Defaults to {@link defaultFieldRegistry} (nothing registered), so a form works with zero
- * setup; an ancestor can `@provide` a different registry to override it for just its subtree.
+ * Defaults to {@link defaultFieldRegistry} (the built-ins only), so a form works with zero
+ * setup; an ancestor can `@provide` a `new FieldRegistry([...overrides])` to register its own
+ * mappers ahead of the built-ins for just its subtree.
  */
 export const fieldRegistryContext = createContext<FieldRegistry>(Symbol("cofy-field-registry"));

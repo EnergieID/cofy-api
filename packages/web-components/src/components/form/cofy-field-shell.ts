@@ -22,6 +22,11 @@ export interface FieldShellIssue {
  * with `wa-form-control-label`, the same utility class (and tokens) Web Awesome's own controls
  * use for their label, rather than a second copy of those three declarations.
  *
+ * `description` sits after the slotted control and before the issues list - a container (an
+ * object's card, a list's accordion, a union's card) has no single control of its own to carry a
+ * `hint` attribute the way a leaf's `wa-input`/`wa-select` does, so this is the one place it can
+ * show its own schema's `description` at all.
+ *
  * `issues` only needs a `message` to print, not a full `ValidationIssue` - a YAML editor's own
  * syntax errors (plain strings) map onto the same shape (`{ message }`) as a caller's schema
  * issues, so both wrap in exactly this one element.
@@ -44,6 +49,7 @@ export class CofyFieldShell extends CofyElement {
   ];
 
   @property({ type: String }) public label = "";
+  @property({ type: String }) public description = "";
   @property({ attribute: false }) public issues: readonly FieldShellIssue[] = [];
 
   public override render(): TemplateResult {
@@ -53,6 +59,9 @@ export class CofyFieldShell extends CofyElement {
           ? nothing
           : html`<div class="wa-form-control-label">${this.label}</div>`}
         <slot></slot>
+        ${this.description === ""
+          ? nothing
+          : html`<div class="wa-color-text-quiet wa-caption-s">${this.description}</div>`}
         ${this.issues.length === 0
           ? nothing
           : html`<ul class="cofy-field-issues">

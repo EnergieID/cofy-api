@@ -5,12 +5,9 @@ import { customElement, state } from "lit/decorators.js";
 import "../editor/cofy-yaml-editor.js";
 import "./cofy-field-shell.js";
 
-import { deref } from "../../schema-ref.js";
 import { toYaml } from "../../yaml.js";
 import type { YamlEditorChange } from "../editor/cofy-yaml-editor.js";
-import { fieldLabel } from "./field-shell.js";
 import { CofyFormField } from "./form-field.js";
-import { issuesAt } from "./issues.js";
 
 /**
  * A schema shape the generic dispatch does not recognize.
@@ -42,11 +39,15 @@ export class CofyUnknownForm extends CofyFormField {
   }
 
   public override render(): TemplateResult {
-    const node = deref(this.schema, this.root);
-    const issues = [...issuesAt(this.issues, this.pointer), ...this.syntaxErrors.map((message) => ({ message }))];
+    const issues = [...this.ownIssues, ...this.syntaxErrors.map((message) => ({ message }))];
 
     return html`
-      <cofy-field-shell data-pointer=${this.pointer} label=${fieldLabel(node, this.pointer)} .issues=${issues}>
+      <cofy-field-shell
+        data-pointer=${this.pointer}
+        label=${this.label}
+        description=${this.description}
+        .issues=${issues}
+      >
         <cofy-yaml-editor
           .text=${this.text}
           @yaml-change=${(event: CustomEvent<YamlEditorChange>): void => this.onYamlChange(event)}

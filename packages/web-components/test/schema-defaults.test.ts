@@ -113,4 +113,18 @@ describe("seedFromSchema", () => {
   it("returns an empty object for a schema with no properties", () => {
     expect(seedFromSchema({ type: "object" })).toEqual({});
   });
+
+  it("terminates the same way when called with an already-resolved node, not just a raw $ref", () => {
+    // `cofy-object-form` seeds itself from its own `.schema`, which `cofy-any-form` has already
+    // resolved past its `$ref` by the time it gets there - it has no `$ref` string left to track
+    // by, only the node's own identity, which is what the cycle guard now keys on either way.
+    const cyclic = {
+      type: "object",
+      properties: { kind: { const: "index", default: "index" }, inner: { $ref: "#/$defs/Formula" } },
+      required: ["kind", "inner"],
+    };
+    const root = { $defs: { Formula: cyclic } };
+
+    expect(seedFromSchema(cyclic, root)).toEqual({ kind: "index", inner: null });
+  });
 });

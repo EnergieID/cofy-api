@@ -11,10 +11,11 @@ export { seedFromSchema } from "./schema-defaults.js";
 export { toYaml, withoutNulls } from "./yaml.js";
 
 export {
-  createFieldRegistry,
+  defaultFieldMappers,
   defaultFieldRegistry,
-  type FieldRegistry,
-} from "./components/form/custom-fields.js";
+  FieldRegistry,
+  type FieldMapper,
+} from "./components/form/field-registry.js";
 
 export { COMPONENTS_NAMESPACE, createI18n, preferredLanguage, type I18nOptions } from "./i18n/i18n.js";
 export { CofyI18n } from "./i18n/cofy-i18n.js";

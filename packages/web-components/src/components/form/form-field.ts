@@ -7,8 +7,8 @@ import { CofyElement } from "../../cofy-element.js";
  * The prop contract shared by every element in the recursive form family.
  *
  * `value` is this field's own slice of the document, not the whole thing - a parent resolves
- * it once and passes it straight down. `issues` is the whole document's, unfiltered; each field
- * picks out what applies to its own pointer (or its descendants') as needed.
+ * it once and passes it straight down. `issues` is the whole document's, unfiltered - a field
+ * reads its own via {@link CofyFormField.ownIssues}.
  */
 export abstract class CofyFormField extends CofyElement {
   /** This field's own (possibly still-`$ref`'d) schema node. */
@@ -22,6 +22,15 @@ export abstract class CofyFormField extends CofyElement {
 
   /** This field's own current value. */
   @property({ attribute: false }) public value: unknown;
+
+  /**
+   * This field's own label, and description (`""` for neither) - extracted by `cofy-any-form`
+   * from this field's schema exactly as encountered (before it resolves `$ref`/`Optional`
+   * wrapping away), since that is the level pydantic actually puts a field's own `title`/
+   * `description` on. Not inherited by children - each gets its own, computed the same way.
+   */
+  @property({ type: String }) public label = "";
+  @property({ type: String }) public description = "";
 
   @property({ type: Boolean }) public required = false;
 
@@ -43,4 +52,13 @@ export abstract class CofyFormField extends CofyElement {
    * draws its own.
    */
   @property({ type: Boolean }) public bare = false;
+
+  /**
+   * This field's own issues - exactly at its own pointer, and none at all while `bare`, since an
+   * ancestor's own boundary (a union's details, an accordion item) already shows them instead.
+   * `bare` is always `false` on a leaf, so this is just the plain filter there.
+   */
+  protected get ownIssues(): readonly ValidationIssue[] {
+    return this.bare ? [] : this.issues.filter((issue) => issue.pointer === this.pointer);
+  }
 }

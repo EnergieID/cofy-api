@@ -4,29 +4,27 @@ import type { TemplateResult } from "lit";
 import { customElement } from "lit/decorators.js";
 import { html, unsafeStatic } from "lit/static-html.js";
 
-import { fieldRegistryContext } from "../../context.js";
-import { defaultFieldRegistry, type FieldRegistry } from "./custom-fields.js";
-import { CofyFormField } from "./form-field.js";
-import { resolveFieldKind, schemaTypeName, type FieldKind } from "./schema-dispatch.js";
+import "./cofy-unknown-form.js";
 
-const KIND_TAG: Record<FieldKind["kind"], string> = {
-  union: "cofy-union-form",
-  enum: "cofy-enum-form",
-  const: "cofy-const-form",
-  secret: "cofy-secret-form",
-  string: "cofy-string-form",
-  number: "cofy-number-form",
-  boolean: "cofy-boolean-form",
-  object: "cofy-object-form",
-  array: "cofy-list-form",
-  unknown: "cofy-unknown-form",
-};
+import { fieldRegistryContext } from "../../context.js";
+import type { FieldRegistry } from "./field-registry.js";
+import { defaultFieldRegistry } from "./field-registry.js";
+import { fieldMeta } from "./field-shell.js";
+import { CofyFormField } from "./form-field.js";
+import { resolveNode } from "./schema-dispatch.js";
+
+const UNKNOWN_TAG = "cofy-unknown-form";
 
 /**
- * Renders whichever field a schema node calls for.
+ * Renders whichever field a schema node calls for: the first mapper in {@link fieldRegistryContext}
+ * whose `matches` accepts this field's own schema, falling back to `cofy-unknown-form` if none do -
+ * imported here directly, since this is the one place that fallback tag is named.
  *
- * The one place a schema type name is checked against a registered custom field before
- * falling through to the generic dispatch - see {@link FieldRegistry}.
+ * The one place a field's label/description are read off its schema (`fieldMeta`, computed once
+ * per render from *this* field's own schema, before it is resolved) and handed down as props -
+ * every mounted tag gets the same, fully resolved `.schema` (`resolveNode`, also computed once)
+ * regardless of which one it is, so a leaf/container never has to resolve or extract either
+ * itself.
  */
 @customElement("cofy-any-form")
 export class CofyAnyForm extends CofyFormField {
@@ -40,20 +38,12 @@ export class CofyAnyForm extends CofyFormField {
   public fieldRegistry: FieldRegistry = defaultFieldRegistry;
 
   public override render(): TemplateResult {
-    const custom = this.fieldRegistry.customFieldFor(schemaTypeName(this.schema));
-    const kind = resolveFieldKind(this.schema, this.root);
-    const tag = unsafeStatic(custom ?? KIND_TAG[kind.kind]);
+    const node = resolveNode(this.schema, this.root);
+    const { label, description } = fieldMeta(this.schema, this.root, this.pointer);
+    const tagName = unsafeStatic(this.fieldRegistry.getTag(node, this.root) ?? UNKNOWN_TAG);
 
-    // A container kind (object/array/union/enum/unknown) needs the schema resolveFieldKind
-    // actually resolved to - $ref-followed and, for an `Optional[X]`, unwrapped past its
-    // `anyOf` - or its own `properties`/`items`/`oneOf` would be one level too deep for it to
-    // see, since each field's own render() only ever calls the cheaper `deref()` on top of
-    // whatever schema it is handed. A leaf kind (string/number/...) carries no such structure
-    // to lose, so the original schema - title and description included - passes through as is.
-    const schema = "schema" in kind ? kind.schema : this.schema;
-
-    return html`<${tag}
-      .schema=${schema}
+    return html`<${tagName}
+      .schema=${node}
       .root=${this.root}
       .pointer=${this.pointer}
       .value=${this.value}
@@ -61,7 +51,9 @@ export class CofyAnyForm extends CofyFormField {
       .issues=${this.issues}
       .hide=${this.hide}
       ?bare=${this.bare}
-    ></${tag}>`;
+      .label=${label}
+      .description=${description}
+    ></${tagName}>`;
   }
 }
 

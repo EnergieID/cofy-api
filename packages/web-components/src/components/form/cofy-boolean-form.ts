@@ -6,27 +6,21 @@ import { ifDefined } from "lit/directives/if-defined.js";
 import "@awesome.me/webawesome/dist/components/checkbox/checkbox.js";
 import "./cofy-field-shell.js";
 
-import { deref } from "../../schema-ref.js";
-import { fieldLabel } from "./field-shell.js";
 import { CofyFormField } from "./form-field.js";
-import { issuesAt } from "./issues.js";
 
 /** A boolean field, rendered as a `wa-checkbox` (its label lives in the default slot, not an attribute). */
 @customElement("cofy-boolean-form")
 export class CofyBooleanForm extends CofyFormField {
   public override render(): TemplateResult {
-    const node = deref(this.schema, this.root);
-    const description = typeof node["description"] === "string" ? node["description"] : undefined;
-
     return html`
-      <cofy-field-shell data-pointer=${this.pointer} .issues=${issuesAt(this.issues, this.pointer)}>
+      <cofy-field-shell data-pointer=${this.pointer} .issues=${this.ownIssues}>
         <wa-checkbox
-          hint=${ifDefined(description)}
+          hint=${ifDefined(this.description || undefined)}
           ?checked=${Boolean(this.value)}
           ?required=${this.required}
           @change=${(event: Event): void => this.onChange(event)}
         >
-          ${fieldLabel(node, this.pointer)}
+          ${this.label}
         </wa-checkbox>
       </cofy-field-shell>
     `;

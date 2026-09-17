@@ -8,14 +8,13 @@ import "@awesome.me/webawesome/dist/components/option/option.js";
 import "@awesome.me/webawesome/dist/components/select/select.js";
 import "../editor/cofy-yaml-editor.js";
 import "../form/cofy-field-shell.js";
-import "../form/register.js";
+import "../form/cofy-any-form.js";
 
 import { CofyElement } from "../../cofy-element.js";
 import { seedFromSchema } from "../../schema-defaults.js";
 import { isRecord } from "../../schema-ref.js";
 import { toYaml } from "../../yaml.js";
 import type { YamlEditorChange } from "../editor/cofy-yaml-editor.js";
-import { issuesAt } from "../form/issues.js";
 import { setAtPointer } from "../form/pointer.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
@@ -114,7 +113,7 @@ export class CofyModuleForm extends CofyElement {
 
   private renderTypePicker(type: string): TemplateResult {
     return html`
-      <cofy-field-shell .issues=${issuesAt(this.issues, "/type")}>
+      <cofy-field-shell .issues=${this.issues.filter((issue) => issue.pointer === "/type")}>
         <wa-select
           label=${this.t("form.moduleType")}
           placeholder=${this.t("form.chooseType")}

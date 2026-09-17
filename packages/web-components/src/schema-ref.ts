@@ -1,7 +1,13 @@
 import type { JsonSchema } from "@cofy/frontend-sdk";
 
-/** `$ref`s already being expanded on the current path, so a cyclic schema can be told apart from a repeated sibling. */
-export type RefGuard = ReadonlySet<string>;
+/**
+ * Schema nodes already being expanded on the current path, so a cyclic schema can be told apart
+ * from a repeated sibling. Tracked by the resolved node's own identity rather than its `$ref`
+ * string: the same `$defs` entry always derefs to the same object, so this works the same way
+ * whether a walk starts from a raw `$ref` or from a node some earlier step already resolved -
+ * a caller handed an already-resolved node has no `$ref` string left to track by.
+ */
+export type RefGuard = ReadonlySet<JsonSchema>;
 
 export const noneExpanding: RefGuard = new Set();
 

@@ -1,122 +1,101 @@
 import { describe, expect, it } from "vitest";
 import type { JsonSchema } from "@cofy/frontend-sdk";
 
-import { resolveFieldKind } from "../../../src/components/form/schema-dispatch.js";
+import {
+  discriminatorOf,
+  resolveNode,
+  schemaTypeName,
+  unionBranches,
+} from "../../../src/components/form/schema-dispatch.js";
 
-describe("resolveFieldKind", () => {
-  it("resolves a plain string", () => {
-    expect(resolveFieldKind({ type: "string" }, {})).toEqual({ kind: "string" });
+describe("resolveNode", () => {
+  it("passes a plain leaf schema through unchanged", () => {
+    const schema = { type: "string" };
+    expect(resolveNode(schema, {})).toBe(schema);
   });
 
-  it("resolves a plain number and integer alike", () => {
-    expect(resolveFieldKind({ type: "number" }, {})).toEqual({ kind: "number" });
-    expect(resolveFieldKind({ type: "integer" }, {})).toEqual({ kind: "number" });
-  });
-
-  it("resolves a boolean", () => {
-    expect(resolveFieldKind({ type: "boolean" }, {})).toEqual({ kind: "boolean" });
-  });
-
-  it("resolves a const-only discriminator field, like `type`", () => {
-    const schema = { const: "billing", default: "billing", type: "string" };
-    expect(resolveFieldKind(schema, {})).toEqual({ kind: "const", value: "billing" });
-  });
-
-  it("resolves a password/writeOnly string as a secret, not a plain string", () => {
-    const schema = { type: "string", format: "password", writeOnly: true };
-    expect(resolveFieldKind(schema, {})).toEqual({ kind: "secret" });
-  });
-
-  it("resolves an object with properties", () => {
-    const schema = { type: "object", properties: { name: { type: "string" } } };
-    expect(resolveFieldKind(schema, {})).toEqual({ kind: "object", schema });
-  });
-
-  it("treats a dict-shaped object (additionalProperties, no fixed properties) as unknown", () => {
-    // `dict[str, Formula]` - no `properties` key for the object renderer to draw a field for.
-    const schema = { type: "object", additionalProperties: { oneOf: [{ type: "string" }] } };
-    expect(resolveFieldKind(schema, {})).toEqual({ kind: "unknown", schema });
-  });
-
-  it("resolves an array, carrying its items schema", () => {
-    const schema = { type: "array", items: { type: "string" } };
-    expect(resolveFieldKind(schema, {})).toEqual({ kind: "array", schema, items: { type: "string" } });
-  });
-
-  it("treats a missing/unrecognized type as unknown, not a crash", () => {
-    expect(resolveFieldKind({}, {})).toEqual({ kind: "unknown", schema: {} });
-  });
-
-  it("resolves a local $ref before deciding the kind", () => {
+  it("resolves a local $ref", () => {
     const costGroup = { enum: ["low", "high"] };
     const root: JsonSchema = { $defs: { CostGroup: costGroup } };
-    const schema = { $ref: "#/$defs/CostGroup" };
-
-    expect(resolveFieldKind(schema, root)).toEqual({ kind: "enum", schema: costGroup, values: ["low", "high"] });
-  });
-
-  it("resolves a discriminated oneOf union, carrying the discriminator mapping", () => {
-    const schema: JsonSchema = {
-      discriminator: { propertyName: "type", mapping: { directive: "#/$defs/DirectiveSourceSettings" } },
-      oneOf: [{ $ref: "#/$defs/DirectiveSourceSettings" }],
-    };
-
-    const result = resolveFieldKind(schema, {});
-
-    expect(result).toEqual({
-      kind: "union",
-      schema,
-      branches: [{ $ref: "#/$defs/DirectiveSourceSettings" }],
-      discriminator: { propertyName: "type", mapping: { directive: "#/$defs/DirectiveSourceSettings" } },
-    });
-  });
-
-  it("resolves a bare oneOf with no discriminator key as a union with none", () => {
-    // The energy_cost `Formula` shape: a callable/`kind`-tagged discriminator pydantic can't
-    // express as `discriminator.mapping`.
-    const schema: JsonSchema = { oneOf: [{ $ref: "#/$defs/MinimumFormula" }, { $ref: "#/$defs/TieredFormula" }] };
-
-    const result = resolveFieldKind(schema, {});
-
-    if (result.kind !== "union") throw new Error("expected a union");
-    expect(result.discriminator).toBeUndefined();
+    expect(resolveNode({ $ref: "#/$defs/CostGroup" }, root)).toBe(costGroup);
   });
 
   it("unwraps Optional[string] (anyOf with one non-null branch) straight through to string", () => {
     const schema = { anyOf: [{ type: "string" }, { type: "null" }], default: null };
-    expect(resolveFieldKind(schema, {})).toEqual({ kind: "string" });
+    expect(resolveNode(schema, {})).toEqual({ type: "string" });
   });
 
-  it("unwraps Optional[$ref] through to the ref's own kind", () => {
+  it("unwraps Optional[$ref] through to the ref's own target", () => {
     const costGroup = { enum: ["low", "high"] };
     const root: JsonSchema = { $defs: { CostGroup: costGroup } };
     const schema = { anyOf: [{ $ref: "#/$defs/CostGroup" }, { type: "null" }], default: null };
-
-    expect(resolveFieldKind(schema, root)).toEqual({ kind: "enum", schema: costGroup, values: ["low", "high"] });
+    expect(resolveNode(schema, root)).toBe(costGroup);
   });
 
-  it("treats Optional[array-of-union] as an array, not a union - the null sits beside the array", () => {
+  it("leaves a discriminated oneOf union alone - it is already terminal", () => {
+    const schema: JsonSchema = { oneOf: [{ $ref: "#/$defs/DirectiveSourceSettings" }] };
+    expect(resolveNode(schema, {})).toBe(schema);
+  });
+
+  it("leaves a multi-branch anyOf with no null option alone, as a union", () => {
+    const schema = { anyOf: [{ type: "string" }, { type: "integer" }] };
+    expect(resolveNode(schema, {})).toBe(schema);
+  });
+
+  it("treats Optional[array-of-union] as the array, not a union - the null sits beside the array", () => {
     const schema = {
       anyOf: [
-        {
-          type: "array",
-          items: { oneOf: [{ $ref: "#/$defs/JSONFormatSettings" }, { $ref: "#/$defs/CSVFormatSettings" }] },
-        },
+        { type: "array", items: { oneOf: [{ $ref: "#/$defs/JSONFormatSettings" }, { $ref: "#/$defs/CSVFormatSettings" }] } },
         { type: "null" },
       ],
       default: null,
     };
+    expect(resolveNode(schema, {})).toEqual(schema.anyOf[0]);
+  });
+});
 
-    const result = resolveFieldKind(schema, {});
-
-    expect(result.kind).toBe("array");
+describe("unionBranches", () => {
+  it("returns undefined for a plain leaf", () => {
+    expect(unionBranches({ type: "string" }, {})).toBeUndefined();
   });
 
-  it("treats a multi-branch anyOf with no null option as a union", () => {
-    const schema = { anyOf: [{ type: "string" }, { type: "integer" }] };
-    const result = resolveFieldKind(schema, {});
+  it("returns oneOf's branches", () => {
+    const branches = [{ $ref: "#/$defs/DirectiveSourceSettings" }];
+    expect(unionBranches({ oneOf: branches }, {})).toEqual(branches);
+  });
 
-    if (result.kind !== "union") throw new Error("expected a union");
-    expect(result.branches).toHaveLength(2);
+  it("returns a bare anyOf's non-null branches, with no discriminator implied", () => {
+    const node = { anyOf: [{ type: "string" }, { type: "integer" }] };
+    expect(unionBranches(node, {})).toEqual(node.anyOf);
+  });
+
+  it("does not treat a single-branch anyOf (Optional[X], already unwrapped by resolveNode) as a union", () => {
+    const node = { anyOf: [{ type: "string" }, { type: "null" }] };
+    expect(unionBranches(node, {})).toBeUndefined();
+  });
+});
+
+describe("discriminatorOf", () => {
+  it("reads a well-formed discriminator", () => {
+    const node = { discriminator: { propertyName: "type", mapping: { directive: "#/$defs/DirectiveSourceSettings" } } };
+    expect(discriminatorOf(node)).toEqual({ propertyName: "type", mapping: { directive: "#/$defs/DirectiveSourceSettings" } });
+  });
+
+  it("returns undefined when there is none - the energy_cost Formula shape", () => {
+    expect(discriminatorOf({ oneOf: [{ $ref: "#/$defs/MinimumFormula" }, { $ref: "#/$defs/TieredFormula" }] })).toBeUndefined();
+  });
+});
+
+describe("schemaTypeName", () => {
+  it("reads a $ref's own $defs entry name", () => {
+    expect(schemaTypeName({ $ref: "#/$defs/Formula" })).toBe("Formula");
+  });
+
+  it("falls back to an inline schema's own title", () => {
+    expect(schemaTypeName({ title: "Cost group" })).toBe("Cost group");
+  });
+
+  it("returns undefined for neither", () => {
+    expect(schemaTypeName({ type: "string" })).toBeUndefined();
   });
 });
