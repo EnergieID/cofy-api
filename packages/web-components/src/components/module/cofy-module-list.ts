@@ -83,7 +83,7 @@ export class CofyModuleList extends CofyElement {
             <tr>
               <th scope="col">${this.t("moduleList.columns.module")}</th>
               <th scope="col">${this.t("moduleList.columns.type")}</th>
-              <th scope="col" class="actions">${this.t("moduleList.columns.actions")}</th>
+              <th scope="col" class="actions"></th>
             </tr>
           </thead>
           <tbody>
