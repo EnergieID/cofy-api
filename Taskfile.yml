@@ -26,6 +26,7 @@ tasks:
 
   lint:
     desc: Lint all packages
+    deps: [build]
     cmds:
       - uv run --project packages/api --directory packages/api poe lint
       - uv run --project packages/management-api --directory packages/management-api poe lint
@@ -50,6 +51,7 @@ tasks:
 
   check:
     desc: Type-check all packages
+    deps: [build]
     cmds:
       - uv run --project packages/api --directory packages/api poe check
       - uv run --project packages/management-api --directory packages/management-api poe check
