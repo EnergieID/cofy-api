@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { JsonSchema } from "@cofy/frontend-sdk";
 
-import { defaultFieldRegistry, FieldRegistry } from "../../../src/components/form/field-registry.js";
+import { defaultFieldRegistry, FieldRegistry, type AS_YAML_OPTION } from "../../../src/components/form/field-registry.js";
 import { resolveNode } from "../../../src/components/form/schema/resolve.js";
 
 /** Dispatches *schema* through *registry*, the same way `cofy-any-form` does - the mounted tag always gets the resolved node. */
@@ -10,8 +10,9 @@ function dispatch(
   root: JsonSchema = {},
   registry = defaultFieldRegistry,
 ): { tag: string; schema: JsonSchema } | undefined {
-  const tag = registry.getTag(schema, root);
-  return tag === undefined ? undefined : { tag, schema: resolveNode(schema, root) };
+  const node = resolveNode(schema, root);
+  const match = registry.getFirstMatch(node, root);
+  return match === undefined ? undefined : { tag: match.tag, schema: node };
 }
 
 describe("defaultFieldRegistry", () => {
@@ -166,6 +167,37 @@ describe("FieldRegistry.getSummary", () => {
   it("summarizes a dict by its own entry count", () => {
     const schema = { type: "object", additionalProperties: { type: "string" } };
     expect(defaultFieldRegistry.getSummary(schema, {}, { peak: "flat", off_peak: "flat" })).toBe("2");
+  });
+});
+
+describe("FieldMapper.asYaml", () => {
+  it("marks a plain array as optionally yaml, form by default", () => {
+    const schema = { type: "array", items: { type: "string" } };
+    expect(defaultFieldRegistry.getFirstMatch(resolveNode(schema, {}), {})?.asYaml).toBe("optional");
+  });
+
+  it("marks an array specifically titled Tariff as yaml by default", () => {
+    const schema = { type: "array", items: { type: "string" }, title: "Tariff" };
+    expect(defaultFieldRegistry.getFirstMatch(resolveNode(schema, {}), {})?.asYaml).toBe("default");
+  });
+
+  it("does not mark an array with an unrelated title as yaml by default", () => {
+    const schema = { type: "array", items: { type: "string" }, title: "Tags" };
+    expect(defaultFieldRegistry.getFirstMatch(resolveNode(schema, {}), {})?.asYaml).toBe("optional");
+  });
+
+  it("marks object, dict, and union as optionally yaml", () => {
+    const asYaml = (schema: JsonSchema): AS_YAML_OPTION | undefined =>
+      defaultFieldRegistry.getFirstMatch(resolveNode(schema, {}), {})?.asYaml;
+
+    expect(asYaml({ type: "object", properties: { name: { type: "string" } } })).toBe("optional");
+    expect(asYaml({ type: "object", additionalProperties: { type: "string" } })).toBe("optional");
+    expect(asYaml({ oneOf: [{ $ref: "#/$defs/A" }, { $ref: "#/$defs/B" }] })).toBe("optional");
+  });
+
+  it("leaves plain leaves with no asYaml option at all", () => {
+    expect(defaultFieldRegistry.getFirstMatch(resolveNode({ type: "string" }, {}), {})?.asYaml).toBeUndefined();
+    expect(defaultFieldRegistry.getFirstMatch(resolveNode({ type: "boolean" }, {}), {})?.asYaml).toBeUndefined();
   });
 });
 

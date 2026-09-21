@@ -101,6 +101,7 @@ export class CofyUnionForm extends CofyFormField {
         description=${this.bare ? "" : this.description}
         .issues=${this.ownIssues}
       >
+        <slot name="actions" slot="actions"></slot>
         ${this.bare ? body : this.renderDetails(body, branch !== undefined)}
       </cofy-field-shell>
     `;

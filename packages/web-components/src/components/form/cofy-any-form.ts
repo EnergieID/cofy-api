@@ -1,24 +1,26 @@
 import { consume } from "@lit/context";
-import { css } from "lit";
+import { css, nothing } from "lit";
 import type { TemplateResult } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { html, unsafeStatic } from "lit/static-html.js";
 
-import "./cofy-unknown-form.js";
+import "./cofy-yaml-form.js";
 
 import { fieldRegistryContext } from "../../context.js";
-import type { FieldRegistry } from "./field-registry.js";
+import type { AS_YAML_OPTION, FieldRegistry } from "./field-registry.js";
 import { defaultFieldRegistry } from "./field-registry.js";
 import { CofyFormField } from "./form-field.js";
 import { deref } from "./schema/ref.js";
 import { resolveNode } from "./schema/resolve.js";
 import { fieldDescription, fieldLabel } from "./schema/summary.js";
+import { nativeStyles } from "../../theme/native-styles.js";
+import { utilityStyles } from "../../theme/utility-styles.js";
 
-const UNKNOWN_TAG = "cofy-unknown-form";
+const YAML_TAG = "cofy-yaml-form";
 
 /**
  * Renders whichever field a schema node calls for: the first mapper in {@link fieldRegistryContext}
- * whose `matches` accepts this field's own schema, falling back to `cofy-unknown-form` if none do -
+ * whose `matches` accepts this field's own schema, falling back to `cofy-yaml-form` if none do -
  * imported here directly, since this is the one place that fallback tag is named.
  *
  * The one place a field's label/description are read off its schema - resolved past its own
@@ -30,19 +32,59 @@ const UNKNOWN_TAG = "cofy-unknown-form";
  */
 @customElement("cofy-any-form")
 export class CofyAnyForm extends CofyFormField {
-  public static override styles = css`
+  public static override styles = [
+    nativeStyles,
+    utilityStyles,
+    css`
     :host {
       display: contents;
     }
-  `;
+
+    .wa-link-plain{
+      cursor: pointer;
+    }
+  `];
 
   @consume({ context: fieldRegistryContext, subscribe: true })
   public fieldRegistry: FieldRegistry = defaultFieldRegistry;
 
+  @state() private yamlToggle = false;
+
+  private shouldShowYaml(asYaml: AS_YAML_OPTION): boolean {
+    switch (asYaml){
+      case "never": return false;
+      case "optional": return this.yamlToggle;
+      case "default": return !this.yamlToggle;
+    }
+  }
+
   public override render(): TemplateResult {
     const node = resolveNode(this.schema, this.root);
     const shallow = deref(this.schema, this.root);
-    const tagName = unsafeStatic(this.fieldRegistry.getTag(node, this.root) ?? UNKNOWN_TAG);
+
+    const match = this.fieldRegistry.getFirstMatch(node, this.root);
+    const asYaml = match?.asYaml ?? "never";
+    const tag = this.shouldShowYaml(asYaml) ? YAML_TAG : match?.tag ?? YAML_TAG
+    const tagName = unsafeStatic(tag);
+
+    const yamlToggle = html`<a
+        class="wa-link-plain"
+        role="button"
+        tabindex="0"
+        slot="actions"
+        @click=${(event: MouseEvent): void => {
+        event.stopPropagation();
+        this.yamlToggle = !this.yamlToggle;
+        }}
+        @keydown=${(event: KeyboardEvent): void => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        event.stopPropagation();
+        this.yamlToggle = !this.yamlToggle;
+        }}
+    >
+        ${this.shouldShowYaml(asYaml) ? this.t("form.viewAsForm") : this.t("form.viewAsYaml")}
+    </a>`;
 
     return html`<${tagName}
       .schema=${node}
@@ -55,7 +97,9 @@ export class CofyAnyForm extends CofyFormField {
       ?bare=${this.bare}
       .label=${fieldLabel(shallow, this.pointer)}
       .description=${fieldDescription(shallow)}
-    ></${tagName}>`;
+    >
+      ${asYaml != "never" ? yamlToggle : nothing }
+    </${tagName}>`;
   }
 }
 

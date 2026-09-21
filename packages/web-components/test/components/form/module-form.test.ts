@@ -287,7 +287,7 @@ describe("the generic form family, mounted end to end", () => {
 
     const nestedField = fieldAt(element, "/source/nested")!;
     expect(nestedField.querySelector("wa-button")).toBeNull();
-    expect(nestedField.shadowRoot!.querySelector(".wa-form-control-label")?.textContent).toBe("SourceB");
+    expect(nestedField.shadowRoot!.querySelector("label")?.textContent).toBe("SourceB");
     const createItem = nestedField.querySelector("wa-details")!;
     expect(createItem.getAttribute("summary")).toBe("Create");
     expect(createItem.querySelector('[slot="expand-icon"]')?.getAttribute("name")).toBe("plus");
@@ -389,7 +389,7 @@ describe("the generic form family, mounted end to end", () => {
     await element.updateComplete;
 
     const shell = element.shadowRoot!.querySelector("cofy-field-shell")!;
-    const label = shell.shadowRoot!.querySelector(".wa-form-control-label");
+    const label = shell.shadowRoot!.querySelector("label");
     // the details is the caller's own markup, slotted into cofy-field-shell - a light-DOM child
     // of it, not inside its shadow root (unlike the label, which cofy-field-shell renders itself).
     const details = shell.querySelector("wa-details");
@@ -509,7 +509,7 @@ describe("the generic form family, mounted end to end", () => {
 
     const shell = element.shadowRoot!.querySelector("cofy-field-shell")!;
     expect(shell.querySelector("wa-details")).toBeNull();
-    expect(shell.shadowRoot!.querySelector(".wa-form-control-label")).toBeNull();
+    expect(shell.shadowRoot!.querySelector("label")).toBeNull();
   });
 
   it("wraps a list in an accordion, with its label above (not a card - the accordion is its own boundary)", async () => {
@@ -527,7 +527,7 @@ describe("the generic form family, mounted end to end", () => {
     await element.updateComplete;
 
     const shell = element.shadowRoot!.querySelector("cofy-field-shell")!;
-    expect(shell.shadowRoot!.querySelector(".wa-form-control-label")?.textContent).toBe("Tags");
+    expect(shell.shadowRoot!.querySelector("label")?.textContent).toBe("Tags");
     expect(shell.querySelector("wa-accordion")).not.toBeNull();
     expect(shell.querySelector("wa-details")).toBeNull();
   });
@@ -826,7 +826,9 @@ describe("the generic form family, mounted end to end", () => {
     const element = await mountObjectForm({ issues });
 
     const cardField = fieldAt(element, "/source")!;
-    const slot = cardField.shadowRoot!.querySelector("slot")!;
+    // Not just "slot" - "/source" has its own label, so its label row's "actions" slot is also
+    // in the shadow root; this has to pick out the default (content) slot specifically.
+    const slot = cardField.shadowRoot!.querySelector("slot:not([name])")!;
     const issuesList = cardField.shadowRoot!.querySelector(".cofy-field-issues")!;
     expect(issuesList.textContent).toContain("does not match a branch");
     expect(slot.compareDocumentPosition(issuesList)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
@@ -836,7 +838,7 @@ describe("the generic form family, mounted end to end", () => {
     // The shape of a tariff module's `formats: list[Format] | None` - the array only shows up
     // once the surrounding anyOf/null wrapper is unwrapped, and each item is itself a
     // discriminated union. A child mounted with the wrong (still-wrapped) schema would see no
-    // `items` at all and fall back to cofy-unknown-form for every element.
+    // `items` at all and fall back to cofy-yaml-form for every element.
     const parentSchema: JsonSchema = {
       type: "object",
       properties: {
@@ -924,7 +926,10 @@ describe("the generic form family, mounted end to end", () => {
 
     const item = fieldAt(element, "/formats/0")!;
     expect(item.querySelector("wa-details")).toBeNull();
-    expect(deepQuery(item, ".wa-form-control-label")).toBeNull();
+    // Not a bare "label" - the union still shows its own type picker's native label ("Type"),
+    // which is expected; only `cofy-field-shell`'s own label row (a `.wa-split > label`) must
+    // be absent here.
+    expect(deepQuery(item, ".wa-split > label")).toBeNull();
   });
 
   it("renders a dict-shaped object (additionalProperties, no fixed properties) as an accordion, not a YAML editor", async () => {
@@ -953,7 +958,7 @@ describe("the generic form family, mounted end to end", () => {
     const field = fieldAt(element, "/injection")!;
     expect(field.querySelector("cofy-yaml-editor")).toBeNull();
     expect(field.querySelector("wa-accordion")).not.toBeNull();
-    expect(field.shadowRoot!.querySelector(".wa-form-control-label")?.textContent).toBe("Injection");
+    expect(field.shadowRoot!.querySelector("label")?.textContent).toBe("Injection");
   });
 });
 
@@ -972,7 +977,7 @@ describe("cofy-dict-form", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const shell = element.shadowRoot!.querySelector("cofy-field-shell")!;
-    expect(shell.shadowRoot!.querySelector(".wa-form-control-label")?.textContent).toBe("Tariffs");
+    expect(shell.shadowRoot!.querySelector("label")?.textContent).toBe("Tariffs");
     expect(shell.querySelector("wa-accordion")).not.toBeNull();
   });
 
@@ -1257,24 +1262,24 @@ describe("cofy-any-form: label and description", () => {
   });
 });
 
-describe("cofy-unknown-form", () => {
+describe("cofy-yaml-form", () => {
   const unknownSchema: JsonSchema = { title: "Extra Config" };
 
   it("shows the value as a YAML editor, labelled with the field's own title", async () => {
-    const element = document.createElement("cofy-unknown-form");
+    const element = document.createElement("cofy-yaml-form");
     await provideI18n(element);
     element.schema = unknownSchema;
     element.root = unknownSchema;
     element.pointer = "/extra";
     element.value = { a: 1, b: "two" };
-    // `cofy-unknown-form` no longer derives its own label from its schema - see the equivalent
+    // `cofy-yaml-form` no longer derives its own label from its schema - see the equivalent
     // note on the nested-object test above.
     element.label = "Extra Config";
     document.body.append(element);
     await element.updateComplete;
 
     const shell = element.shadowRoot!.querySelector("cofy-field-shell")!;
-    expect(shell.shadowRoot!.querySelector(".wa-form-control-label")?.textContent).toBe("Extra Config");
+    expect(shell.shadowRoot!.querySelector("label")?.textContent).toBe("Extra Config");
     const editor = element.shadowRoot!.querySelector("cofy-yaml-editor") as HTMLElement & { text: string };
     expect(editor).not.toBeNull();
     expect(editor.text).toContain("a: 1");
@@ -1282,7 +1287,7 @@ describe("cofy-unknown-form", () => {
   });
 
   it("dispatches field-change with the parsed value once the YAML is edited", async () => {
-    const element = document.createElement("cofy-unknown-form");
+    const element = document.createElement("cofy-yaml-form");
     await provideI18n(element);
     element.schema = unknownSchema;
     element.root = unknownSchema;
@@ -1303,7 +1308,7 @@ describe("cofy-unknown-form", () => {
   });
 
   it("does not dispatch field-change while the YAML has syntax errors, and shows them instead", async () => {
-    const element = document.createElement("cofy-unknown-form");
+    const element = document.createElement("cofy-yaml-form");
     await provideI18n(element);
     element.schema = unknownSchema;
     element.root = unknownSchema;
@@ -1324,6 +1329,50 @@ describe("cofy-unknown-form", () => {
     expect(events).toEqual([]);
     const shell = element.shadowRoot!.querySelector("cofy-field-shell")!;
     expect(shell.shadowRoot!.querySelector(".cofy-field-issues")?.textContent).toContain("bad");
+  });
+
+  it("hands the editor issues inside its own subtree with pointers relative to it, not the whole document's", async () => {
+    // `text` is only this field's own subtree (e.g. a Tariff's own YAML), not the whole module -
+    // `cofy-yaml-editor` locates a pointer against that local text, so a document-rooted pointer
+    // like "/extra/a" has to become "/a" to resolve to anything at all.
+    const element = document.createElement("cofy-yaml-form");
+    await provideI18n(element);
+    element.schema = unknownSchema;
+    element.root = unknownSchema;
+    element.pointer = "/extra";
+    element.value = { a: 1 };
+    element.issues = [
+      { pointer: "/extra/a", message: "inside the subtree", keyword: "custom" },
+      { pointer: "/extra", message: "the subtree itself", keyword: "custom" },
+      { pointer: "/elsewhere", message: "outside the subtree", keyword: "custom" },
+      { pointer: "/extraordinary", message: "a sibling pointer that merely starts with the prefix", keyword: "custom" },
+    ];
+    document.body.append(element);
+    await element.updateComplete;
+
+    const editor = element.shadowRoot!.querySelector("cofy-yaml-editor") as HTMLElement & {
+      issues: { pointer: string; message: string }[];
+    };
+    expect(editor.issues).toEqual([
+      { pointer: "/a", message: "inside the subtree" },
+      { pointer: "", message: "the subtree itself" },
+    ]);
+  });
+
+  it("hands the editor no issues while bare - an ancestor's own boundary already owns showing them", async () => {
+    const element = document.createElement("cofy-yaml-form");
+    await provideI18n(element);
+    element.schema = unknownSchema;
+    element.root = unknownSchema;
+    element.pointer = "/extra";
+    element.value = { a: 1 };
+    element.issues = [{ pointer: "/extra/a", message: "inside the subtree", keyword: "custom" }];
+    element.bare = true;
+    document.body.append(element);
+    await element.updateComplete;
+
+    const editor = element.shadowRoot!.querySelector("cofy-yaml-editor") as HTMLElement & { issues: unknown[] };
+    expect(editor.issues).toEqual([]);
   });
 });
 
@@ -1355,14 +1404,16 @@ describe("cofy-field-shell", () => {
   it("shows no label when it is empty", async () => {
     const element = await mountFieldShell();
 
-    expect(element.shadowRoot!.querySelector(".wa-form-control-label")).toBeNull();
+    expect(element.shadowRoot!.querySelector("label")).toBeNull();
   });
 
   it("shows its own label above the slotted control", async () => {
     const element = await mountFieldShell({ label: "Source" });
 
-    const label = element.shadowRoot!.querySelector(".wa-form-control-label");
-    const slot = element.shadowRoot!.querySelector("slot")!;
+    const label = element.shadowRoot!.querySelector("label");
+    // Not just "slot" - the label row has its own named "actions" slot beside it, so this has to
+    // pick out the default (content) slot specifically to test what it actually means to.
+    const slot = element.shadowRoot!.querySelector("slot:not([name])")!;
     expect(label?.textContent).toBe("Source");
     expect(label?.compareDocumentPosition(slot)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });

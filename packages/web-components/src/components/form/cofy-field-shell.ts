@@ -57,7 +57,11 @@ export class CofyFieldShell extends CofyElement {
       <div class="wa-stack wa-gap-xs">
         ${this.label === ""
           ? nothing
-          : html`<div class="wa-form-control-label">${this.label}</div>`}
+          : html`
+          <div class="wa-split">
+            <label>${this.label}</label>
+            <slot name="actions"></slot>
+          </div>`}
         <slot></slot>
         ${this.description === ""
           ? nothing

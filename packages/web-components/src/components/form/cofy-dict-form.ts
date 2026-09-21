@@ -63,6 +63,7 @@ export class CofyDictForm extends CofyFormField {
 
     return html`
       <cofy-field-shell data-pointer=${this.pointer} label=${label} description=${description} .issues=${this.ownIssues}>
+        <slot name="actions" slot="actions"></slot>
         <wa-accordion
           appearance="outlined"
           @wa-expand=${(event: CustomEvent<{ item: Element }>): void => this.onExpand(event, valueSchema)}

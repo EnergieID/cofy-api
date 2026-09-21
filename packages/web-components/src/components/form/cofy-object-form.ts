@@ -81,6 +81,7 @@ export class CofyObjectForm extends CofyFormField {
         description=${wrapped ? this.description : ""}
         .issues=${this.ownIssues}
       >
+        <slot name="actions" slot="actions"></slot>
         ${wrapped ? this.renderPopulated(propertiesBlock) : propertiesBlock}
       </cofy-field-shell>
     `;

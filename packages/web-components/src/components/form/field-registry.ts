@@ -16,6 +16,8 @@ import { isRecord } from "./schema/ref.js";
 import { resolveNode, unionBranches } from "./schema/resolve.js";
 import { arraySummary, dictSummary, primitiveText, tagSummary } from "./schema/summary.js";
 
+export type AS_YAML_OPTION = "never" | "optional" | "default";
+
 /**
  * One entry in a {@link FieldRegistry}.
  *
@@ -35,6 +37,9 @@ export interface FieldMapper {
   tag: string;
 
   summarize?(value: unknown, node: JsonSchema, root: JsonSchema): string | undefined;
+
+  /** Marks if an as yaml toggle should be shown in the form, or even if the yaml entry should be the default */
+  asYaml?: AS_YAML_OPTION
 }
 
 /**
@@ -43,10 +48,19 @@ export interface FieldMapper {
  * checked first.
  */
 export const defaultFieldMappers: readonly FieldMapper[] = [
+  /* Special cases */
+  {
+    tag: "cofy-list-form",
+    matches: (node: JsonSchema): boolean => node["type"] === "array" && node["title"] === "Tariff",
+    summarize: arraySummary,
+    asYaml: "default",
+  },
+  /* Defaults */
   {
     tag: "cofy-union-form",
     matches: (node: JsonSchema, root: JsonSchema): boolean => unionBranches(node, root) !== undefined,
     summarize: tagSummary,
+    asYaml: "optional",
   },
   {
     tag: "cofy-enum-form",
@@ -86,6 +100,7 @@ export const defaultFieldMappers: readonly FieldMapper[] = [
     // (`additionalProperties`, no `properties`) is handled by `cofy-dict-form` below instead.
     matches: (node: JsonSchema): boolean => node["type"] === "object" && isRecord(node["properties"]),
     summarize: tagSummary,
+    asYaml: "optional",
   },
   {
     tag: "cofy-dict-form",
@@ -94,11 +109,13 @@ export const defaultFieldMappers: readonly FieldMapper[] = [
     matches: (node: JsonSchema): boolean =>
       node["type"] === "object" && !isRecord(node["properties"]) && isRecord(node["additionalProperties"]),
     summarize: dictSummary,
+    asYaml: "optional",
   },
   {
     tag: "cofy-list-form",
     matches: (node: JsonSchema): boolean => node["type"] === "array",
     summarize: arraySummary,
+    asYaml: "optional",
   },
 ];
 
@@ -124,22 +141,16 @@ export class FieldRegistry {
     this.mappers = [...overrides, ...defaultFieldMappers];
   }
 
-  /** The tag `cofy-any-form` should mount for *schema*, or `undefined` if nothing matches - its own `cofy-unknown-form` fallback. */
-  public getTag(schema: JsonSchema, root: JsonSchema): string | undefined {
-    return this.getFirstMatch(schema, root)?.mapper.tag;
-  }
-
   /** A one-line stand-in for whatever *schema* would dispatch to, given *value* - see {@link FieldMapper.summarize}. */
   public getSummary(schema: JsonSchema, root: JsonSchema, value: unknown): string | undefined {
-    const match = this.getFirstMatch(schema, root);
-    return match?.mapper.summarize?.(value, match.node, root);
+    const node = resolveNode(schema, root);
+    const match = this.getFirstMatch(node, root);
+    return match?.summarize?.(value, node, root);
   }
 
-  /** The first mapper accepting *schema* (resolved past its own `$ref`/`Optional`-wrapping), alongside that resolved node. */
-  private getFirstMatch(schema: JsonSchema, root: JsonSchema): { node: JsonSchema; mapper: FieldMapper } | undefined {
-    const node = resolveNode(schema, root);
-    const mapper = this.mappers.find((candidate) => candidate.matches(node, root));
-    return mapper === undefined ? undefined : { node, mapper };
+  /** The first mapper accepting *node* - already resolved past its own `$ref`/`Optional`-wrapping (`resolveNode`), unlike `schema` in {@link getSummary}. */
+  public getFirstMatch(node: JsonSchema, root: JsonSchema): FieldMapper | undefined {
+    return this.mappers.find((candidate) => candidate.matches(node, root));
   }
 }
 
