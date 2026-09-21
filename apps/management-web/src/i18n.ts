@@ -8,4 +8,4 @@ export const APP_NAMESPACE = "app";
  * complete `components.yaml` beside it: i18next falls back key by key, so a half-finished
  * translation shows what it has and English for the rest.
  */
-export const LANGUAGES = ["en", "nl"] as const;
+export const LANGUAGES = ["en"] as const;
