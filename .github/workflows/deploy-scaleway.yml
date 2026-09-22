@@ -43,6 +43,16 @@ jobs:
           docker push ${{ env.IMAGE }}:${{ github.sha }}
           docker push ${{ env.IMAGE }}:latest
 
+      - name: Copy the compose stack to the server
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SCALEWAY_SSH_HOST }}
+          username: deploy
+          key: ${{ secrets.SCALEWAY_SSH_KEY }}
+          source: "apps/demo_multitenant/docker-compose.yml,apps/demo_multitenant/Caddyfile"
+          target: "~/app"
+          strip_components: 2
+
       - name: Deploy to the Scaleway instance
         uses: appleboy/ssh-action@v1
         with:
@@ -52,13 +62,7 @@ jobs:
           script: |
             set -e
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ${{ env.IMAGE }}:latest
-            docker stop cofy-management 2>/dev/null || true
-            docker rm cofy-management 2>/dev/null || true
-            docker run -d \
-              --name cofy-management \
-              --restart unless-stopped \
-              -p 8080:8080 \
-              -v /data:/data \
-              ${{ env.IMAGE }}:latest
+            cd ~/app
+            docker compose pull
+            docker compose up -d
             docker image prune -f

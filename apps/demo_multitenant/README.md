@@ -42,3 +42,13 @@ survive a redeploy instead of resetting. On first boot, an empty `/data` is seed
 `seed/`; once anything exists there, it's left alone. The container reads `PORT` (defaults to
 `8080`, matching most cloud platforms, including Scaleway's container runtime) and honors a
 `VERSION` build arg for `APP_VERSION`.
+
+## Production deploy
+
+`.github/workflows/deploy-scaleway.yml` builds the image, pushes it to `ghcr.io`, and deploys
+it to a Scaleway instance on every push to `main`. There, `docker-compose.yml` runs it behind
+`caddy` (`Caddyfile`) for TLS: `app` has no published port at all, so the only way in from
+outside is through Caddy's automatic Let's Encrypt HTTPS on 80/443 - see
+[deploy-scaleway.yml](../../.github/workflows/deploy-scaleway.yml) for exactly what it copies
+to the server and runs. `caddy_data`/`caddy_config` (the issued certificate and Caddy's own
+state) are named volumes, so a redeploy doesn't force reissuing the certificate.
