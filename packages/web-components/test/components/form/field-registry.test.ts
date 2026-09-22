@@ -204,14 +204,16 @@ describe("FieldMapper.asYaml", () => {
 describe("new FieldRegistry(overrides)", () => {
   it("tries the override before the built-ins", () => {
     const formula = { $ref: "#/$defs/Formula" };
-    const registry = new FieldRegistry([{ tag: "cofy-formula-form", matches: (node): boolean => node === formula }]);
+    const registry = new FieldRegistry([
+      { tag: "cofy-formula-form", component: HTMLElement, matches: (node): boolean => node === formula },
+    ]);
 
     // No $defs to resolve `formula` against, so the node handed to `matches` is `formula` itself.
     expect(dispatch(formula, {}, registry)?.tag).toBe("cofy-formula-form");
   });
 
   it("falls through to the built-ins for anything the override does not itself match", () => {
-    const registry = new FieldRegistry([{ tag: "cofy-formula-form", matches: (): boolean => false }]);
+    const registry = new FieldRegistry([{ tag: "cofy-formula-form", component: HTMLElement, matches: (): boolean => false }]);
 
     expect(dispatch({ type: "string" }, {}, registry)).toEqual({ tag: "cofy-string-form", schema: { type: "string" } });
   });

@@ -1,16 +1,22 @@
 import type { JsonSchema } from "@cofy/frontend-sdk";
 
-// Registers every tag `defaultFieldMappers` below names
-import "./cofy-object-form.js";
-import "./cofy-dict-form.js";
-import "./cofy-list-form.js";
-import "./cofy-union-form.js";
-import "./cofy-string-form.js";
-import "./cofy-secret-form.js";
-import "./cofy-number-form.js";
-import "./cofy-boolean-form.js";
-import "./cofy-enum-form.js";
-import "./cofy-const-form.js";
+// Registers every tag `defaultFieldMappers` below names. A bare `import "./x.js"` would do the
+// same at runtime, but this package's own build (`vite.build.config.ts`) treats each component
+// file as its own entry - and a side-effect-only import between two entries with no value
+// crossing the boundary is exactly the shape Rollup/Rolldown's `preserveModules` output silently
+// drops, taking the mapper's element registration with it. Importing the class and storing it
+// on its mapper below (`component`, otherwise unread) gives the bundler a real, externally
+// observed reference it can never prove unused, instead of one it happens not to drop today.
+import { CofyBooleanForm } from "./cofy-boolean-form.js";
+import { CofyConstForm } from "./cofy-const-form.js";
+import { CofyDictForm } from "./cofy-dict-form.js";
+import { CofyEnumForm } from "./cofy-enum-form.js";
+import { CofyListForm } from "./cofy-list-form.js";
+import { CofyNumberForm } from "./cofy-number-form.js";
+import { CofyObjectForm } from "./cofy-object-form.js";
+import { CofySecretForm } from "./cofy-secret-form.js";
+import { CofyStringForm } from "./cofy-string-form.js";
+import { CofyUnionForm } from "./cofy-union-form.js";
 
 import { isRecord } from "./schema/ref.js";
 import { resolveNode, unionBranches } from "./schema/resolve.js";
@@ -36,6 +42,14 @@ export interface FieldMapper {
   /** The tag to mount when this mapper matches. */
   tag: string;
 
+  /**
+   * The class `tag` names, otherwise unread - `cofy-any-form` dispatches by the string alone.
+   * Keeping a real reference to it here, rather than only importing it for its registration
+   * side effect, is what keeps this package's own build from dropping that import - see the
+   * comment on the imports above.
+   */
+  component: CustomElementConstructor;
+
   summarize?(value: unknown, node: JsonSchema, root: JsonSchema): string | undefined;
 
   /** Marks if an as yaml toggle should be shown in the form, or even if the yaml entry should be the default */
@@ -51,6 +65,7 @@ export const defaultFieldMappers: readonly FieldMapper[] = [
   /* Special cases */
   {
     tag: "cofy-list-form",
+    component: CofyListForm,
     matches: (node: JsonSchema): boolean => node["type"] === "array" && node["title"] === "Tariff",
     summarize: arraySummary,
     asYaml: "default",
@@ -58,22 +73,26 @@ export const defaultFieldMappers: readonly FieldMapper[] = [
   /* Defaults */
   {
     tag: "cofy-union-form",
+    component: CofyUnionForm,
     matches: (node: JsonSchema, root: JsonSchema): boolean => unionBranches(node, root) !== undefined,
     summarize: tagSummary,
     asYaml: "optional",
   },
   {
     tag: "cofy-enum-form",
+    component: CofyEnumForm,
     matches: (node: JsonSchema): boolean => Array.isArray(node["enum"]),
     summarize: primitiveText,
   },
   {
     tag: "cofy-const-form",
+    component: CofyConstForm,
     matches: (node: JsonSchema): boolean => "const" in node,
     summarize: primitiveText,
   },
   {
     tag: "cofy-secret-form",
+    component: CofySecretForm,
     // Never summarized - a credential has no business showing up in a collapsed header or a
     // list item, even redacted.
     matches: (node: JsonSchema): boolean =>
@@ -81,21 +100,25 @@ export const defaultFieldMappers: readonly FieldMapper[] = [
   },
   {
     tag: "cofy-string-form",
+    component: CofyStringForm,
     matches: (node: JsonSchema): boolean => node["type"] === "string",
     summarize: primitiveText,
   },
   {
     tag: "cofy-number-form",
+    component: CofyNumberForm,
     matches: (node: JsonSchema): boolean => node["type"] === "integer" || node["type"] === "number",
     summarize: primitiveText,
   },
   {
     tag: "cofy-boolean-form",
+    component: CofyBooleanForm,
     matches: (node: JsonSchema): boolean => node["type"] === "boolean",
     summarize: primitiveText,
   },
   {
     tag: "cofy-object-form",
+    component: CofyObjectForm,
     // Requires a fixed `properties` key to draw fields for - a `dict[str, X]` schema
     // (`additionalProperties`, no `properties`) is handled by `cofy-dict-form` below instead.
     matches: (node: JsonSchema): boolean => node["type"] === "object" && isRecord(node["properties"]),
@@ -104,6 +127,7 @@ export const defaultFieldMappers: readonly FieldMapper[] = [
   },
   {
     tag: "cofy-dict-form",
+    component: CofyDictForm,
     // The opposite shape: no fixed `properties`, but a schema for every value via
     // `additionalProperties` - e.g. pydantic's `dict[str, Formula]`.
     matches: (node: JsonSchema): boolean =>
@@ -113,6 +137,7 @@ export const defaultFieldMappers: readonly FieldMapper[] = [
   },
   {
     tag: "cofy-list-form",
+    component: CofyListForm,
     matches: (node: JsonSchema): boolean => node["type"] === "array",
     summarize: arraySummary,
     asYaml: "optional",
