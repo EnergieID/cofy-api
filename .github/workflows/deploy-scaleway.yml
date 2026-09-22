@@ -1,0 +1,64 @@
+name: Deploy to Scaleway
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-scaleway
+  cancel-in-progress: true
+
+jobs:
+  test-container:
+    uses: ./.github/workflows/test-container-management.yml
+
+  build-and-deploy:
+    needs: test-container
+    environment: scaleway
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/energieid/cofy-api/management
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        run: |
+          docker build \
+            -t ${{ env.IMAGE }}:${{ github.sha }} \
+            -t ${{ env.IMAGE }}:latest \
+            -f apps/demo_multitenant/Dockerfile \
+            .
+          docker push ${{ env.IMAGE }}:${{ github.sha }}
+          docker push ${{ env.IMAGE }}:latest
+
+      - name: Deploy to the Scaleway instance
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SCALEWAY_SSH_HOST }}
+          username: deploy
+          key: ${{ secrets.SCALEWAY_SSH_KEY }}
+          script: |
+            set -e
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ${{ env.IMAGE }}:latest
+            docker stop cofy-management 2>/dev/null || true
+            docker rm cofy-management 2>/dev/null || true
+            docker run -d \
+              --name cofy-management \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              -v /data:/data \
+              ${{ env.IMAGE }}:latest
+            docker image prune -f

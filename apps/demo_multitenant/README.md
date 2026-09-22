@@ -18,3 +18,27 @@ task demo-multitenant-web     # console dev server on :5173, proxying to the API
 `.data/`, which is git-ignored and is what the management API actually reads and writes while
 the demo runs (`COFY_MANAGEMENT_DATA_DIR`, set by the `demo-multitenant-api` task). Run the
 reset task again any time to discard local changes and start from the committed defaults.
+
+## Docker
+
+`Dockerfile` builds the management API and the console into a single image: the console is
+served by the API itself (same origin, so no CORS or base URL to configure - see
+`COFY_MANAGEMENT_STATIC_DIR` in `packages/management-api/src/cofy/management/main.py`).
+
+```sh
+task demo-multitenant-docker
+```
+
+Runs the same build and run as:
+
+```sh
+docker build -f apps/demo_multitenant/Dockerfile -t cofy-management-demo .
+docker run -p 8080:8080 -v cofy-management-data:/data cofy-management-demo
+```
+
+Build from the repo root, since the image needs sources from several packages. `/data` is
+where community configs (and the modules they reference) live - mount a volume there so they
+survive a redeploy instead of resetting. On first boot, an empty `/data` is seeded from
+`seed/`; once anything exists there, it's left alone. The container reads `PORT` (defaults to
+`8080`, matching most cloud platforms, including Scaleway's container runtime) and honors a
+`VERSION` build arg for `APP_VERSION`.

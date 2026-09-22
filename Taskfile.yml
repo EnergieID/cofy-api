@@ -101,6 +101,12 @@ tasks:
     cmds:
       - bash -c '{{.WITH_NODE}} cd apps/management-web && npm run dev'
 
+  demo-multitenant-docker:
+    desc: Build and run the multitenant demo's production Docker image locally
+    cmds:
+      - docker build -t cofy-management-demo -f apps/demo_multitenant/Dockerfile .
+      - docker run --rm -p 8080:8080 -v cofy-management-data:/data cofy-management-demo
+
   build:
     desc: Build the frontend packages and the console
     cmds:
@@ -119,5 +125,5 @@ tasks:
   prod:
     desc: Build and run the production container
     cmds:
-      - docker build -t cofy-api -f Dockerfile .
+      - docker build -t cofy-api -f apps/demo_cofy_api/Dockerfile .
       - docker run -p 8080:8080 --env-file .env.local cofy-api

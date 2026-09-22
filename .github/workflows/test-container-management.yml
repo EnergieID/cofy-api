@@ -1,4 +1,4 @@
-name: test container
+name: test management container
 
 on:
   workflow_call:
@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: "build container and check health endpoint"
+      - name: "build container and check the console + API respond"
         run: |
             set -euxo pipefail
 
-            docker build -t cofy-api:latest -f apps/demo_cofy_api/Dockerfile .
+            docker build -t cofy-management-demo:latest -f apps/demo_multitenant/Dockerfile .
 
-            CONTAINER_NAME=cofy-api-test
+            CONTAINER_NAME=cofy-management-demo-test
             cleanup() {
                 status=$?
                 echo "Step exit status: $status"
@@ -37,21 +37,21 @@ jobs:
             docker run -d \
                 --name "$CONTAINER_NAME" \
                 -p 8080:8080 \
-                --env-file .env.example \
-                cofy-api:latest
+                cofy-management-demo:latest
 
             for i in {1..15}; do
                 echo "Health check attempt $i"
-                if curl -fsS -v http://localhost:8080/health; then
+                if curl -fsS -v http://localhost:8080/management/communities; then
                     break
                 fi
                 sleep 2
             done
 
-            RESPONSE=$(curl -fsS http://localhost:8080/health)
-            echo "Health check response: $RESPONSE"
+            RESPONSE=$(curl -fsS http://localhost:8080/management/communities)
+            echo "Communities response: $RESPONSE"
 
-            if [[ "$RESPONSE" != '{"status":"ok"}' ]]; then
-                echo "Health check failed"
+            CONSOLE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
+            if [[ "$CONSOLE_STATUS" != "200" ]]; then
+                echo "Console did not respond with 200 (got $CONSOLE_STATUS)"
                 exit 1
             fi
