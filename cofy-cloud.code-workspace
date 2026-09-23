@@ -24,5 +24,8 @@
             "name": "management-web",
             "path": "apps/management-web"
         }
-    ]
+    ],
+    "settings": {
+        "svg.preview.background": "editor"
+    }
 }

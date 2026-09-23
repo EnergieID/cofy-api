@@ -79,7 +79,6 @@ export class CofyApp extends LitElement {
         min-block-size: 100vh;
       }
       .brand {
-        color: var(--wa-color-brand);
         font-weight: var(--wa-font-weight-semibold);
         text-decoration: none;
         font-size: var(--wa-font-size-l);
@@ -154,7 +153,10 @@ export class CofyApp extends LitElement {
              would spend a row of vertical space it does not need. -->
         <header slot="header" class="wa-split measure">
           <div class="wa-cluster crumbs">
-            <a class="brand" href="#/">${this.t("product")} <span class=sub-brand>${this.t("subtitle")}</strong></a>
+            <a class="brand" href="#/">
+              <wa-icon name="brand" library="cofy"></wa-icon>
+              <span class="wa-desktop-only">${this.t("product")} <span class=sub-brand>${this.t("subtitle")}</span></span>
+            </a>
             <cofy-breadcrumbs .crumbs=${this.crumbState.crumbs}></cofy-breadcrumbs>
           </div>
           <cofy-settings-panel></cofy-settings-panel>

@@ -18,6 +18,35 @@ const ICONS: Record<string, string> = {
   plus: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
     <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
   </svg>`,
+  brand: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.5 0.5 6 7">
+    <style>
+      .arc { fill: none; stroke: currentColor; stroke-linecap: round; stroke-width: 0.6; }
+      .end-arc { stroke-linecap: butt; }
+    </style>
+    <path class="arc end-arc" d="M 4 1 C 3.0557 1.3148 2.3148 2.0557 2 3"/>
+    <path class="arc end-arc" d="M 6.4495 2 C 6.0708 1.5361 5.5681 1.1894 5 1"/>
+    <path class="arc" d="M 5.8559 3 C 5.6013 2.5274 5.1759 2.1698 4.6667 2"/>
+    <path class="arc end-arc" d="M 4.6667 6 C 5.0541 5.8708 5.3958 5.6319 5.65 5.3122"/>
+    <path class="arc" d="M 5 7 C 5.9443 6.6852 6.6852 5.9443 7 5"/>
+    <path class="arc end-arc" d="M 3.65 5.6192 C 3.852 5.7877 4.0838 5.9168 4.3333 6"/>
+    <path class="arc end-arc" d="M 3 4.6667 C 3.078 4.9007 3.1965 5.1192 3.35 5.3122"/>
+    <path class="arc end-arc" d="M 2 5 C 2.3148 5.9443 3.0557 6.6852 4 7"/>
+    <path class="arc end-arc" d="M 4.3333 2 C 4.0838 2.0832 3.852 2.2123 3.65 2.3808"/>
+    <path class="arc end-arc" d="M 3.35 2.6878 C 3.1965 2.8808 3.078 3.0993 3 3.3333"/>
+    <path class="arc end-arc" d="M 2 3.6667 L 2 4.6667"/>
+    <path class="arc" d="M 2 4.6667 L 2 5"/>
+    <path class="arc" d="M 2 4.6667 L 3 4.6667"/>
+    <path class="arc" d="M 4.6667 6 L 4.6667 7"/>
+    <path class="arc" d="M 4.6667 7 L 5 7"/>
+    <path class="arc end-arc" d="M 5.8559 5 L 7 5"/>
+    <path class="arc end-arc" d="M 5.8559 3 L 7 3"/>
+    <path class="arc" d="M 4.6667 6 L 4.3333 6"/>
+    <path class="arc" d="M 4.6667 2 L 4.6667 1"/>
+    <path class="arc" d="M 4.6667 1 L 5 1"/>
+    <path class="arc" d="M 4.6667 2 L 4.3333 2"/>
+    <path class="arc" d="M 4.6667 1 L 4 1"/>
+    <path class="arc" d="M 3 4.6667 L 3 3.3333"/>
+  </svg>`
 };
 
 registerIconLibrary("cofy", {
