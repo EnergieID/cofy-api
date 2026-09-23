@@ -5,6 +5,11 @@ The same instance as [demo-cofy-api](../demo_cofy_api), built instead from a dec
 placeholders in the file are filled in from the environment before it's parsed, so secrets
 stay out of the committed config. See [main.py](main.py).
 
+This is a worked example of route 1 in the [root README](../../README.md) - one community,
+self-hosted, configured through a settings file rather than Python code. To start your own,
+fork [cofy-api-template](https://github.com/EnergieID/cofy-api-template), or see
+[packages/api](../../packages/api) for the package this demo is built from.
+
 ## Running
 
 ```sh

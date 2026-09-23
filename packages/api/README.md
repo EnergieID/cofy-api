@@ -2,7 +2,10 @@
 
 Cofy API is an open-source modular framework for ingesting, standardising, storing, and computing energy-related data.
 
-This package contains the runtime API and module system.
+This package contains the runtime API and module system: the piece you need for route 1 in the
+[root README](../../README.md), running a single energy community yourself. If you'd rather
+start from a ready-made repo than from this package directly, see
+[cofy-api-template](https://github.com/EnergieID/cofy-api-template).
 
 ## Install
 

@@ -4,6 +4,11 @@ Runs the management API together with the management console, so several communi
 configured and operated through the UI. Demonstrates hosting more than one `cofy-api`
 configuration behind a single management layer.
 
+This is a worked example of route 2 in the [root README](../../README.md) - several
+communities, with a management UI. It's the reference for anyone hosting Cofy on behalf of more
+than one community: what to run, how the pieces talk to each other, and how to package and
+deploy them.
+
 ## Running
 
 ```sh
@@ -52,3 +57,10 @@ outside is through Caddy's automatic Let's Encrypt HTTPS on 80/443 - see
 [deploy-scaleway.yml](../../.github/workflows/deploy-scaleway.yml) for exactly what it copies
 to the server and runs. `caddy_data`/`caddy_config` (the issued certificate and Caddy's own
 state) are named volumes, so a redeploy doesn't force reissuing the certificate.
+
+This is how EnergyID runs its own hosted instance, not a generally reachable image - the
+`ghcr.io/energieid/cofy-api/management` package is private, so `docker-compose.yml` as
+committed here only works for EnergyID's own deploy. To deploy your own copy the same way,
+build and push the image to a registry you control (or reuse `task demo-multitenant-docker` to
+build it locally), point `docker-compose.yml` at that image instead, and put your own
+`Caddyfile` host names in front of it.
