@@ -9,6 +9,7 @@ import "@awesome.me/webawesome/dist/components/icon/icon.js";
 import "./cofy-any-form.js";
 import "./cofy-field-shell.js";
 import "../../icons.js";
+import "../layout/cofy-link-button.js";
 
 import { fieldRegistryContext } from "../../context.js";
 import { nativeStyles } from "../../theme/native-styles.js";
@@ -83,24 +84,7 @@ export class CofyListForm extends CofyFormField {
       <wa-accordion-item data-segment=${index} ?expanded=${this.expandedIndices.has(index)}>
         <div slot="label" class="wa-split">
           <span>${index + 1}${summary ? html`. ${summary}` : ""}</span>
-          <a
-            class="wa-link-plain"
-            role="button"
-            tabindex="0"
-            @click=${(event: MouseEvent): void => {
-              // Without this the trigger's own click handler also fires and toggles the item.
-              event.stopPropagation();
-              this.removeAt(index);
-            }}
-            @keydown=${(event: KeyboardEvent): void => {
-              if (event.key !== "Enter" && event.key !== " ") return;
-              event.preventDefault();
-              event.stopPropagation();
-              this.removeAt(index);
-            }}
-          >
-            ${this.t("form.remove")}
-          </a>
+          <cofy-link-button @click=${(): void => this.removeAt(index)}>${this.t("form.remove")}</cofy-link-button>
         </div>
         <cofy-any-form
           .schema=${itemsSchema}

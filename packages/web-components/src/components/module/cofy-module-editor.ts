@@ -52,9 +52,11 @@ export class CofyModuleEditor extends CofyElement {
   ];
 
   @consume({ context: moduleStoreContext, subscribe: true })
+  @state()
   public moduleStore!: ModuleStore;
 
   @consume({ context: allowedModulesStoreContext, subscribe: true })
+  @state()
   public allowedModules!: AllowedModulesStore;
 
   @property({ type: String }) public slug = "";

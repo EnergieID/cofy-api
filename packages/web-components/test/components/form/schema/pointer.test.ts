@@ -19,6 +19,10 @@ describe("parsePointer", () => {
     expect(parsePointer("/a~1b")).toEqual(["a/b"]);
     expect(parsePointer("/a~0b")).toEqual(["a~b"]);
   });
+
+  it("leaves a leading-zero digit segment as a string - never a real array index", () => {
+    expect(parsePointer("/mydict/007")).toEqual(["mydict", "007"]);
+  });
 });
 
 describe("pointerFor", () => {
@@ -81,5 +85,12 @@ describe("setAtPointer", () => {
     const next = setAtPointer(doc, "/mydict/1/value", "new");
 
     expect(next).toEqual({ mydict: { "1": { value: "new" }, other: { value: "kept" } } });
+  });
+
+  it("preserves a dict key's leading zeros through the pointer round-trip", () => {
+    const doc = { mydict: { "007": { value: "old" }, other: { value: "kept" } } };
+    const next = setAtPointer(doc, "/mydict/007/value", "new");
+
+    expect(next).toEqual({ mydict: { "007": { value: "new" }, other: { value: "kept" } } });
   });
 });

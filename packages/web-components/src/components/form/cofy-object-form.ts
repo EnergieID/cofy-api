@@ -8,6 +8,7 @@ import "@awesome.me/webawesome/dist/components/icon/icon.js";
 import "./cofy-any-form.js";
 import "./cofy-field-shell.js";
 import "../../icons.js";
+import "../layout/cofy-link-button.js";
 
 import { fieldRegistryContext } from "../../context.js";
 import { nativeStyles } from "../../theme/native-styles.js";
@@ -96,23 +97,7 @@ export class CofyObjectForm extends CofyFormField {
           <span>${summary ?? ""}</span>
           ${this.required
             ? nothing
-            : html`<a
-                class="wa-link-plain"
-                role="button"
-                tabindex="0"
-                @click=${(event: MouseEvent): void => {
-                  event.stopPropagation();
-                  this.clear();
-                }}
-                @keydown=${(event: KeyboardEvent): void => {
-                  if (event.key !== "Enter" && event.key !== " ") return;
-                  event.preventDefault();
-                  event.stopPropagation();
-                  this.clear();
-                }}
-              >
-                ${this.t("form.remove")}
-              </a>`}
+            : html`<cofy-link-button @click=${(): void => this.clear()}>${this.t("form.remove")}</cofy-link-button>`}
         </div>
         ${content}
       </wa-details>

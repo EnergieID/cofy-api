@@ -16,6 +16,7 @@ import type { YamlEditorChange } from "../editor/cofy-yaml-editor.js";
 import { seedFromSchema } from "../form/schema/defaults.js";
 import { setAtPointer } from "../form/schema/pointer.js";
 import { isRecord } from "../form/schema/ref.js";
+import { resolveNode } from "../form/schema/resolve.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 
@@ -84,7 +85,7 @@ export class CofyModuleForm extends CofyElement {
           ? nothing
           : mode === "form" && schema !== undefined
             ? html`<cofy-object-form
-                .schema=${schema}
+                .schema=${resolveNode(schema, schema)}
                 .root=${schema}
                 .pointer=${""}
                 .value=${this.value}

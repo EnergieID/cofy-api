@@ -1,11 +1,10 @@
-import fcntl
 import logging
 import os
 
 import yaml
 from cofy.api.cofy_api import CofyAPISettings
 
-from ...errors import ManagementError, ResourceAlreadyExistsError, ResourceNotFoundError
+from ...errors import ManagementError, ResourceAlreadyExistsError
 from ..communities import CommunitiesPersistence
 from .base import FilePersistence
 
@@ -42,10 +41,7 @@ class FileCommunitiesPersistence(FilePersistence, CommunitiesPersistence):
         path = self._community_path(slug)  # also validates the slug before it becomes a filename
         self.base_path.mkdir(parents=True, exist_ok=True)
 
-        dumped = yaml.safe_dump(
-            settings.model_dump(exclude_none=True, polymorphic_serialization=True, round_trip=True),
-            sort_keys=True,
-        )
+        dumped = self._serialize(settings)
         try:
             # O_EXCL makes the existence check and the create one atomic step, so two
             # concurrent creates of the same slug cannot both believe they won.
@@ -70,15 +66,9 @@ class FileCommunitiesPersistence(FilePersistence, CommunitiesPersistence):
             return config
 
     def delete(self, slug: str) -> None:
-        path = self._community_path(slug)  # also validates the slug before it becomes a filename
-        if not path.exists():
-            raise ResourceNotFoundError(f"Community {slug!r} not found")
-
-        with path.open("r", encoding="utf-8") as handle:
-            fcntl.flock(handle, fcntl.LOCK_EX)
-            try:
-                if not path.exists():
-                    raise ResourceNotFoundError(f"Community {slug!r} not found")
-                path.unlink()
-            finally:
-                fcntl.flock(handle, fcntl.LOCK_UN)
+        # An exclusive lock serializes concurrent deletes of the same slug instead of letting
+        # both pass `_locked_file`'s existence check and race each other's `unlink` - the loser
+        # sees a clean, idempotent not-found (raised by `_locked_file` itself) rather than a
+        # raw `FileNotFoundError` from a second unlink.
+        with self._locked_file(slug, exclusive=True):
+            self._community_path(slug).unlink()

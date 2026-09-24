@@ -239,21 +239,25 @@ describe("the generic form family, mounted end to end", () => {
     const events: unknown[] = [];
     element.addEventListener("field-change", (event) => events.push((event as CustomEvent).detail));
 
-    const remove = fieldAt(element, "/tags")!.querySelector<HTMLElement>('[slot="label"] a')!;
-    remove.dispatchEvent(new MouseEvent("click"));
+    const linkButton = deepQuery(fieldAt(element, "/tags")!, '[slot="label"] cofy-link-button')!;
+    const remove = deepQuery(linkButton.shadowRoot!, "button")!;
+    remove.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
 
     expect(events).toEqual([{ pointer: "/tags", value: ["two"] }]);
   });
 
-  it("removes an array element from the keyboard too - the delete link has no native href to make it tabbable", async () => {
+  it("removes an array element via a real, natively-focusable button - no hand-rolled tabindex/role needed", async () => {
     const element = await mountObjectForm();
     const events: unknown[] = [];
     element.addEventListener("field-change", (event) => events.push((event as CustomEvent).detail));
 
-    const remove = fieldAt(element, "/tags")!.querySelector<HTMLElement>('[slot="label"] a')!;
-    expect(remove.getAttribute("tabindex")).toBe("0");
-    expect(remove.getAttribute("role")).toBe("button");
-    remove.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    const linkButton = deepQuery(fieldAt(element, "/tags")!, '[slot="label"] cofy-link-button')!;
+    const remove = deepQuery(linkButton.shadowRoot!, "button")!;
+    expect(remove.tagName).toBe("BUTTON");
+    // A real browser translates a keyboard Enter/Space on a focused button into this same
+    // click - jsdom does not simulate that translation, so this drives it the way it actually
+    // manifests rather than dispatching a keydown jsdom would not act on anyway.
+    (remove as HTMLButtonElement).click();
 
     expect(events).toEqual([{ pointer: "/tags", value: ["two"] }]);
   });
@@ -423,9 +427,9 @@ describe("the generic form family, mounted end to end", () => {
 
     const shell = fieldAt(element, "/thing")!;
     const details = shell.querySelector("wa-details")!;
-    const deleteLink = details.querySelector('[slot="summary"] a')!;
+    const deleteLink = details.querySelector('[slot="summary"] cofy-link-button')!;
     expect(deleteLink.textContent?.trim()).toBe("Remove");
-    deleteLink.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    deepQuery(deleteLink.shadowRoot!, "button")!.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
 
     expect(events).toEqual([{ pointer: "/thing", value: null }]);
   });
@@ -474,7 +478,7 @@ describe("the generic form family, mounted end to end", () => {
 
     const shell = fieldAt(element, "/thing")!;
     const details = shell.querySelector("wa-details")!;
-    expect(details.querySelector('[slot="summary"] a')).toBeNull();
+    expect(details.querySelector('[slot="summary"] cofy-link-button')).toBeNull();
   });
 
   it("shows a nested object's own issue after its fields, not before, matching a leaf field's own", async () => {
@@ -708,7 +712,7 @@ describe("the generic form family, mounted end to end", () => {
     const details = shell.querySelector("wa-details")!;
     expect(details).not.toBeNull();
     expect(details.hasAttribute("open")).toBe(true);
-    expect(details.querySelector('[slot="summary"] a')).toBeNull();
+    expect(details.querySelector('[slot="summary"] cofy-link-button')).toBeNull();
     expect(details.querySelector("wa-select")).not.toBeNull();
   });
 
@@ -756,9 +760,9 @@ describe("the generic form family, mounted end to end", () => {
 
     const shell = fieldAt(element, "/pick")!;
     const details = shell.querySelector("wa-details")!;
-    const deleteLink = details.querySelector('[slot="summary"] a')!;
+    const deleteLink = details.querySelector('[slot="summary"] cofy-link-button')!;
     expect(deleteLink.textContent?.trim()).toBe("Remove");
-    deleteLink.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    deepQuery(deleteLink.shadowRoot!, "button")!.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
 
     expect(events).toEqual([{ pointer: "/pick", value: null }]);
   });
@@ -818,7 +822,7 @@ describe("the generic form family, mounted end to end", () => {
 
     const shell = fieldAt(element, "/pick")!;
     const details = shell.querySelector("wa-details")!;
-    expect(details.querySelector('[slot="summary"] a')).toBeNull();
+    expect(details.querySelector('[slot="summary"] cofy-link-button')).toBeNull();
   });
 
   it("shows a union's own issue after its picker/branch, not before, matching a leaf field's own", async () => {
@@ -1091,8 +1095,8 @@ describe("cofy-dict-form", () => {
     element.addEventListener("field-change", (event) => {
       emitted = (event as CustomEvent<{ value: unknown }>).detail.value;
     });
-    const remove = element.shadowRoot!.querySelector<HTMLElement>('[slot="label"] a')!;
-    remove.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    const remove = element.shadowRoot!.querySelector('[slot="label"] cofy-link-button')!;
+    deepQuery(remove.shadowRoot!, "button")!.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
 
     expect(emitted).toEqual({ off_peak: "low" });
   });
@@ -1141,6 +1145,29 @@ describe("cofy-dict-form", () => {
     input.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
 
     expect(emitted).toBeUndefined();
+  });
+
+  it("allows renaming a key to a name that only collides with Object.prototype, not a real entry", async () => {
+    const dictSchema: JsonSchema = { type: "object", additionalProperties: { type: "string" } };
+    const element = document.createElement("cofy-dict-form");
+    await provideI18n(element);
+    element.schema = dictSchema;
+    element.root = dictSchema;
+    element.pointer = "/tariffs";
+    element.value = { peak: "flat" };
+    document.body.append(element);
+    await element.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    let emitted: unknown;
+    element.addEventListener("field-change", (event) => {
+      emitted = (event as CustomEvent<{ value: unknown }>).detail.value;
+    });
+    const input = element.shadowRoot!.querySelector("wa-input") as HTMLElement & { value: string };
+    input.value = "toString";
+    input.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+
+    expect(emitted).toEqual({ toString: "flat" });
   });
 
   it("does not trigger an ancestor dict's own add when a nested dict's own add item fires wa-expand", async () => {

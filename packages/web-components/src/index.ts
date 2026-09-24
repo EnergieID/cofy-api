@@ -32,6 +32,7 @@ export { CofyYamlForm } from "./components/form/cofy-yaml-form.js";
 export { CofyBreadcrumbs, type Crumb } from "./components/layout/cofy-breadcrumbs.js";
 export { CofyCommunityList } from "./components/community/cofy-community-list.js";
 export { CofyHeading } from "./components/layout/cofy-heading.js";
+export { CofyLinkButton } from "./components/layout/cofy-link-button.js";
 export { CofyLocalePicker } from "./components/settings/cofy-locale-picker.js";
 export { CofyModuleCreate } from "./components/module/cofy-module-create.js";
 export { CofyModuleEditor } from "./components/module/cofy-module-editor.js";

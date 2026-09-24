@@ -10,6 +10,7 @@ import "@awesome.me/webawesome/dist/components/input/input.js";
 import "./cofy-any-form.js";
 import "./cofy-field-shell.js";
 import "../../icons.js";
+import "../layout/cofy-link-button.js";
 
 import { fieldRegistryContext } from "../../context.js";
 import { nativeStyles } from "../../theme/native-styles.js";
@@ -85,24 +86,7 @@ export class CofyDictForm extends CofyFormField {
       <wa-accordion-item data-segment=${key} ?expanded=${this.expandedKeys.has(key)}>
         <div slot="label" class="wa-split">
           <span>${key}${summary ? html`: ${summary}` : ""}</span>
-          <a
-            class="wa-link-plain"
-            role="button"
-            tabindex="0"
-            @click=${(event: MouseEvent): void => {
-              // Without this the trigger's own click handler also fires and toggles the item.
-              event.stopPropagation();
-              this.removeKey(key);
-            }}
-            @keydown=${(event: KeyboardEvent): void => {
-              if (event.key !== "Enter" && event.key !== " ") return;
-              event.preventDefault();
-              event.stopPropagation();
-              this.removeKey(key);
-            }}
-          >
-            ${this.t("form.remove")}
-          </a>
+          <cofy-link-button @click=${(): void => this.removeKey(key)}>${this.t("form.remove")}</cofy-link-button>
         </div>
         <div class="wa-stack">
           <wa-input label=${this.t("form.key")} .value=${key} @input=${(event: Event): void => this.renameKey(key, event)}></wa-input>
@@ -174,8 +158,10 @@ export class CofyDictForm extends CofyFormField {
 
     const entries = isRecord(this.value) ? this.value : {};
     // Never silently merge two entries into one - leave the rename unapplied until the reader
-    // picks a key that is not already someone else's.
-    if (newKey in entries) return;
+    // picks a key that is not already someone else's. `in` would also match an inherited
+    // property name (`toString`, `constructor`, ...) that no entry here actually has, wrongly
+    // refusing a rename to any of them - `hasOwnProperty` only sees this object's own keys.
+    if (Object.hasOwn(entries, newKey)) return;
 
     const value = Object.fromEntries(Object.entries(entries).map(([k, v]) => [k === oldKey ? newKey : k, v]));
 

@@ -10,6 +10,7 @@ import "@awesome.me/webawesome/dist/components/option/option.js";
 import "@awesome.me/webawesome/dist/components/select/select.js";
 import "./cofy-any-form.js";
 import "./cofy-field-shell.js";
+import "../layout/cofy-link-button.js";
 
 import { fieldRegistryContext } from "../../context.js";
 import { nativeStyles } from "../../theme/native-styles.js";
@@ -115,23 +116,7 @@ export class CofyUnionForm extends CofyFormField {
         <div slot="summary" class="wa-split">
           <span>${summary ?? ""}</span>
           ${chosen && !this.required
-            ? html`<a
-                class="wa-link-plain"
-                role="button"
-                tabindex="0"
-                @click=${(event: MouseEvent): void => {
-                  event.stopPropagation();
-                  this.emit(null);
-                }}
-                @keydown=${(event: KeyboardEvent): void => {
-                  if (event.key !== "Enter" && event.key !== " ") return;
-                  event.preventDefault();
-                  event.stopPropagation();
-                  this.emit(null);
-                }}
-              >
-                ${this.t("form.remove")}
-              </a>`
+            ? html`<cofy-link-button @click=${(): void => this.emit(null)}>${this.t("form.remove")}</cofy-link-button>`
             : nothing}
         </div>
         ${body}

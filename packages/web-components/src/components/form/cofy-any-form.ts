@@ -5,6 +5,7 @@ import { customElement, state } from "lit/decorators.js";
 import { html, unsafeStatic } from "lit/static-html.js";
 
 import "./cofy-yaml-form.js";
+import "../layout/cofy-link-button.js";
 
 import { fieldRegistryContext } from "../../context.js";
 import type { AS_YAML_OPTION, FieldRegistry } from "./field-registry.js";
@@ -36,14 +37,11 @@ export class CofyAnyForm extends CofyFormField {
     nativeStyles,
     utilityStyles,
     css`
-    :host {
-      display: contents;
-    }
-
-    .wa-link-plain{
-      cursor: pointer;
-    }
-  `];
+      :host {
+        display: contents;
+      }
+    `,
+  ];
 
   @consume({ context: fieldRegistryContext, subscribe: true })
   public fieldRegistry: FieldRegistry = defaultFieldRegistry;
@@ -67,24 +65,14 @@ export class CofyAnyForm extends CofyFormField {
     const tag = this.shouldShowYaml(asYaml) ? YAML_TAG : match?.tag ?? YAML_TAG
     const tagName = unsafeStatic(tag);
 
-    const yamlToggle = html`<a
-        class="wa-link-plain"
-        role="button"
-        tabindex="0"
-        slot="actions"
-        @click=${(event: MouseEvent): void => {
-        event.stopPropagation();
+    const yamlToggle = html`<cofy-link-button
+      slot="actions"
+      @click=${(): void => {
         this.yamlToggle = !this.yamlToggle;
-        }}
-        @keydown=${(event: KeyboardEvent): void => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        event.stopPropagation();
-        this.yamlToggle = !this.yamlToggle;
-        }}
+      }}
     >
-        ${this.shouldShowYaml(asYaml) ? this.t("form.viewAsForm") : this.t("form.viewAsYaml")}
-    </a>`;
+      ${this.shouldShowYaml(asYaml) ? this.t("form.viewAsForm") : this.t("form.viewAsYaml")}
+    </cofy-link-button>`;
 
     return html`<${tagName}
       .schema=${node}

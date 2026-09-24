@@ -42,6 +42,7 @@ export class CofyModuleList extends CofyElement {
   ];
 
   @consume({ context: moduleStoreContext, subscribe: true })
+  @state()
   public store!: ModuleStore;
 
   @property({ type: String }) public slug = "";

@@ -10,7 +10,7 @@ export function parsePointer(pointer: string): PointerSegment[] {
     .slice(1)
     .split("/")
     .map((part) => part.replace(/~1/g, "/").replace(/~0/g, "~"))
-    .map((part) => (/^\d+$/.test(part) ? Number(part) : part));
+    .map((part) => (/^(0|[1-9]\d*)$/.test(part) ? Number(part) : part));
 }
 
 /** Append one segment to a pointer, escaping it if it is a property name. */
