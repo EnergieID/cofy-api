@@ -17,6 +17,12 @@ tasks:
     cmds:
       - uv run --project packages/api --directory packages/api poe test
       - uv run --project packages/management-api --directory packages/management-api poe test
+      - task: test-frontend
+
+  test-frontend:
+    desc: Run tests (with coverage) for the frontend packages
+    deps: [build]
+    cmds:
       - |
         bash -c '{{.WITH_NODE}}
         for pkg in {{.NODE_PACKAGES}}; do
