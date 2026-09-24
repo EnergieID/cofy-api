@@ -5,9 +5,6 @@ energy data — meter readings, local production, tariffs — and turns it into 
 reporting a community needs to run itself. It's free, it's yours to host, and it's modular: you
 switch on only the parts your community actually needs.
 
-Cofy is young, so if you've never heard of it before, you're not missing something — almost
-everyone reading this is in that position.
-
 ## Not sure where to start?
 
 The quickest way to find out if Cofy fits your community, or to get help setting it up, is to
