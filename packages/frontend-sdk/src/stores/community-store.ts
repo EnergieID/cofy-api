@@ -1,7 +1,7 @@
 import { State, stateProperty } from "@dodona/lit-state";
 
 import type { ApiClient } from "../api-client.js";
-import { asProblem, type ProblemError } from "../errors.js";
+import { asProblem, withProblem, type ProblemError } from "../errors.js";
 import type { CommunityBody, CommunityCreate, CommunityInfo } from "../types.js";
 
 /**
@@ -49,23 +49,25 @@ export class CommunityStore extends State {
   }
 
   public async get(slug: string): Promise<CommunityInfo> {
-    return await this.api.GET(CommunityStore.ITEM, { params: { path: { slug } } });
+    return await withProblem(() => this.api.GET(CommunityStore.ITEM, { params: { path: { slug } } }));
   }
 
   public async create(community: CommunityCreate): Promise<CommunityInfo> {
-    const created = await this.api.POST(CommunityStore.COLLECTION, { body: community });
+    const created = await withProblem(() => this.api.POST(CommunityStore.COLLECTION, { body: community }));
     this.communities = [...this.communities, created].sort((a, b) => a.slug.localeCompare(b.slug));
     return created;
   }
 
   public async update(slug: string, community: CommunityBody): Promise<CommunityInfo> {
-    const updated = await this.api.PUT(CommunityStore.ITEM, { params: { path: { slug } }, body: community });
+    const updated = await withProblem(() =>
+      this.api.PUT(CommunityStore.ITEM, { params: { path: { slug } }, body: community }),
+    );
     this.communities = this.communities.map((existing) => (existing.slug === slug ? updated : existing));
     return updated;
   }
 
   public async remove(slug: string): Promise<void> {
-    await this.api.DELETE(CommunityStore.ITEM, { params: { path: { slug } } });
+    await withProblem(() => this.api.DELETE(CommunityStore.ITEM, { params: { path: { slug } } }));
     this.communities = this.communities.filter((existing) => existing.slug !== slug);
     if (this.currentSlug === slug) this.currentSlug = null;
   }

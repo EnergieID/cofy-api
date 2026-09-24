@@ -1,4 +1,4 @@
-import { linter, lintGutter, type Diagnostic } from "@codemirror/lint";
+import { forceLinting, linter, lintGutter, type Diagnostic } from "@codemirror/lint";
 import { EditorState, type Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { yaml as yamlLanguage } from "@codemirror/lang-yaml";
@@ -93,8 +93,10 @@ export class CofyYamlEditor extends CofyElement {
       });
     }
     if (changed.has("issues")) {
-      // Re-run the linter so newly supplied issues are drawn.
-      this.view.dispatch({});
+      // An empty dispatch does not satisfy any of the linter extension's rerun conditions
+      // (docChanged, a config change, or its own `needsRefresh` flag) - `forceLinting` is the
+      // linter's own API for exactly this, a source's output changing with no document edit.
+      forceLinting(this.view);
     }
   }
 

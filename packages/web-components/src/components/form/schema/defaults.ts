@@ -1,6 +1,7 @@
 import type { JsonSchema } from "@cofy/frontend-sdk";
 
 import { deref, isRecord, noneExpanding, type RefGuard } from "./ref.js";
+import { unionBranches } from "./resolve.js";
 
 /**
  * Build the smallest object that a schema would plausibly accept.
@@ -30,10 +31,15 @@ function seed(schema: JsonSchema, root: JsonSchema, expanding: RefGuard): unknow
 
   if ("default" in node) return node["default"];
 
-  const oneOf = node["oneOf"];
-  if (Array.isArray(oneOf) && oneOf.length > 0) {
+  // `unionBranches` is the same test `cofy-union-form` uses to decide whether it has a genuine
+  // union to show a picker for - a `oneOf`, or a multi-branch `anyOf` (a plain, non-optional
+  // `Union[A, B]`, which pydantic emits as `anyOf` rather than `oneOf`). An `Optional[X]`
+  // (`anyOf` with a single non-null branch) does not reach here: pydantic always gives it a
+  // `default` of `None`, already returned above.
+  const branches = unionBranches(node, root);
+  if (branches !== undefined) {
     // Pick the first branch; the author changes the discriminator to choose another.
-    return seed(oneOf[0] as JsonSchema, root, path);
+    return seed(branches[0]!, root, path);
   }
 
   const constant = node["const"];

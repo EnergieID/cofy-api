@@ -78,8 +78,12 @@ class FilePersistence:
         with path.open(file_mode, encoding="utf-8") as handle:
             fcntl.flock(handle, lock_flag)
             try:
-                loaded = yaml.safe_load(handle) or {}
+                loaded = yaml.safe_load(handle)
                 if not isinstance(loaded, dict):
+                    # `safe_load` of an empty or all-comments file returns `None`, which used to
+                    # be quietly turned into `{}` here - every field defaults, so that validated
+                    # as a legitimate blank community instead of surfacing a truncated file (e.g.
+                    # from a crash mid-write) as the corruption it actually is.
                     raise ValueError(f"Community config at {path} must be a YAML mapping")
 
                 config = CofyAPISettings.model_validate(loaded)

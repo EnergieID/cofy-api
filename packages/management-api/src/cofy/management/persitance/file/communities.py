@@ -1,10 +1,11 @@
+import fcntl
 import logging
 import os
 
 import yaml
 from cofy.api.cofy_api import CofyAPISettings
 
-from ...errors import ManagementError, ResourceAlreadyExistsError
+from ...errors import ManagementError, ResourceAlreadyExistsError, ResourceNotFoundError
 from ..communities import CommunitiesPersistence
 from .base import FilePersistence
 
@@ -69,8 +70,15 @@ class FileCommunitiesPersistence(FilePersistence, CommunitiesPersistence):
             return config
 
     def delete(self, slug: str) -> None:
-        # Opening for read proves the community exists and takes a lock that excludes a
-        # concurrent write; the file is removed once that lock has been released.
-        with self._open_community_config(slug, "read"):
-            pass
-        self._community_path(slug).unlink()
+        path = self._community_path(slug)  # also validates the slug before it becomes a filename
+        if not path.exists():
+            raise ResourceNotFoundError(f"Community {slug!r} not found")
+
+        with path.open("r", encoding="utf-8") as handle:
+            fcntl.flock(handle, fcntl.LOCK_EX)
+            try:
+                if not path.exists():
+                    raise ResourceNotFoundError(f"Community {slug!r} not found")
+                path.unlink()
+            finally:
+                fcntl.flock(handle, fcntl.LOCK_UN)

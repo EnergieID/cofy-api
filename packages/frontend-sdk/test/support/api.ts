@@ -15,3 +15,10 @@ export function stubbedApi(handler: (call: Call) => StubResponse | undefined): S
   const { fetch, calls } = stubFetch(handler);
   return { api: new ApiClient({ fetch, baseUrl: ORIGIN }), calls };
 }
+
+/** A client whose transport always throws, the way a genuine network failure would - never
+ * a `ProblemError`, since that only exists once a response has actually come back. */
+export function failingApi(): ApiClient {
+  const fetch: typeof globalThis.fetch = (): Promise<Response> => Promise.reject(new TypeError("network error"));
+  return new ApiClient({ fetch, baseUrl: ORIGIN });
+}

@@ -71,6 +71,36 @@ describe("seedFromSchema", () => {
     expect(seeded).toEqual({ source: { type: "a" } });
   });
 
+  it("takes the first branch of a plain (non-discriminated) union too, which pydantic emits as anyOf", () => {
+    const seeded = seedFromSchema({
+      type: "object",
+      properties: {
+        source: {
+          anyOf: [{ $ref: "#/$defs/A" }, { $ref: "#/$defs/B" }],
+        },
+      },
+      required: ["source"],
+      $defs: {
+        A: { type: "object", properties: { type: { const: "a", default: "a" } }, required: ["type"] },
+        B: { type: "object", properties: { type: { const: "b", default: "b" } }, required: ["type"] },
+      },
+    });
+
+    expect(seeded).toEqual({ source: { type: "a" } });
+  });
+
+  it("still seeds an Optional (a single-branch anyOf with null) from its own default rather than treating it as a union", () => {
+    const seeded = seedFromSchema({
+      type: "object",
+      properties: {
+        nickname: { anyOf: [{ type: "string" }, { type: "null" }], default: null },
+      },
+      required: ["nickname"],
+    });
+
+    expect(seeded).toEqual({ nickname: null });
+  });
+
   it("starts arrays empty", () => {
     expect(seedFromSchema({ type: "object", properties: { xs: { type: "array" } }, required: ["xs"] })).toEqual({
       xs: [],

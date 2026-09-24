@@ -160,24 +160,30 @@ export class CofyUnionForm extends CofyFormField {
       </wa-select>
     `;
   }
+  
+  private optionValue(branch: JsonSchema, index: number): string {
+    return schemaTypeName(branch) ?? String(index);
+  }
 
   private renderBareChoice(branches: readonly JsonSchema[]): TemplateResult {
-    const selected =
-      this.value === undefined || this.value === null ? undefined : branches[matchBranch(this.value, branches, this.root)];
+    const selectedIndex =
+      this.value === undefined || this.value === null ? undefined : matchBranch(this.value, branches, this.root);
 
     return html`
       <wa-select
         label=${this.t("form.type")}
         placeholder=${this.t("form.choose")}
-        .value=${selected === undefined ? "" : (schemaTypeName(selected) ?? "")}
+        .value=${selectedIndex === undefined ? "" : this.optionValue(branches[selectedIndex]!, selectedIndex)}
         lang=${this.i18n?.resolvedLanguage ?? "en"}
         ?required=${this.required}
         @change=${(event: Event): void => this.chooseBranch(event, branches)}
       >
         ${repeat(
           branches,
-          (branch) => schemaTypeName(branch) ?? "",
-          (branch) => html`<wa-option value=${schemaTypeName(branch) ?? ""}>${titleCase(schemaTypeName(branch) ?? "?")}</wa-option>`,
+          (branch, index) => this.optionValue(branch, index),
+          (branch, index) => html`<wa-option value=${this.optionValue(branch, index)}
+            >${titleCase(schemaTypeName(branch) ?? String(index + 1))}</wa-option
+          >`,
         )}
       </wa-select>
     `;
@@ -202,8 +208,8 @@ export class CofyUnionForm extends CofyFormField {
   }
 
   private chooseBranch(event: Event, branches: readonly JsonSchema[]): void {
-    const typeName = (event.target as HTMLElement & { value?: string }).value ?? "";
-    const branch = branches.find((candidate) => schemaTypeName(candidate) === typeName);
+    const value = (event.target as HTMLElement & { value?: string }).value ?? "";
+    const branch = branches.find((candidate, index) => this.optionValue(candidate, index) === value);
     if (branch === undefined) return;
     this.emit(seedFromSchema(branch, this.root));
   }

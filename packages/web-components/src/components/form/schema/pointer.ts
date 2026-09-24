@@ -34,14 +34,15 @@ function setAt(doc: unknown, path: PointerSegment[], value: unknown): unknown {
   const [head, ...rest] = path;
   if (head === undefined) return value;
 
-  if (typeof head === "number") {
+  if (typeof head === "number" && (Array.isArray(doc) || doc === undefined)) {
     const array = [...asArray(doc)];
     array[head] = setAt(array[head], rest, value);
     return array;
   }
 
   const record = isRecord(doc) ? { ...doc } : {};
-  record[head] = setAt(record[head], rest, value);
+  const key = String(head);
+  record[key] = setAt(record[key], rest, value);
   return record;
 }
 

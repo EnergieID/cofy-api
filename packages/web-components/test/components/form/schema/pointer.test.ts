@@ -72,4 +72,14 @@ describe("setAtPointer", () => {
 
     expect(next.formats).toBe(doc.formats);
   });
+
+  it("treats an all-digit dict key as an object key, not an array index", () => {
+    // A dict-form entry can be renamed to any string, including one that looks like a
+    // number - nothing here should turn the dict it lives in into a sparse array and drop
+    // every other key.
+    const doc = { mydict: { "1": { value: "old" }, other: { value: "kept" } } };
+    const next = setAtPointer(doc, "/mydict/1/value", "new");
+
+    expect(next).toEqual({ mydict: { "1": { value: "new" }, other: { value: "kept" } } });
+  });
 });

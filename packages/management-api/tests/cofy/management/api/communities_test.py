@@ -247,6 +247,8 @@ def test_listing_skips_an_unreadable_community(client: TestClient, tmp_data: Pat
         "type: cofy-api\n",  # discriminator that does not validate
         "- just\n- a\n- list\n",  # not a mapping
         "title: [unclosed\n",  # not even YAML
+        "",  # empty file - safe_load returns None, not a mapping either
+        "# just a comment\n",  # also parses to None
     ],
 )
 def test_listing_survives_every_kind_of_broken_config(client: TestClient, tmp_data: Path, content: str):
@@ -263,6 +265,18 @@ def test_reading_a_broken_community_directly_still_reports_the_error(client: Tes
     (tmp_data / "broken.yaml").write_text("type: cofy-api\n")
 
     r = client.get("/management/communities/broken")
+
+    assert r.status_code == 422
+    assert r.headers["content-type"] == "application/problem+json"
+
+
+def test_an_empty_config_file_is_reported_as_broken_rather_than_a_blank_community(client: TestClient, tmp_data: Path):
+    """A truncated file (e.g. from a crash mid-write) parses to `None`, not `{}` - it must
+    surface as the corruption it is rather than silently validating as a fresh, blank
+    community with every field at its default."""
+    (tmp_data / "empty.yaml").write_text("")
+
+    r = client.get("/management/communities/empty")
 
     assert r.status_code == 422
     assert r.headers["content-type"] == "application/problem+json"

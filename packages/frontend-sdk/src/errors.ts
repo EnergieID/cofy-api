@@ -60,3 +60,19 @@ export function asProblem(error: unknown): ProblemError {
   if (error instanceof ProblemError) return error;
   return new ProblemError(0, { detail: error instanceof Error ? error.message : String(error) });
 }
+
+/**
+ * Run *request*, converting anything it throws into a `ProblemError`.
+ *
+ * Callers that don't handle their own errors inline (unlike `load()`, most store methods let
+ * the caller catch and display the failure) rely on every rejection already being a
+ * `ProblemError` - a raw network `TypeError` reaching UI code that force-casts its catch
+ * variable would crash instead of rendering a message.
+ */
+export async function withProblem<T>(request: () => Promise<T>): Promise<T> {
+  try {
+    return await request();
+  } catch (error) {
+    throw asProblem(error);
+  }
+}

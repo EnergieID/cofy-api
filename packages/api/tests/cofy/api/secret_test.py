@@ -96,7 +96,10 @@ def test_restores_through_dicts_by_key():
     assert incoming["b"].api_key.get_secret_value() == MASK  # no counterpart to restore from
 
 
-def test_field_absent_from_the_stored_model_is_skipped():
+def test_a_differently_shaped_stored_model_is_skipped():
+    """A stored model missing some of the incoming fields is, definitionally, a different
+    concrete class - covered by the same class-identity guard as the polymorphic-branch case."""
+
     class Fewer(BaseModel):
         label: str = "unnamed"
 
@@ -117,6 +120,19 @@ def test_mismatched_shapes_restore_nothing():
     restore_masked_secrets(incoming, Credentials(api_key="stored"))
 
     assert incoming.token.get_secret_value() == MASK
+
+
+def test_same_named_field_on_a_different_concrete_class_restores_nothing():
+    """Two unrelated classes coincidentally sharing a field name must not exchange secrets."""
+
+    class OtherCredentialsSameFieldName(BaseModel):
+        type: Literal["other"] = "other"
+        api_key: Secret
+
+    incoming = OtherCredentialsSameFieldName(api_key=MASK)
+    restore_masked_secrets(incoming, Credentials(api_key="stored"))
+
+    assert incoming.api_key.get_secret_value() == MASK
 
 
 def test_non_model_values_are_ignored():

@@ -1,7 +1,7 @@
 import { State, StateMap, stateProperty } from "@dodona/lit-state";
 
 import type { ApiClient } from "../api-client.js";
-import { asProblem, type ProblemError } from "../errors.js";
+import { asProblem, withProblem, type ProblemError } from "../errors.js";
 import { moduleKey, type ModuleId, type ModuleSettings } from "../types.js";
 
 /**
@@ -59,21 +59,28 @@ export class ModuleStore extends State {
   }
 
   public async create(slug: string, module: ModuleSettings): Promise<ModuleSettings> {
-    const created = (await this.api.POST(ModuleStore.COLLECTION, {
-      params: { path: { slug } },
-      // The body is a discriminated union the generated types spell out per variant; a
-      // module built from a runtime schema cannot be narrowed to one of them here.
-      body: module as never,
-    })) as ModuleSettings;
-    this.modules.set(slug, [...(this.modules.get(slug) ?? []), created]);
+    const created = (await withProblem(() =>
+      this.api.POST(ModuleStore.COLLECTION, {
+        params: { path: { slug } },
+        // The body is a discriminated union the generated types spell out per variant; a
+        // module built from a runtime schema cannot be narrowed to one of them here.
+        body: module as never,
+      }),
+    )) as ModuleSettings;
+
+    // Only update an already-loaded cache
+    const cached = this.modules.get(slug);
+    if (cached !== undefined) this.modules.set(slug, [...cached, created]);
     return created;
   }
 
   public async replace(slug: string, id: ModuleId, module: ModuleSettings): Promise<ModuleSettings> {
-    const replaced = (await this.api.PUT(ModuleStore.ITEM, {
-      params: { path: { slug, module_type: id.type, name: id.name } },
-      body: module as never,
-    })) as ModuleSettings;
+    const replaced = (await withProblem(() =>
+      this.api.PUT(ModuleStore.ITEM, {
+        params: { path: { slug, module_type: id.type, name: id.name } },
+        body: module as never,
+      }),
+    )) as ModuleSettings;
 
     const cached = this.modules.get(slug);
     if (cached !== undefined) {
@@ -86,9 +93,11 @@ export class ModuleStore extends State {
   }
 
   public async remove(slug: string, id: ModuleId): Promise<void> {
-    await this.api.DELETE(ModuleStore.ITEM, {
-      params: { path: { slug, module_type: id.type, name: id.name } },
-    });
+    await withProblem(() =>
+      this.api.DELETE(ModuleStore.ITEM, {
+        params: { path: { slug, module_type: id.type, name: id.name } },
+      }),
+    );
     const cached = this.modules.get(slug);
     if (cached !== undefined) {
       this.modules.set(

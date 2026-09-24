@@ -30,9 +30,15 @@ def restore_masked_secrets(incoming: Any, stored: Any) -> None:
     nothing and the incoming values stand as sent. List elements are paired by position.
     """
     if isinstance(incoming, BaseModel) and isinstance(stored, BaseModel):
+        # A field name matching by coincidence across unrelated concrete classes (two source
+        # types both happening to have an `api_key`) is not "the same shape" - restoring across
+        # that would leak one service's credential onto another, so the classes must match too.
+        if type(incoming) is not type(stored):
+            return
+        # Same concrete class, so every name in `model_fields` is guaranteed to be a present
+        # attribute on both - no `hasattr` guard needed here the way the dict/list cases below
+        # need one, since those pair up by key/position instead of by a shared class.
         for name in type(incoming).model_fields:
-            if not hasattr(stored, name):
-                continue
             new_value, old_value = getattr(incoming, name), getattr(stored, name)
             if isinstance(new_value, SecretStr) and isinstance(old_value, SecretStr):
                 if new_value.get_secret_value() == MASK:
