@@ -8,9 +8,13 @@ const srcDir = fileURLToPath(new URL("src", import.meta.url));
 /**
  * Every source file, as its own Rollup entry.
  *
- * `preserveModules` below keeps them as separate output files instead of bundling them
- * together - so this has to hand Rollup one entry per file for it to preserve, the same way
- * `tsc`'s own `src` → `dist` mirroring did.
+ * Rollup's `output.preserveModules` looks like the tool for keeping `dist` shaped like `src`,
+ * but its own docs warn it off: it still tree-shakes, including dropping files "that ... do not
+ * have side effects when executed" - which is exactly how this repo lost its icon and custom
+ * element registrations to silent dead-code elimination. The docs' own recommended alternative
+ * for this is what's here instead: designate every file as its own entry point (Rollup never
+ * tree-shakes an entry module away, only unused exports of one), and let Rollup's ordinary
+ * chunking hoist genuinely shared code into its own chunk rather than duplicating it.
  */
 function entries(): Record<string, string> {
   const files = readdirSync(srcDir, { recursive: true })
@@ -51,8 +55,6 @@ export default defineConfig({
       //   a consumer ever installs, so it has to be bundled as part of our own output instead.
       external: (id: string) => !id.includes("?") && !id.startsWith("@oxc-project/runtime") && !id.startsWith(".") && !id.startsWith("/"),
       output: {
-        preserveModules: true,
-        preserveModulesRoot: srcDir,
         entryFileNames: "[name].js",
       },
     },
