@@ -105,6 +105,14 @@ jobs:
         # Builds packages/frontend-sdk and packages/web-components first - apps/management-web
         # depends on their build output, not their sources.
         run: task test-frontend
+      - name: Rename coverage reports
+        # upload-artifact strips the shared parent directory off a multi-path upload, so
+        # `packages/frontend-sdk/coverage/...` and `packages/web-components/coverage/...` would
+        # both land as ambiguous, differently-rooted paths on download. Flat, unique names next
+        # to the workflow root sidestep that, matching how the backend jobs above do it.
+        run: |
+          cp packages/frontend-sdk/coverage/cobertura-coverage.xml cov-frontend-sdk.xml
+          cp packages/web-components/coverage/cobertura-coverage.xml cov-web-components.xml
       - name: Upload coverage data
         uses: actions/upload-artifact@v7
         with:
@@ -112,8 +120,8 @@ jobs:
           # management-web is thin composition of these two libraries and has no coverage
           # floor of its own (see frontend-coverage below), so only their reports are here.
           path: |
-            packages/frontend-sdk/coverage/cobertura-coverage.xml
-            packages/web-components/coverage/cobertura-coverage.xml
+            cov-frontend-sdk.xml
+            cov-web-components.xml
 
   frontend-coverage:
     runs-on: ubuntu-latest
@@ -127,7 +135,7 @@ jobs:
       - name: Code Coverage Report
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: packages/frontend-sdk/coverage/cobertura-coverage.xml,packages/web-components/coverage/cobertura-coverage.xml
+          filename: cov-frontend-sdk.xml,cov-web-components.xml
           badge: true
           hide_complexity: true
           hide_branch_rate: true
