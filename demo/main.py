@@ -5,8 +5,7 @@ from energy_cost import Supplier, Tariff
 from energy_cost.index import CachedEntsoeDayAheadIndex, CSVIndex, Index
 from isodate import Duration
 
-from cofy import CofyAPI
-from cofy.api import TokenAuth, TokenInfo
+from cofy.api import CofyAPI, TokenAuth, TokenInfo
 from cofy.modules.billing.module import BillingModule
 from cofy.modules.directive import DirectiveModule, DirectiveSource
 from cofy.modules.members import MembersFileSource, MembersModule

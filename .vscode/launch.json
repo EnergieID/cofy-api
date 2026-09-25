@@ -9,6 +9,7 @@
             "name": "Python Debugger: FastAPI",
             "type": "debugpy",
             "request": "launch",
+            "python": "${workspaceFolder}/packages/api/.venv/bin/python",
             "module": "uvicorn",
             "args": [
                 "demo.main:app",
@@ -25,6 +26,7 @@
             "name": "Python Debugger: Management API",
             "type": "debugpy",
             "request": "launch",
+            "python": "${workspaceFolder}/packages/management-api/.venv/bin/python",
             "module": "uvicorn",
             "args": [
                 "cofy.management.main:app",
