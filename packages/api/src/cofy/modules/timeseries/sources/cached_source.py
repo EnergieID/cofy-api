@@ -3,6 +3,8 @@ import datetime as dt
 import logging
 import time
 from collections import OrderedDict
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
@@ -36,6 +38,12 @@ class _Entry:
     fetched_at: float
 
 
+@dataclass
+class _SeriesLock:
+    lock: asyncio.Lock
+    users: int = 0
+
+
 class CachedTimeseriesSource(TimeseriesSource, settings=CachedTimeseriesSourceSettings):
     def __init__(
         self,
@@ -65,7 +73,7 @@ class CachedTimeseriesSource(TimeseriesSource, settings=CachedTimeseriesSourceSe
         self.chunk_size = chunk_size
         self.max_chunks = max_chunks
         self._entries: OrderedDict[tuple, _Entry] = OrderedDict()
-        self._locks: dict[tuple, asyncio.Lock] = {}
+        self._locks: dict[tuple, _SeriesLock] = {}
 
     async def fetch_timeseries(
         self,
@@ -78,7 +86,7 @@ class CachedTimeseriesSource(TimeseriesSource, settings=CachedTimeseriesSourceSe
         series = (str(resolution), frozenset(kwargs.items()))
         segments = self._segments(start, end, resolution)
 
-        async with self._locks.setdefault(series, asyncio.Lock()):
+        async with self._series_lock(series):
             entries = {segment: entry for segment in segments if (entry := self._fresh_entry(series, segment))}
             runs = _consecutive_runs([segment for segment in segments if segment not in entries])
             fetched = await asyncio.gather(*(self._fetch_run(series, run, resolution, kwargs) for run in runs))
@@ -89,7 +97,26 @@ class CachedTimeseriesSource(TimeseriesSource, settings=CachedTimeseriesSourceSe
         frames = [entry.frame for entry in ordered if len(entry.frame) > 0]
         frame = _slice(nw.concat(frames), start, end) if frames else ordered[0].frame
         latest = max(ordered, key=lambda entry: entry.fetched_at)
-        return Timeseries(frame=frame, metadata=dict(latest.metadata))
+        # the result expires with its oldest chunk; stale chunks served after a failed fetch expire right away
+        now = time.monotonic()
+        remaining = min(self._max_age.total_seconds() - (now - entry.fetched_at) for entry in ordered)
+        metadata = dict(latest.metadata)
+        metadata["expires"] = dt.datetime.now(dt.UTC) + dt.timedelta(seconds=max(remaining, 0))
+        return Timeseries(frame=frame, metadata=metadata)
+
+    @asynccontextmanager
+    async def _series_lock(self, series: tuple) -> AsyncGenerator[None]:
+        # one lock per series, so a slow fetch only blocks requests for that series,
+        # removed once unused so the locks don't grow with every distinct set of extra args
+        series_lock = self._locks.setdefault(series, _SeriesLock(asyncio.Lock()))
+        series_lock.users += 1
+        try:
+            async with series_lock.lock:
+                yield
+        finally:
+            series_lock.users -= 1
+            if series_lock.users == 0:
+                del self._locks[series]
 
     def _segments(self, start: dt.datetime, end: dt.datetime, resolution: ISODuration) -> list[Segment]:
         chunk_size = self.chunk_size

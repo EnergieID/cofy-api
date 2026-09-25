@@ -477,3 +477,46 @@ def test_explicit_bounds_are_not_aligned():
 
     assert dt.datetime.fromisoformat(metadata["start"]) == start
     assert dt.datetime.fromisoformat(metadata["end"]) == end
+
+
+class ExpiresSource(DummyTimeseriesSource):
+    def __init__(self, expires_in: dt.timedelta):
+        self.expires_in = expires_in
+
+    async def fetch_timeseries(self, start, end, resolution=dt.timedelta(hours=1), **kwargs):
+        timeseries = await super().fetch_timeseries(start, end, resolution, **kwargs)
+        timeseries.metadata["expires"] = dt.datetime.now(dt.UTC) + self.expires_in
+        return timeseries
+
+    @property
+    def max_age(self) -> dt.timedelta:
+        return dt.timedelta(hours=1)
+
+
+class RecordingFormat(JSONFormat):
+    def format(self, timeseries):
+        self.metadata = dict(timeseries.metadata)
+        return super().format(timeseries)
+
+
+@pytest.mark.parametrize(
+    "expires_in, expected", [(dt.timedelta(minutes=10), "max-age=600"), (-dt.timedelta(1), "max-age=0")]
+)
+def test_cache_control_header_uses_expires_from_metadata(expires_in, expected):
+    client, module = _client(ExpiresSource(expires_in))
+
+    response = client.get(module.prefix)
+
+    assert response.headers["Cache-Control"] == expected
+
+
+def test_expires_metadata_is_derived_from_source_max_age():
+    fmt = RecordingFormat()
+    module = TimeseriesModule(source=MaxAgeSource(), formats=[fmt], default_args={"limit": None})
+    app = FastAPI()
+    app.include_router(module)
+
+    TestClient(app).get(module.prefix)
+
+    remaining = (fmt.metadata["expires"] - dt.datetime.now(dt.UTC)).total_seconds()
+    assert remaining == pytest.approx(1800, abs=5)

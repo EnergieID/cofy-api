@@ -229,3 +229,28 @@ def test_max_age_is_the_smallest_of_both_sources():
 def test_max_age_is_unknown_when_either_source_is_unknown():
     source = DynamicBoundaryDirectiveSource(MaxAgeSource(dt.timedelta(hours=1)), DummyTimeseriesSource())
     assert source.max_age is None
+
+
+@pytest.mark.asyncio
+async def test_expires_is_the_earliest_of_both_sources():
+    early = dt.datetime(2026, 1, 1, 12, tzinfo=dt.UTC)
+    late = dt.datetime(2026, 1, 1, 13, tzinfo=dt.UTC)
+
+    class ExpiringSignal(DummyTimeseriesSource):
+        async def fetch_timeseries(self, start, end, resolution=dt.timedelta(hours=1), **kwargs):
+            timeseries = await super().fetch_timeseries(start, end, resolution, **kwargs)
+            timeseries.metadata["expires"] = late
+            return timeseries
+
+    class ExpiringBoundaries(DummyBoundarySource):
+        async def fetch_timeseries(self, start, end, resolution=dt.timedelta(hours=1), **kwargs):
+            timeseries = await super().fetch_timeseries(start, end, resolution, **kwargs)
+            timeseries.metadata["expires"] = early
+            return timeseries
+
+    source = DynamicBoundaryDirectiveSource(ExpiringSignal(), ExpiringBoundaries(boundaries=[(5, 15, 25, 35)] * 2))
+    result = await source.fetch_timeseries(
+        dt.datetime(2026, 1, 1, tzinfo=dt.UTC), dt.datetime(2026, 1, 1, 2, tzinfo=dt.UTC), dt.timedelta(hours=1)
+    )
+
+    assert result.metadata["expires"] == early

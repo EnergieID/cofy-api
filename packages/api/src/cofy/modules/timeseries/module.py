@@ -201,15 +201,19 @@ class TimeseriesModule(Module, settings=TimeseriesModuleSettings):
             timeseries.metadata["end"] = end
             timeseries.metadata["resolution"] = resolution
             timeseries.metadata["format"] = format.name
+            now = dt.datetime.now(dt.UTC)
+            max_age = self.source.max_age
+            if "expires" not in timeseries.metadata and max_age is not None:
+                timeseries.metadata["expires"] = now + max_age
 
             # return in requested format
             result = format.format(timeseries)
 
-            max_age = self.source.max_age
-            if max_age is not None:
+            expires = timeseries.metadata.get("expires")
+            if expires is not None:
                 # formats returning their own Response ignore headers set on the injected one
                 target = result if isinstance(result, Response) else response
-                target.headers["Cache-Control"] = f"max-age={int(max_age.total_seconds())}"
+                target.headers["Cache-Control"] = f"max-age={max(round((expires - now).total_seconds()), 0)}"
 
             return result
 

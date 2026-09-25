@@ -74,6 +74,10 @@ class DynamicBoundaryDirectiveSource(TimeseriesSource, settings=DynamicBoundaryD
 
         result = Timeseries(frame=combined, metadata=signal_ts.metadata)
         result.metadata["unit"] = "directive"
+        # the result is only as fresh as its least fresh input
+        expires = [ts.metadata["expires"] for ts in (signal_ts, boundary_ts) if "expires" in ts.metadata]
+        if expires:
+            result.metadata["expires"] = min(expires)
         return result
 
     @property

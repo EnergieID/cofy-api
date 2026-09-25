@@ -215,6 +215,40 @@ async def test_concurrent_misses_share_one_upstream_call(clock):
 
 
 @pytest.mark.asyncio
+async def test_slow_miss_does_not_block_other_series(clock):
+    class SlowForBE(CountingSource):
+        async def fetch_timeseries(self, start, end, resolution, **kwargs) -> Timeseries:
+            self.delay = 0.2 if kwargs.get("country_code") == "BE" else 0.0
+            return await super().fetch_timeseries(start, end, resolution, **kwargs)
+
+    source = CachedTimeseriesSource(SlowForBE())
+    slow = asyncio.create_task(source.fetch_timeseries(T0, T0 + DAY, HOUR, country_code="BE"))
+    await asyncio.sleep(0)
+
+    await asyncio.wait_for(source.fetch_timeseries(T0, T0 + DAY, HOUR, country_code="NL"), timeout=0.1)
+    assert not slow.done()
+    await slow
+
+
+@pytest.mark.asyncio
+async def test_locks_are_removed_after_use(clock):
+    upstream = CountingSource()
+    upstream.delay = 0.01
+    source = CachedTimeseriesSource(upstream)
+
+    await asyncio.gather(
+        source.fetch_timeseries(T0, T0 + DAY, HOUR, country_code="BE"),
+        source.fetch_timeseries(T0, T0 + DAY, HOUR, country_code="BE"),
+        source.fetch_timeseries(T0, T0 + DAY, HOUR, country_code="NL"),
+    )
+    upstream.fail = True
+    with pytest.raises(RuntimeError):
+        await source.fetch_timeseries(T0, T0 + DAY, HOUR, country_code="DE")
+
+    assert source._locks == {}
+
+
+@pytest.mark.asyncio
 async def test_stale_chunks_are_served_when_upstream_fails(clock):
     upstream = CountingSource()
     source = CachedTimeseriesSource(upstream)
@@ -357,3 +391,43 @@ def test_settings_json_schema_describes_durations_as_strings():
     properties = schema["$defs"]["CachedTimeseriesSourceSettings"]["properties"]
 
     assert (properties["chunk_size"]["type"], properties["chunk_size"]["format"]) == ("string", "duration")
+
+
+def seconds_until(expires: dt.datetime) -> float:
+    return (expires - dt.datetime.now(dt.UTC)).total_seconds()
+
+
+@pytest.mark.asyncio
+async def test_expires_reflects_remaining_cache_time(clock):
+    source = CachedTimeseriesSource(CountingSource())
+
+    fresh = await source.fetch_timeseries(T0, T0 + DAY, HOUR)
+    clock[0] += 1800
+    cached = await source.fetch_timeseries(T0, T0 + DAY, HOUR)
+
+    assert seconds_until(fresh.metadata["expires"]) == pytest.approx(3600, abs=5)
+    assert seconds_until(cached.metadata["expires"]) == pytest.approx(1800, abs=5)
+
+
+@pytest.mark.asyncio
+async def test_expires_follows_the_oldest_chunk(clock):
+    source = CachedTimeseriesSource(CountingSource())
+
+    await source.fetch_timeseries(T0, T0 + DAY, HOUR)
+    clock[0] += 3000
+    result = await source.fetch_timeseries(T0, T0 + 2 * DAY, HOUR)
+
+    assert seconds_until(result.metadata["expires"]) == pytest.approx(600, abs=5)
+
+
+@pytest.mark.asyncio
+async def test_stale_reuse_expires_immediately(clock):
+    upstream = CountingSource()
+    source = CachedTimeseriesSource(upstream)
+
+    await source.fetch_timeseries(T0, T0 + DAY, HOUR)
+    clock[0] += 7200
+    upstream.fail = True
+    result = await source.fetch_timeseries(T0, T0 + DAY, HOUR)
+
+    assert seconds_until(result.metadata["expires"]) == pytest.approx(0, abs=5)
