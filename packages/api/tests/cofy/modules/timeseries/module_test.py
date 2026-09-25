@@ -421,3 +421,59 @@ def test_can_create_from_settings():
 
     assert isinstance(module, TimeseriesModule)
     assert isinstance(module.source, DummyTimeseriesSource)
+
+
+class MaxAgeSource(DummyTimeseriesSource):
+    @property
+    def max_age(self) -> dt.timedelta:
+        return dt.timedelta(minutes=30)
+
+
+def _client(source) -> tuple[TestClient, TimeseriesModule]:
+    module = TimeseriesModule(source=source, default_args={"limit": None})
+    app = FastAPI()
+    app.include_router(module)
+    return TestClient(app), module
+
+
+@pytest.mark.parametrize("suffix", ["", ".csv"])
+def test_cache_control_header_uses_source_max_age(suffix):
+    client, module = _client(MaxAgeSource())
+
+    response = client.get(f"{module.prefix}{suffix}")
+
+    assert response.status_code == 200
+    assert response.headers["Cache-Control"] == "max-age=1800"
+
+
+def test_no_cache_control_header_without_source_max_age():
+    client, module = _client(DummyTimeseriesSource())
+
+    response = client.get(module.prefix)
+
+    assert response.status_code == 200
+    assert "Cache-Control" not in response.headers
+
+
+def test_default_bounds_are_aligned_to_resolution():
+    client, module = _client(DummyTimeseriesSource())
+
+    first = client.get(module.prefix).json()["metadata"]
+    second = client.get(module.prefix).json()["metadata"]
+
+    assert (first["start"], first["end"]) == (second["start"], second["end"])
+    start = dt.datetime.fromisoformat(first["start"])
+    end = dt.datetime.fromisoformat(first["end"])
+    assert (start.minute, start.second, start.microsecond) == (0, 0, 0)
+    assert (end.minute, end.second, end.microsecond) == (0, 0, 0)
+
+
+def test_explicit_bounds_are_not_aligned():
+    client, module = _client(DummyTimeseriesSource())
+    start = dt.datetime(2026, 1, 1, 0, 7, tzinfo=dt.UTC)
+    end = dt.datetime(2026, 1, 1, 3, 7, tzinfo=dt.UTC)
+
+    metadata = client.get(module.prefix, params={"start": start.isoformat(), "end": end.isoformat()}).json()["metadata"]
+
+    assert dt.datetime.fromisoformat(metadata["start"]) == start
+    assert dt.datetime.fromisoformat(metadata["end"]) == end

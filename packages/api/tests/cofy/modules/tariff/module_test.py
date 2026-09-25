@@ -19,15 +19,6 @@ def test_tariffmodule_type_property():
     assert module.type == "tariff"
 
 
-def test_floor_datetime():
-    from cofy.modules.tariff.module import floor_datetime
-
-    dt_obj = dt.datetime(2026, 1, 1, 10, 37, 45, tzinfo=dt.UTC)
-    delta = dt.timedelta(hours=1)
-    floored = floor_datetime(dt_obj, delta)
-    assert floored == dt.datetime(2026, 1, 1, 10, 0, 0, tzinfo=dt.UTC)
-
-
 class TestTariffModule:
     def setup_method(self):
         self.module = TariffModule(source=DummySource())

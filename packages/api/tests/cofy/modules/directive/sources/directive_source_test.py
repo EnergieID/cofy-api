@@ -47,3 +47,13 @@ def test_supported_resolutions_and_extra_args_are_forwarded():
 
     assert source.supported_resolutions == wrapped.supported_resolutions
     assert source.extra_args == wrapped.extra_args
+
+
+def test_max_age_is_forwarded():
+    class MaxAgeSource(DummyTimeseriesSource):
+        @property
+        def max_age(self) -> dt.timedelta:
+            return dt.timedelta(hours=1)
+
+    assert DirectiveSource(MaxAgeSource(), boundaries=(5, 15, 25, 35)).max_age == dt.timedelta(hours=1)
+    assert DirectiveSource(DummyTimeseriesSource(), boundaries=(5, 15, 25, 35)).max_age is None

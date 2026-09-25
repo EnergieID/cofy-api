@@ -11,6 +11,7 @@ from cofy.modules.directive import DirectiveModule, DirectiveSource
 from cofy.modules.members import MembersFileSource, MembersModule
 from cofy.modules.production import EnergyIDProduction, ProductionModule
 from cofy.modules.tariff import EnergyCostTariffSource, EntsoeDayAheadTariffSource, KiwattFormat, TariffModule
+from cofy.modules.timeseries import CachedTimeseriesSource
 from demo_cofy_api.members.load_from_csv import example_load_members_from_file
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
@@ -21,18 +22,23 @@ cofy = CofyAPI(
     debug_mode=environ.get("COFY_DEBUG", "").lower() in ("1", "true", "yes"),
 )
 
+# cached, so frequent requests (including the directive module below, which shares this source) don't all hit ENTSO-E
 entsoe = TariffModule(
-    source=EntsoeDayAheadTariffSource(
-        api_key=environ.get("ENTSOE_API_KEY", ""),
+    source=CachedTimeseriesSource(
+        EntsoeDayAheadTariffSource(
+            api_key=environ.get("ENTSOE_API_KEY", ""),
+        )
     ),
     name="entsoe",
 )
 cofy.register_module(entsoe)
 
 ## Tariff app with custom source
-source = EntsoeDayAheadTariffSource(
-    country_code="NL",
-    api_key=environ.get("ENTSOE_API_KEY", ""),
+source = CachedTimeseriesSource(
+    EntsoeDayAheadTariffSource(
+        country_code="NL",
+        api_key=environ.get("ENTSOE_API_KEY", ""),
+    )
 )
 kiwatt = TariffModule(
     source=source,

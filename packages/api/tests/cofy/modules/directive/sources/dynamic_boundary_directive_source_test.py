@@ -210,3 +210,22 @@ def test_extra_args_boundary_only():
     source = DynamicBoundaryDirectiveSource(signal, boundary)
 
     assert source.extra_args == {"b": float}
+
+
+class MaxAgeSource(DummyTimeseriesSource):
+    def __init__(self, max_age: dt.timedelta):
+        self._max_age = max_age
+
+    @property
+    def max_age(self) -> dt.timedelta:
+        return self._max_age
+
+
+def test_max_age_is_the_smallest_of_both_sources():
+    source = DynamicBoundaryDirectiveSource(MaxAgeSource(dt.timedelta(hours=1)), MaxAgeSource(dt.timedelta(minutes=5)))
+    assert source.max_age == dt.timedelta(minutes=5)
+
+
+def test_max_age_is_unknown_when_either_source_is_unknown():
+    source = DynamicBoundaryDirectiveSource(MaxAgeSource(dt.timedelta(hours=1)), DummyTimeseriesSource())
+    assert source.max_age is None

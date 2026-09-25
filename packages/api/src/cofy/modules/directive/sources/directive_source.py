@@ -61,3 +61,7 @@ class DirectiveSource(TimeseriesSource, settings=DirectiveSourceSettings):
     @property
     def extra_args(self) -> dict:
         return self.source.extra_args
+
+    @property
+    def max_age(self) -> dt.timedelta | None:
+        return self.source.max_age

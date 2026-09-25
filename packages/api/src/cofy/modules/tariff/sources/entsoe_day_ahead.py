@@ -63,6 +63,10 @@ class EntsoeDayAheadTariffSource(TimeseriesSource, settings=EntsoeDayAheadTariff
         return ["PT15M"]
 
     @property
+    def max_age(self) -> dt.timedelta:
+        return dt.timedelta(hours=1)
+
+    @property
     def extra_args(self) -> dict:
         if self.country_code is not None:
             return {}

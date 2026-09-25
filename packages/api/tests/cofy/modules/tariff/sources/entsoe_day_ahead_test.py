@@ -106,3 +106,7 @@ async def test_returns_empty_when_no_data():
     result = await src.fetch_timeseries(start, end)
     assert isinstance(result, Timeseries)
     assert result.frame.is_empty
+
+
+def test_max_age():
+    assert EntsoeDayAheadTariffSource(api_key="key").max_age == dt.timedelta(hours=1)

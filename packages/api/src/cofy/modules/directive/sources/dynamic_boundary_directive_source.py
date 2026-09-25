@@ -92,3 +92,12 @@ class DynamicBoundaryDirectiveSource(TimeseriesSource, settings=DynamicBoundaryD
     def extra_args(self) -> dict:
         # The extra args are the union of the signal source and boundary source extra args, with signal source taking precedence in case of conflicts
         return {**self.boundary_source.extra_args, **self.signal_source.extra_args}
+
+    @property
+    def max_age(self) -> dt.timedelta | None:
+        # The result is only as fresh as its least fresh input, and unknown if either input is unknown
+        signal_max_age = self.signal_source.max_age
+        boundary_max_age = self.boundary_source.max_age
+        if signal_max_age is None or boundary_max_age is None:
+            return None
+        return min(signal_max_age, boundary_max_age)
