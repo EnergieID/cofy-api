@@ -2,6 +2,7 @@ import contextvars
 import io
 import itertools
 import logging
+import shutil
 import time
 import uuid
 from pathlib import Path
@@ -21,12 +22,14 @@ _tag_counter = itertools.count(1)
 
 
 class DebugMiddleware(BaseHTTPMiddleware):
-    """Middleware that profiles each request and persists profiling data to disk."""
+    """Middleware that profiles each request and persists the profiles of the latest `max_profiles` requests to disk."""
 
-    def __init__(self, app: ASGIApp, debug_dir: Path, base_url: str = "/debug") -> None:
+    def __init__(self, app: ASGIApp, debug_dir: Path, base_url: str = "/debug", max_profiles: int = 100) -> None:
         super().__init__(app)
         self._debug_dir = debug_dir
         self._base_url = base_url.rstrip("/")
+        self._max_profiles = max_profiles
+        self._in_flight = 0
 
         yappi.set_tag_callback(lambda: _request_tag.get(0))
         yappi.set_clock_type("wall")
@@ -45,14 +48,23 @@ class DebugMiddleware(BaseHTTPMiddleware):
         request_dir = self._debug_dir / request_id
         request_dir.mkdir(parents=True, exist_ok=True)
 
-        response = await call_next(request)
+        self._in_flight += 1
+        try:
+            response = await call_next(request)
 
-        buf = io.StringIO()
-        yappi.get_func_stats(filter={"tag": tag}).print_all(
-            out=buf,
-            columns={0: ("name", 120), 1: ("ncall", 8), 2: ("tsub", 10), 3: ("ttot", 10), 4: ("tavg", 10)},
-        )
-        (request_dir / "profile.txt").write_text(buf.getvalue(), encoding="utf-8")
+            buf = io.StringIO()
+            yappi.get_func_stats(filter={"tag": tag}).print_all(
+                out=buf,
+                columns={0: ("name", 120), 1: ("ncall", 8), 2: ("tsub", 10), 3: ("ttot", 10), 4: ("tavg", 10)},
+            )
+            (request_dir / "profile.txt").write_text(buf.getvalue(), encoding="utf-8")
+        finally:
+            self._in_flight -= 1
+            # yappi keeps stats for every tag until cleared and cannot clear a single tag,
+            # so clear everything once no other request still needs its stats.
+            if self._in_flight == 0:
+                yappi.clear_stats()
+        self._prune_profiles()
 
         elapsed_ms = (time.perf_counter() - t_start) * 1000
         logger.info(
@@ -70,3 +82,8 @@ class DebugMiddleware(BaseHTTPMiddleware):
         response.headers["X-Debug-Url"] = debug_url
 
         return response
+
+    def _prune_profiles(self) -> None:
+        request_dirs = sorted((p for p in self._debug_dir.iterdir() if p.is_dir()), key=lambda p: p.stat().st_mtime)
+        for request_dir in request_dirs[: max(len(request_dirs) - self._max_profiles, 0)]:
+            shutil.rmtree(request_dir, ignore_errors=True)

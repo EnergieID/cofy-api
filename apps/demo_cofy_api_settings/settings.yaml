@@ -11,15 +11,20 @@ modules:
   - type: tariff
     name: entsoe
     source:
-      type: entsoe_day_ahead
-      api_key: ${ENTSOE_API_KEY}
+      # caches in chunks of a day; max_age defaults to the wrapped source's (1 hour for ENTSO-E)
+      type: cached
+      source:
+        type: entsoe_day_ahead
+        api_key: ${ENTSOE_API_KEY}
 
   - type: tariff
     name: kiwatt
     source:
-      type: entsoe_day_ahead
-      country_code: NL
-      api_key: ${ENTSOE_API_KEY}
+      type: cached
+      source:
+        type: entsoe_day_ahead
+        country_code: NL
+        api_key: ${ENTSOE_API_KEY}
     formats:
       - type: kiwatt
 
@@ -68,8 +73,10 @@ modules:
     source:
       type: directive
       source:
-        type: entsoe_day_ahead
-        api_key: ${ENTSOE_API_KEY}
+        type: cached
+        source:
+          type: entsoe_day_ahead
+          api_key: ${ENTSOE_API_KEY}
       boundaries: [0, 10, 25, 50]
       reverse: true
     formats:

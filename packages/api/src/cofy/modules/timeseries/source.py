@@ -31,3 +31,8 @@ class TimeseriesSource(FromSettingsMixin, ABC, settings=TimeseriesSourceSettings
     def extra_args(self) -> dict:
         """Optionally specify extra keyword args that this source supports, e.g. {"country_code": str}. This can be used by the frontend to dynamically generate query forms."""
         return {}
+
+    @property
+    def max_age(self) -> dt.timedelta | None:
+        """Optionally specify how long fetched data stays valid, used for caching. None means unknown."""
+        return None

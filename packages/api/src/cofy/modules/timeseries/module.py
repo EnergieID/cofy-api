@@ -1,13 +1,14 @@
 import datetime as dt
 from typing import TYPE_CHECKING, Annotated, Literal
 
-from fastapi import Depends, Query, Request
+from fastapi import Depends, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from isodate import ISO8601Error, parse_duration
 from pydantic import create_model
 
 from cofy.api import Module, ModuleSettings
 
+from .alignment import ceil_datetime, floor_datetime
 from .format import TimeseriesFormat, TimeseriesFormatSettings
 from .formats.csv import CSVFormat
 from .formats.json import JSONFormat
@@ -126,6 +127,7 @@ class TimeseriesModule(Module, settings=TimeseriesModuleSettings):
 
         async def get_timeseries(
             request: Request,
+            response: Response,
             start: Annotated[
                 dt.datetime,
                 Query(
@@ -160,6 +162,12 @@ class TimeseriesModule(Module, settings=TimeseriesModuleSettings):
                 start = start.replace(tzinfo=dt.UTC)
             if end is not None and end.tzinfo is None:
                 end = end.replace(tzinfo=dt.UTC)
+            # align defaulted bounds to the resolution, so repeated default requests ask for the same range
+            if isinstance(resolution, dt.timedelta):
+                if "start" not in request.query_params:
+                    start = floor_datetime(start, resolution)
+                if end is not None and "end" not in request.query_params:
+                    end = ceil_datetime(end, resolution)
             # calculate adjusted start and end based on offset and limit
             if offset is not None:
                 start += offset * resolution
@@ -193,9 +201,21 @@ class TimeseriesModule(Module, settings=TimeseriesModuleSettings):
             timeseries.metadata["end"] = end
             timeseries.metadata["resolution"] = resolution
             timeseries.metadata["format"] = format.name
+            now = dt.datetime.now(dt.UTC)
+            max_age = self.source.max_age
+            if "expires" not in timeseries.metadata and max_age is not None:
+                timeseries.metadata["expires"] = now + max_age
 
             # return in requested format
-            return format.format(timeseries)
+            result = format.format(timeseries)
+
+            expires = timeseries.metadata.get("expires")
+            if expires is not None:
+                # formats returning their own Response ignore headers set on the injected one
+                target = result if isinstance(result, Response) else response
+                target.headers["Cache-Control"] = f"max-age={max(round((expires - now).total_seconds()), 0)}"
+
+            return result
 
         self.add_api_route(
             "" if default else f".{format.name}",

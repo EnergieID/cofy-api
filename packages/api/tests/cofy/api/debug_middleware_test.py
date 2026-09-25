@@ -2,6 +2,7 @@ import asyncio
 from pathlib import Path
 
 import pytest
+import yappi
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
@@ -84,3 +85,25 @@ async def test_concurrent_requests_produce_separate_profiles(debug_dir: Path) ->
 
     assert (debug_dir / id1 / "profile.txt").exists()
     assert (debug_dir / id2 / "profile.txt").exists()
+
+
+def test_middleware_keeps_only_latest_profiles(debug_dir: Path) -> None:
+    _app = FastAPI()
+    _app.add_middleware(DebugMiddleware, debug_dir=debug_dir, max_profiles=2)
+
+    @_app.get("/hello")
+    def hello():
+        return {"message": "hello"}
+
+    client = TestClient(_app)
+    ids = [client.get("/hello").headers["X-Debug-Id"] for _ in range(4)]
+
+    assert sorted(p.name for p in debug_dir.iterdir()) == sorted(ids[-2:])
+
+
+def test_middleware_does_not_accumulate_profiler_stats(app: FastAPI) -> None:
+    client = TestClient(app)
+    for _ in range(5):
+        client.get("/hello")
+    # only the stats recorded after the last clear remain, not those of every earlier request
+    assert len({stat.tag for stat in yappi.get_func_stats()}) <= 2

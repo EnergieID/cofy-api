@@ -16,6 +16,24 @@ ISODuration = Annotated[
 ]
 
 
+def _parse_timedelta(value: object) -> object:
+    parsed = parse_duration(value) if isinstance(value, str) else value
+    if isinstance(parsed, Duration):
+        raise ValueError("Only durations without years or months are supported, as they have no fixed length")
+    return parsed
+
+
+ISOTimedelta = Annotated[
+    timedelta,
+    BeforeValidator(_parse_timedelta),
+    PlainSerializer(lambda v: strftime(v, "P%P"), return_type=str),
+    Field(
+        description="ISO-8601 duration without years or months",
+        examples=["PT15M", "P1D"],
+    ),
+]
+
+
 class Timeseries:
     frame: nw.DataFrame
     metadata: dict
