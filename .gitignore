@@ -51,6 +51,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+coverage/
 
 # Translations
 *.mo
@@ -215,3 +216,13 @@ local.settings.json
 
 # SQLite database files
 *.db
+
+# Multitenant demo's local runtime data (reset with `task demo-multitenant-reset`)
+/apps/demo_multitenant/.data/
+
+# Frontend / Node
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+

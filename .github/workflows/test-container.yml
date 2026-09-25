@@ -18,7 +18,7 @@ jobs:
         run: |
             set -euxo pipefail
 
-            docker build -t cofy-api:latest -f Dockerfile .
+            docker build -t cofy-api:latest -f apps/demo_cofy_api/Dockerfile .
 
             CONTAINER_NAME=cofy-api-test
             cleanup() {

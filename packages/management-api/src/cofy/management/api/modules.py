@@ -4,9 +4,10 @@ from typing import Annotated
 
 from cofy.api.module import ModuleSettings
 from cofy.modules.discovery import discover_all_types
-from fastapi import APIRouter, Body, Path
+from fastapi import APIRouter, Path
 
 from ..persitance.modules import ModulesPersistence
+from .allowed_modules import allowed_module_types
 
 # Import every installed module/source/format type,
 discover_all_types()
@@ -43,8 +44,9 @@ class ModulesRouter:
     def create(
         self,
         slug: str,
-        payload: Annotated[AnyModuleSettings, Body(description="Full module settings payload")],
+        payload: AnyModuleSettings,
     ) -> AnyModuleSettings:
+        self._check_type_is_allowed(slug, payload)
         return self.persistence.create(slug, payload)
 
     def put(
@@ -52,10 +54,21 @@ class ModulesRouter:
         slug: str,
         module_type: str,
         name: str,
-        payload: Annotated[AnyModuleSettings, Body(description="Full module settings payload")],
+        payload: AnyModuleSettings,
     ) -> AnyModuleSettings:
         self._check_identity_matches_path(payload, module_type, name)
+        self._check_type_is_allowed(slug, payload)
         return self.persistence.replace(slug, module_type, name, payload)
+
+    @staticmethod
+    def _check_type_is_allowed(slug: str, module: AnyModuleSettings) -> None:
+        """Reject a module type this community may not configure."""
+        allowed = allowed_module_types(slug)
+        if module.type not in allowed:
+            raise ValueError(
+                f"Module type {module.type!r} is not allowed for community {slug!r}. "
+                f"Allowed types: {', '.join(sorted(allowed))}"
+            )
 
     @staticmethod
     def _check_identity_matches_path(module: AnyModuleSettings, module_type: str, name: str) -> None:

@@ -1,0 +1,37 @@
+/*
+ * Colours for the YAML editor.
+ *
+ * Web Awesome has no syntax palette, and its hue tints are absolute - `--wa-color-indigo-40`
+ * is the same colour in light and dark, because only the *semantic* tokens are redefined per
+ * scheme. So a syntax palette has to be ours, and it has to pick a different tint per scheme:
+ * that is the entire reason there are two blocks below rather than one.
+ *
+ * Eight roles, which is what YAML actually distinguishes. Values are Web Awesome hues, so they
+ * sit inside whatever theme and palette the page is using.
+ *
+ * These are optional. `yaml-highlight.ts` names each token with its default written into the
+ * `var()` call, so the editor is correctly coloured without this file; importing it is how a
+ * deployment overrides the palette.
+ */
+:root,
+.wa-light {
+  --cofy-syntax-key: var(--wa-color-indigo-40);
+  --cofy-syntax-string: var(--wa-color-green-30);
+  --cofy-syntax-number: var(--wa-color-cyan-30);
+  --cofy-syntax-atom: var(--wa-color-purple-40);
+  --cofy-syntax-comment: var(--wa-color-gray-50);
+  --cofy-syntax-meta: var(--wa-color-orange-40);
+  --cofy-syntax-punctuation: var(--wa-color-gray-50);
+  --cofy-syntax-invalid: var(--wa-color-red-40);
+}
+
+.wa-dark {
+  --cofy-syntax-key: var(--wa-color-indigo-70);
+  --cofy-syntax-string: var(--wa-color-green-70);
+  --cofy-syntax-number: var(--wa-color-cyan-70);
+  --cofy-syntax-atom: var(--wa-color-purple-70);
+  --cofy-syntax-comment: var(--wa-color-gray-60);
+  --cofy-syntax-meta: var(--wa-color-orange-70);
+  --cofy-syntax-punctuation: var(--wa-color-gray-60);
+  --cofy-syntax-invalid: var(--wa-color-red-70);
+}

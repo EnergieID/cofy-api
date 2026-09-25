@@ -1,0 +1,32 @@
+# Deployed to the Scaleway instance by `.github/workflows/deploy-scaleway.yml`. `app` has no
+# published port - it's only reachable from `caddy` over the compose network, so the only way
+# in from outside is through Caddy's TLS-terminated 80/443.
+services:
+  app:
+    image: ghcr.io/energieid/cofy-api/management:latest
+    container_name: cofy-management
+    restart: unless-stopped
+    volumes:
+      - /data:/data
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: cofy-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  # Let's Encrypt certificates and Caddy's own state - must survive a redeploy, or every
+  # `docker compose up` would re-issue a certificate and risk Let's Encrypt's rate limits.
+  caddy_data:
+  caddy_config:

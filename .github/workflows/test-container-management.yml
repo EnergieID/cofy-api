@@ -1,0 +1,57 @@
+name: test management container
+
+on:
+  workflow_call:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: "build container and check the console + API respond"
+        run: |
+            set -euxo pipefail
+
+            docker build -t cofy-management-demo:latest -f apps/demo_multitenant/Dockerfile .
+
+            CONTAINER_NAME=cofy-management-demo-test
+            cleanup() {
+                status=$?
+                echo "Step exit status: $status"
+                echo "--- docker ps -a ---"
+                docker ps -a || true
+                echo "--- container logs ---"
+                docker logs "$CONTAINER_NAME" || true
+                docker stop "$CONTAINER_NAME" >/dev/null 2>&1 || true
+                docker rm "$CONTAINER_NAME" >/dev/null 2>&1 || true
+                exit $status
+            }
+            trap cleanup EXIT
+
+            docker run -d \
+                --name "$CONTAINER_NAME" \
+                -p 8080:8080 \
+                cofy-management-demo:latest
+
+            for i in {1..15}; do
+                echo "Health check attempt $i"
+                if curl -fsS -v http://localhost:8080/management/communities; then
+                    break
+                fi
+                sleep 2
+            done
+
+            RESPONSE=$(curl -fsS http://localhost:8080/management/communities)
+            echo "Communities response: $RESPONSE"
+
+            CONSOLE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
+            if [[ "$CONSOLE_STATUS" != "200" ]]; then
+                echo "Console did not respond with 200 (got $CONSOLE_STATUS)"
+                exit 1
+            fi

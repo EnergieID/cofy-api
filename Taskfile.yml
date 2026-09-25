@@ -1,49 +1,135 @@
 version: '3'
 
+# Each package manages its own dependencies, so the frontend tasks below loop over the
+# package directories rather than going through a workspace root - matching how the Python
+# packages are driven. They switch to the Node version pinned in .nvmrc through nvm when nvm
+# is installed, and otherwise use whatever node is on PATH.
+#
+# The order matters: the app and the components consume the packages they depend on through
+# those packages' build output, so the libraries are built first.
+vars:
+  NODE_PACKAGES: packages/frontend-sdk packages/web-components apps/management-web
+  WITH_NODE: 'NVM="${NVM_DIR:-$HOME/.nvm}/nvm.sh"; [ -s "$NVM" ] && . "$NVM" && nvm use --silent;'
+
 tasks:
   test:
     desc: Run tests for all packages
     cmds:
       - uv run --project packages/api --directory packages/api poe test
       - uv run --project packages/management-api --directory packages/management-api poe test
+      - task: test-frontend
+
+  test-frontend:
+    desc: Run tests (with coverage) for the frontend packages
+    deps: [build]
+    cmds:
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm run test --if-present) || exit 1
+        done'
 
   lint:
     desc: Lint all packages
+    deps: [build]
     cmds:
       - uv run --project packages/api --directory packages/api poe lint
       - uv run --project packages/management-api --directory packages/management-api poe lint
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm run lint --if-present) || exit 1
+        done'
 
   format:
     desc: Format all packages
     cmds:
       - uv run --project packages/api --directory packages/api poe format
       - uv run --project packages/management-api --directory packages/management-api poe format
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm run format --if-present) || exit 1
+        done'
 
   check:
     desc: Type-check all packages
+    deps: [build]
     cmds:
       - uv run --project packages/api --directory packages/api poe check
       - uv run --project packages/management-api --directory packages/management-api poe check
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm run check --if-present) || exit 1
+        done'
 
-  demo:
-    desc: Run the demo API locally
+  install:
+    desc: Install the frontend package dependencies
+    cmds:
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm install) || exit 1
+        done'
+
+  demo-cofy-api:
+    desc: Run the Python-defined cofy-api demo locally
     dotenv: ['.env.local']
     cmds:
-      - uv run --project packages/api fastapi dev demo/main.py
+      - uv run --project packages/api fastapi dev apps/demo_cofy_api/main.py
 
-  from_settings:
-    desc: Run the from_settings demo locally
+  demo-cofy-api-settings:
+    desc: Run the settings-file cofy-api demo locally
     dotenv: ['.env.local']
     cmds:
-      - uv run --project packages/api fastapi dev demo/from_settings.py
+      - uv run --project packages/api fastapi dev apps/demo_cofy_api_settings/main.py
 
-  management:
-    desc: Run the management API locally
+  demo-multitenant-reset:
+    desc: Reset the multitenant demo's local data back to its committed seed
+    cmds:
+      - python3 apps/demo_multitenant/scripts/reset.py
+
+  demo-multitenant-api:
+    desc: Run the management API for the multitenant demo locally
+    env:
+      COFY_MANAGEMENT_DATA_DIR: '{{.ROOT_DIR}}/apps/demo_multitenant/.data'
     cmds:
       - uv run --project packages/management-api --directory packages/management-api poe run
+
+  demo-multitenant-web:
+    desc: Run the management console locally (expects `task demo-multitenant-api` on :8000)
+    cmds:
+      - bash -c '{{.WITH_NODE}} cd apps/management-web && npm run dev'
+
+  demo-multitenant-docker:
+    desc: Build and run the multitenant demo's production Docker image locally
+    cmds:
+      - docker build -t cofy-management-demo -f apps/demo_multitenant/Dockerfile .
+      - docker run --rm -p 8080:8080 -v cofy-management-data:/data cofy-management-demo
+
+  build:
+    desc: Build the frontend packages and the console
+    cmds:
+      - |
+        bash -c '{{.WITH_NODE}}
+        for pkg in {{.NODE_PACKAGES}}; do
+          echo "--- $pkg"
+          (cd "$pkg" && npm run build --if-present) || exit 1
+        done'
+
+  generate:
+    desc: Regenerate the typed API client from the management API's OpenAPI document
+    cmds:
+      - bash -c '{{.WITH_NODE}} cd packages/frontend-sdk && npm run generate'
 
   prod:
     desc: Build and run the production container
     cmds:
-      - docker build -t cofy-api -f Dockerfile .
+      - docker build -t cofy-api -f apps/demo_cofy_api/Dockerfile .
       - docker run -p 8080:8080 --env-file .env.local cofy-api

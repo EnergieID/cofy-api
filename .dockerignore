@@ -1,0 +1,21 @@
+.git/
+
+# Python
+**/__pycache__/
+**/.pycache/
+**/*.egg-info/
+**/.venv/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.coverage
+
+# Frontend / Node
+**/node_modules/
+**/dist/
+**/.vite/
+**/*.tsbuildinfo
+
+# Local runtime data and secrets
+.env
+.env.local
+apps/demo_multitenant/.data/

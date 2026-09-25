@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    // The JS itself comes from `vite build` (see package.json and vite.build.config.ts),
+    // which resolves things `tsc` alone cannot - `?raw` CSS imports among them. `tsc` here
+    // only emits the `.d.ts` files Vite's own build does not produce.
+    "emitDeclarationOnly": true
+  },
+  "include": ["src"]
+}
