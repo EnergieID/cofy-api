@@ -9,7 +9,8 @@ from isodate import Duration
 from cofy.api import CofyAPI, TokenAuth  # noqa: F401
 from cofy.modules.billing import BillingModule  # noqa: F401
 from cofy.modules.directive import DirectiveFormat, DirectiveModule, DirectiveSource  # noqa: F401
-from cofy.modules.production import EnergyIDProduction, ProductionModule  # noqa: F401
+from cofy.modules.production import AccForecastSource, EnergyIDProduction, ProductionModule  # noqa: F401
+from cofy.modules.simultaneity import SimultaneitySource  # noqa: F401
 from cofy.modules.tariff import (  # noqa: F401
     EnergyCostTariffSource,
     EntsoeDayAheadTariffSource,
