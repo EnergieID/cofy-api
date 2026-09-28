@@ -96,7 +96,7 @@ jobs:
             packages/web-components/package-lock.json
             apps/management-web/package-lock.json
       - name: Install Task
-        uses: arduino/setup-task@v2
+        uses: arduino/setup-task@v3
         with:
           version: '3.x'
       - name: Install frontend dependencies
