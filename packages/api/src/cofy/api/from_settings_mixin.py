@@ -46,8 +46,18 @@ class BaseSettingsModel(BaseModel):
     def union_type(cls) -> Any:
         """Return a discriminated union of every settings model registered under `cls`."""
         finalize()
-        registry = getattr(cls._model, "_registry", {})
-        union = reduce(or_, registry.values())
+        members: list[Any] = list(getattr(cls._model, "_registry", {}).values())
+        if not members:
+            # A union with no members can't be expressed, and would break every model with a field of
+            # this type, so the abstract base stands in. It can't be built, so this must not pass silently.
+            logger.warning(
+                "Nothing is registered under the abstract %s, so %s stands in for it. Nothing can be configured "
+                "for this family: either give it a settings-constructible implementation, or drop its settings.",
+                cls._model.__name__,
+                cls.__name__,
+            )
+            members = [cls]
+        union = reduce(or_, members)
         return Annotated[union, Field(discriminator="type")]
 
     @classmethod
@@ -86,7 +96,6 @@ def finalize(*, force: bool = False) -> None:
 
     _resolving = True
     try:
-        _prune_abstract_registrations()
         settings_models = list(_registered_settings)
         aliases = {settings.union_alias(): settings.union_type() for settings in settings_models}
         modules = {sys.modules[settings.__module__] for settings in settings_models}
@@ -104,30 +113,6 @@ def finalize(*, force: bool = False) -> None:
         _resolved_count = len(settings_models)
     finally:
         _resolving = False
-
-
-def _prune_abstract_registrations() -> None:
-    """Unregister settings whose target class still has unimplemented abstract methods."""
-    for settings in list(_registered_settings):
-        if not getattr(settings._model, "__abstractmethods__", None):
-            continue
-
-        type_name = settings.model_fields["type"].default
-        for base in settings._model.__mro__:
-            registry = base.__dict__.get("_registry")
-            if not isinstance(registry, dict) or registry.get(type_name) is not settings:
-                continue
-            if len(registry) == 1:
-                logger.warning(
-                    "Type %r is abstract but is the only one registered under %s, so it is left in place. "
-                    "Nothing can be configured for this family: either give %s a settings-constructible "
-                    "implementation, or drop its settings models.",
-                    type_name,
-                    base.__name__,
-                    base.__name__,
-                )
-                continue
-            del registry[type_name]
 
 
 def _reresolve_alias_fields(settings: type[BaseSettingsModel], aliases: dict[str, Any]) -> None:
@@ -162,8 +147,14 @@ class FromSettingsMixin:
     def __init_subclass__(
         cls: type[FromSettingsMixin],
         settings: type[BaseSettingsModel] | None = None,
+        abstract: bool = False,
         **kwargs,
     ):
+        """Register `cls` as the class built from `settings`.
+
+        An `abstract` class is the base of a family: it gets a registry and a published union of its
+        subclasses' settings, but can't itself be configured.
+        """
         super().__init_subclass__(**kwargs)
         # Not every subclass needs to be creatable from settings (e.g. test doubles).
         # If no settings model is provided, skip registration.
@@ -180,14 +171,17 @@ class FromSettingsMixin:
         if not isinstance(type_name, str) or not type_name:
             raise TypeError(f"{settings.__name__}.type must have a non-empty string default value for registration")
 
-        for base in cls.__mro__:
-            if "_registry" in base.__dict__:
-                registry = base.__dict__["_registry"]
-                if isinstance(registry, dict):
-                    if type_name in registry:
-                        raise TypeError(f"Duplicate registration for type {type_name!r}")
-                    registry[type_name] = settings
+        # An abstract class only roots a family, so it isn't a type of its own in any registry.
+        if not abstract:
+            for base in cls.__mro__:
+                if "_registry" in base.__dict__:
+                    registry = base.__dict__["_registry"]
+                    if isinstance(registry, dict):
+                        if type_name in registry:
+                            raise TypeError(f"Duplicate registration for type {type_name!r}")
+                        registry[type_name] = settings
 
+        # Abstract settings are still published, so the family's union alias exists.
         if settings not in _registered_settings:
             _registered_settings.append(settings)
 

@@ -25,7 +25,7 @@ class ModuleSettings(BaseSettingsModel):
     )
 
 
-class Module(APIRouter, FromSettingsMixin, ABC, settings=ModuleSettings):
+class Module(APIRouter, FromSettingsMixin, ABC, settings=ModuleSettings, abstract=True):
     type: str = "module"
     type_description: str = "Generic module"
 

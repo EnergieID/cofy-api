@@ -27,6 +27,7 @@ import pytest
 # PyPI names whose import name differs from the normalised form.
 IMPORT_OVERRIDES: dict[str, set[str]] = {
     "entsoe-py": {"entsoe"},
+    "google-auth": {"google"},
     "PyYAML": {"yaml"},
 }
 
@@ -38,6 +39,7 @@ EXTRA_ZONES: dict[str, set[str]] = {
     "production": {"modules/production/"},
     "members": {"modules/members/"},
     "directive": {"modules/directive/"},
+    "simultaneity": {"modules/simultaneity/"},
     "debug": {"api/debug_"},
 }
 

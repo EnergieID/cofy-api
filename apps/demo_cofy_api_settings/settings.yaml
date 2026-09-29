@@ -81,3 +81,30 @@ modules:
       reverse: true
     formats:
       - type: directive
+
+  - type: directive
+    name: deltawind
+    description: Simultaneity directive for the Deltawind pilot, based on ACC forecasts. Low simultaneity encourages consumption.
+    source:
+      type: directive
+      # simultaneity is total consumption as a percentage of total production; 80-120% is neutral.
+      # The outer boundaries are placeholders until the pilot partners settle the policy.
+      boundaries: [60, 80, 120, 140]
+      reverse: true
+      source:
+        # follows ACC's concurrency matching for a tree of clusters, of type pool, producer_priority,
+        # capacity_priority or producer_share, each with the member settings of its type
+        type: acc_simultaneity
+        cluster:
+          type: pool
+          members:
+            # further members reuse the credentials with `credentials: *acc_credentials`
+            - source:
+                type: cached
+                max_age: PT15M
+                source:
+                  type: acc_forecast
+                  ean: '${ACC_EAN_1}'
+                  credentials: &acc_credentials '${ACC_CREDENTIALS}'
+    formats:
+      - type: directive
