@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from cofy.modules.production import AccForecastSource
+from cofy.modules.production.sources.acc_forecast import ACC_TIMEOUT
 from cofy.modules.timeseries import TimeseriesSource
 
 MODULE = "cofy.modules.production.sources.acc_forecast"
@@ -76,6 +77,7 @@ async def test_fetches_all_pages(id_token):
     assert first.args == (f"{BASE_URL}/v1/connections/541234567890123456/forecasts",)
     assert first.kwargs["params"] == {"from_dt": START.isoformat(), "to_dt": END.isoformat()}
     assert first.kwargs["headers"] == {"Authorization": "Bearer test-token"}
+    assert first.kwargs["timeout"] == second.kwargs["timeout"] == ACC_TIMEOUT
     assert second.args == (f"{BASE_URL}{FIRST_PAGE['next']}",)
     # the token is refreshed once and reused while valid
     id_token.from_service_account_info.return_value.refresh.assert_called_once()

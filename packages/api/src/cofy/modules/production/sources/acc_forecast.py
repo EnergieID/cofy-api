@@ -16,6 +16,8 @@ from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, T
 
 ACC_BASE_URL = "https://connection-usage-service-prd-730943142752.europe-west1.run.app"
 ACC_TARGET_AUDIENCE = "connection-usage"
+# seconds; without one a hanging ACC blocks the request, and the cache lock held for it, indefinitely
+ACC_TIMEOUT = 30
 
 
 class AccForecastSettings(TimeseriesSourceSettings):
@@ -63,7 +65,12 @@ class AccForecastSource(TimeseriesSource, settings=AccForecastSettings):
         if not self.credentials.valid:
             self.credentials.refresh(Request())
 
-        response = requests.get(url, params=params, headers={"Authorization": f"Bearer {self.credentials.token}"})
+        response = requests.get(
+            url,
+            params=params,
+            headers={"Authorization": f"Bearer {self.credentials.token}"},
+            timeout=ACC_TIMEOUT,
+        )
         if response.status_code != 200:
             raise ValueError(f"Failed to fetch forecasts from ACC: {response.status_code} - {response.text}")
         return AccForecastPage.model_validate(response.json())
