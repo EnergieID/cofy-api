@@ -13,7 +13,7 @@ class MemberSourceSettings(BaseSettingsModel):
     type: Literal["member"] = "member"
 
 
-class MemberSource(FromSettingsMixin, ABC, Generic[T], settings=MemberSourceSettings):
+class MemberSource(FromSettingsMixin, ABC, Generic[T], settings=MemberSourceSettings, abstract=True):
     @abstractmethod
     def list(
         self,

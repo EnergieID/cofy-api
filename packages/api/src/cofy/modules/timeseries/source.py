@@ -11,7 +11,7 @@ class TimeseriesSourceSettings(BaseSettingsModel):
     type: Literal["timeseries"] = "timeseries"
 
 
-class TimeseriesSource(FromSettingsMixin, ABC, settings=TimeseriesSourceSettings):
+class TimeseriesSource(FromSettingsMixin, ABC, settings=TimeseriesSourceSettings, abstract=True):
     @abstractmethod
     async def fetch_timeseries(
         self,

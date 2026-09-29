@@ -13,7 +13,7 @@ class TimeseriesFormatSettings(BaseSettingsModel):
     type: Literal["timeseries"] = "timeseries"
 
 
-class TimeseriesFormat(FromSettingsMixin, ABC, settings=TimeseriesFormatSettings):
+class TimeseriesFormat(FromSettingsMixin, ABC, settings=TimeseriesFormatSettings, abstract=True):
     @abstractmethod
     def format(self, timeseries: Timeseries) -> object:
         """Format the timeseries data into a Response object."""

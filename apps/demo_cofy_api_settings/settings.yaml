@@ -92,15 +92,19 @@ modules:
       boundaries: [60, 80, 120, 140]
       reverse: true
       source:
-        type: simultaneity
-        sources:
-          # a member is consuming or producing depending on the sign of its forecast.
-          # further members reuse the credentials with `credentials: *acc_credentials`.
-          - type: cached
-            max_age: PT15M
-            source:
-              type: acc_forecast
-              ean: '${ACC_EAN_1}'
-              credentials: &acc_credentials '${ACC_CREDENTIALS}'
+        # follows ACC's concurrency matching for a tree of clusters, of type pool, producer_priority,
+        # capacity_priority or producer_share, each with the member settings of its type
+        type: acc_simultaneity
+        cluster:
+          type: pool
+          members:
+            # further members reuse the credentials with `credentials: *acc_credentials`
+            - source:
+                type: cached
+                max_age: PT15M
+                source:
+                  type: acc_forecast
+                  ean: '${ACC_EAN_1}'
+                  credentials: &acc_credentials '${ACC_CREDENTIALS}'
     formats:
       - type: directive

@@ -1,47 +1,13 @@
 import datetime as dt
 import math
 
-import polars as pl
 import pytest
 
 from cofy.modules.simultaneity import SimultaneitySource
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
+from cofy.modules.timeseries import TimeseriesSource
 
 from ...timeseries.dummy_source import DummyTimeseriesSource
-
-START = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
-QUARTER = dt.timedelta(minutes=15)
-
-
-class FixedSource(TimeseriesSource):
-    """Returns the given values at consecutive quarter-hours from START."""
-
-    def __init__(
-        self,
-        values: list[float],
-        *,
-        metadata: dict | None = None,
-        resolutions: list[str] | None = None,
-        max_age: dt.timedelta | None = None,
-    ):
-        self.values = values
-        self.metadata = metadata or {}
-        self.resolutions = resolutions or []
-        self._max_age = max_age
-
-    async def fetch_timeseries(
-        self, start: dt.datetime, end: dt.datetime, resolution: ISODuration, **kwargs
-    ) -> Timeseries:
-        data = {"timestamp": [START + i * QUARTER for i in range(len(self.values))], "value": self.values}
-        return Timeseries(frame=pl.DataFrame(data), metadata=dict(self.metadata))
-
-    @property
-    def supported_resolutions(self) -> list[str]:
-        return self.resolutions
-
-    @property
-    def max_age(self) -> dt.timedelta | None:
-        return self._max_age
+from ..fixed_source import QUARTER, START, FixedSource
 
 
 async def fetch_values(*sources: TimeseriesSource) -> list[float]:
