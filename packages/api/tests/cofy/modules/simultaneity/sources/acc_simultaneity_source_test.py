@@ -31,12 +31,7 @@ async def fetch_values(cluster: AccCluster) -> list[float]:
 
 
 def pool(*members: TimeseriesSource | AccCluster) -> AccPoolCluster:
-    return AccPoolCluster(
-        [
-            AccPoolMember(cluster=member) if isinstance(member, AccCluster) else AccPoolMember(source=member)
-            for member in members
-        ]
-    )
+    return AccPoolCluster([AccPoolMember(source=member) for member in members])
 
 
 @pytest.mark.asyncio
@@ -131,7 +126,7 @@ async def test_nested_cluster_takes_part_according_to_its_role():
     nested = pool(FixedSource([10.0]), FixedSource([-4.0]))
     cluster = AccProducerPriorityCluster(
         [
-            AccPriorityMember(cluster=nested, role="producer"),
+            AccPriorityMember(source=nested, role="producer"),
             AccPriorityMember(source=FixedSource([3.0]), role="consumer"),
             AccPriorityMember(source=FixedSource([-5.0]), role="producer"),
         ]
@@ -191,13 +186,6 @@ def test_resolutions_and_max_age_combine_all_nested_sources():
     assert source.max_age == minute
 
 
-def test_member_is_either_a_source_or_a_cluster():
-    with pytest.raises(ValueError):
-        AccPoolMember()
-    with pytest.raises(ValueError):
-        AccPoolMember(source=FixedSource([]), cluster=pool(FixedSource([])))
-
-
 def test_create_from_settings():
     source = TimeseriesSource.create(
         {
@@ -207,7 +195,7 @@ def test_create_from_settings():
                 "members": [
                     {"source": {"type": "dummy_timeseries_source"}},
                     {
-                        "cluster": {
+                        "source": {
                             "type": "producer_share",
                             "members": [
                                 {"source": {"type": "dummy_timeseries_source"}, "role": "producer", "share_ratio": 0.5}
@@ -221,7 +209,7 @@ def test_create_from_settings():
 
     assert isinstance(source, AccSimultaneitySource)
     assert isinstance(source.cluster, AccPoolCluster)
-    nested = source.cluster.members[1].cluster
+    nested = source.cluster.members[1].source
     assert isinstance(nested, AccProducerShareCluster)
     assert isinstance(nested.members[0], AccShareMember)
     assert (nested.members[0].role, nested.members[0].share_ratio) == ("producer", 0.5)
@@ -233,19 +221,10 @@ def test_create_from_settings():
     [
         {"type": "pool", "members": []},
         {"type": "pool", "members": [{}]},
-        {
-            "type": "pool",
-            "members": [
-                {
-                    "source": {"type": "dummy_timeseries_source"},
-                    "cluster": {"type": "pool", "members": [{"source": {"type": "dummy_timeseries_source"}}]},
-                }
-            ],
-        },
         # ACC doesn't support nesting in a producer share cluster
         {
             "type": "producer_share",
-            "members": [{"cluster": {"type": "pool", "members": [{"source": {"type": "dummy_timeseries_source"}}]}}],
+            "members": [{"source": {"type": "pool", "members": [{"source": {"type": "dummy_timeseries_source"}}]}}],
         },
         {"type": "producer_share", "members": [{"source": {"type": "dummy_timeseries_source"}, "share_ratio": 1.5}]},
         {

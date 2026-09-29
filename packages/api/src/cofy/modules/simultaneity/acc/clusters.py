@@ -55,9 +55,9 @@ class AccCluster(FromSettingsMixin, Generic[M], settings=AccClusterSettings, abs
         """The sources of all connections in the cluster and its nested clusters."""
         sources = []
         for member in self.members:
-            if member.cluster is not None:
-                sources.extend(member.cluster.sources())
-            elif member.source is not None:
+            if isinstance(member.source, AccCluster):
+                sources.extend(member.source.sources())
+            else:
                 sources.append(member.source)
         return sources
 
@@ -65,11 +65,11 @@ class AccCluster(FromSettingsMixin, Generic[M], settings=AccClusterSettings, abs
         """The cluster's volumes, given the net volume expression of each connection's source."""
         consumption, production, residual, nested_matched = [], [], [], []
         for member in self.members:
-            if member.cluster is not None:
-                nested = member.cluster.volumes(volume_of)
+            if isinstance(member.source, AccCluster):
+                nested = member.source.volumes(volume_of)
                 volume = nested.residual
                 nested_matched.append(nested.matched_in_tree)
-            elif member.source is not None:
+            else:
                 volume = volume_of(member.source)
             consumption.append(member.consumption(volume))
             production.append(member.production(volume))

@@ -1,7 +1,7 @@
-from typing import TYPE_CHECKING, Literal, Self
+from typing import TYPE_CHECKING, Annotated, Literal
 
 import narwhals as nw
-from pydantic import Field, NonNegativeFloat, model_validator
+from pydantic import Field, NonNegativeFloat
 
 from cofy.api import BaseSettingsModel, FromSettingsMixin
 from cofy.modules.timeseries import TimeseriesSource, TimeseriesSourceSettings
@@ -17,24 +17,17 @@ Role = Literal["consumer", "producer", "prosumer"]
 
 
 class AccMemberSettings(BaseSettingsModel):
-    # Unresolved until cofy.api.finalize() publishes the discriminated unions.
-    source: "AnyTimeseriesSourceSettings | None" = None
-    cluster: "AnyAccClusterSettings | None" = None
-
-    @model_validator(mode="after")
-    def _source_or_cluster(self) -> Self:
-        if (self.source is None) == (self.cluster is None):
-            raise ValueError("A member is either a source or a cluster")
-        return self
+    source: 'Annotated[AnyTimeseriesSourceSettings | AnyAccClusterSettings, Field(discriminator="type")]'
 
 
 class AccMember(FromSettingsMixin):
-    def __init__(self, source: TimeseriesSource | None = None, cluster: "AccCluster | None" = None):
-        """A member of an ACC cluster: a connection given by a source of its net volumes, or a nested cluster."""
-        if (source is None) == (cluster is None):
-            raise ValueError("A member is either a source or a cluster")
+    def __init__(self, source: "TimeseriesSource | AccCluster"):
+        """A member of an ACC cluster.
+
+        Args:
+            source: Where the member's net volume comes from: a connection's source, or a nested cluster.
+        """
         self.source = source
-        self.cluster = cluster
 
     def participating(self, volume: nw.Expr) -> nw.Expr:
         """The part of the net volume that takes part in the cluster's matching."""
