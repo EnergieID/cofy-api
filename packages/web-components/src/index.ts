@@ -1,9 +1,12 @@
 export {
   allowedModulesStoreContext,
+  allowedResourcesStoreContext,
+  communitySlugContext,
   communityStoreContext,
   fieldRegistryContext,
   i18nContext,
   moduleStoreContext,
+  resourceStoreContext,
   themeStateContext,
 } from "./context.js";
 export { CofyElement } from "./cofy-element.js";
@@ -39,6 +42,12 @@ export { CofyModuleEditor } from "./components/module/cofy-module-editor.js";
 export { CofyModuleForm } from "./components/module/cofy-module-form.js";
 export { CofyModuleList } from "./components/module/cofy-module-list.js";
 export { CofyProblemDetails } from "./components/cofy-problem-details.js";
+export { CofyReferableForm } from "./components/form/cofy-referable-form.js";
+export { CofyActionMenu, type MenuAction } from "./components/form/cofy-action-menu.js";
+export { CofySaveResourceDialog } from "./components/resource/cofy-save-resource-dialog.js";
+export { CofyResourceCreate } from "./components/resource/cofy-resource-create.js";
+export { CofyResourceEditor } from "./components/resource/cofy-resource-editor.js";
+export { CofyResourceList } from "./components/resource/cofy-resource-list.js";
 export { CofySettingsPanel } from "./components/settings/cofy-settings-panel.js";
 export { CofyThemePicker } from "./components/settings/cofy-theme-picker.js";
 export { cofyEditorTheme } from "./components/editor/yaml-highlight.js";

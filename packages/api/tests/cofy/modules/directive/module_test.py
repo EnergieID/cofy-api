@@ -6,16 +6,16 @@ from fastapi.testclient import TestClient
 from cofy.api.module import Module
 from cofy.modules.directive import DirectiveFormat, DirectiveModule, DirectiveSource
 
-from ..timeseries.dummy_source import DummyTimeseriesSource
+from ..timeseries.dummy_source import DummyNumericSource
 
 
 def test_directivemodule_type_property():
-    module = DirectiveModule(source=DirectiveSource(DummyTimeseriesSource(), boundaries=(5, 15, 25, 35)))
+    module = DirectiveModule(source=DirectiveSource(DummyNumericSource(), boundaries=(5, 15, 25, 35)))
     assert module.type == "directive"
 
 
 def test_formats_default():
-    module = DirectiveModule(source=DirectiveSource(DummyTimeseriesSource(), boundaries=(5, 15, 25, 35)))
+    module = DirectiveModule(source=DirectiveSource(DummyNumericSource(), boundaries=(5, 15, 25, 35)))
     assert len(module.formats) == 1
     assert isinstance(module.formats[0], DirectiveFormat)
 
@@ -24,7 +24,7 @@ def test_api_endpoint_returns_directives():
     start = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
     end = dt.datetime(2026, 1, 1, 3, 0, tzinfo=dt.UTC)
     module = DirectiveModule(
-        source=DirectiveSource(DummyTimeseriesSource(), boundaries=(5, 15, 25, 35)),
+        source=DirectiveSource(DummyNumericSource(), boundaries=(5, 15, 25, 35)),
     )
 
     app = FastAPI()
@@ -52,7 +52,7 @@ def test_can_create_from_settings():
             "type": "directive",
             "source": {
                 "type": "directive",
-                "source": {"type": "dummy_timeseries_source"},
+                "source": {"type": "dummy_numeric_source"},
                 "boundaries": [5, 15, 25, 35],
             },
         }

@@ -7,7 +7,7 @@ import type { RouteTable } from "../../src/router.js";
 
 const routes = {
   communities: { path: "/", render: (): TemplateResult => html`<p>root</p>` },
-  modules: { path: "/c/:slug", render: ({ slug }): TemplateResult => html`<p>modules ${slug}</p>` },
+  modules: { path: "/communities/:slug", render: ({ slug }): TemplateResult => html`<p>modules ${slug}</p>` },
 } satisfies RouteTable;
 
 describe("RouteState", () => {
@@ -24,9 +24,9 @@ describe("RouteState", () => {
   });
 
   it("starts from the address bar", () => {
-    window.location.hash = "#/c/foo";
+    window.location.hash = "#/communities/foo";
 
-    expect(new RouteState(routes).path).toBe("/c/foo");
+    expect(new RouteState(routes).path).toBe("/communities/foo");
   });
 
   it("defaults to the root path", () => {
@@ -36,28 +36,28 @@ describe("RouteState", () => {
   it("writes the hash when navigating, so the address bar and back button agree", () => {
     state.navigate("modules", { slug: "foo" });
 
-    expect(window.location.hash).toBe("#/c/foo");
-    expect(state.path).toBe("/c/foo");
+    expect(window.location.hash).toBe("#/communities/foo");
+    expect(state.path).toBe("/communities/foo");
   });
 
   it("updates state even when the hash is already what it would set", () => {
     // `hashchange` does not fire for a no-op assignment, so the state cannot wait for it
-    window.location.hash = "#/c/foo";
+    window.location.hash = "#/communities/foo";
     state.navigate("modules", { slug: "foo" });
 
-    expect(state.path).toBe("/c/foo");
+    expect(state.path).toBe("/communities/foo");
   });
 
   it("follows the address bar changing underneath it", async () => {
-    window.location.hash = "#/c/bar";
+    window.location.hash = "#/communities/bar";
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(state.path).toBe("/c/bar");
+    expect(state.path).toBe("/communities/bar");
   });
 
   it("stops following once stopped", async () => {
     state.stop();
-    window.location.hash = "#/c/bar";
+    window.location.hash = "#/communities/bar";
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(state.path).toBe("/");
@@ -73,7 +73,7 @@ describe("RouteState", () => {
   });
 
   it("builds a hash for a named route, so a link never spells out a path", () => {
-    expect(state.hashFor("modules", { slug: "foo" })).toBe("#/c/foo");
+    expect(state.hashFor("modules", { slug: "foo" })).toBe("#/communities/foo");
   });
 
   it("renders the matching route with its parameters", () => {

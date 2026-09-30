@@ -6,16 +6,25 @@ import "@awesome.me/webawesome/dist/styles/webawesome.css";
 import "@awesome.me/webawesome/dist/components/page/page.js";
 
 import { provide } from "@lit/context";
-import { AllowedModulesStore, ApiClient, CommunityStore, ModuleStore } from "@cofy/frontend-sdk";
+import {
+  AllowedModulesStore,
+  AllowedResourcesStore,
+  ApiClient,
+  CommunityStore,
+  ModuleStore,
+  ResourceStore,
+} from "@cofy/frontend-sdk";
 import { StateController } from "@dodona/lit-state";
 import {
   ThemeState,
   allowedModulesStoreContext,
+  allowedResourcesStoreContext,
   communityStoreContext,
   createI18n,
   i18nContext,
   moduleStoreContext,
   nativeStyles,
+  resourceStoreContext,
   themeStateContext,
   utilityStyles,
   yamlBackend,
@@ -114,6 +123,12 @@ export class CofyApp extends LitElement {
 
   @provide({ context: allowedModulesStoreContext })
   public allowedModules = new AllowedModulesStore(this.api);
+
+  @provide({ context: resourceStoreContext })
+  public resources = new ResourceStore(this.api);
+
+  @provide({ context: allowedResourcesStoreContext })
+  public allowedResources = new AllowedResourcesStore(this.api);
 
   @provide({ context: routeStateContext })
   public routeState = new RouteState(routes);

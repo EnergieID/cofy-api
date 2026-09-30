@@ -24,6 +24,21 @@ moduleList:
     type: Type
     actions: Acties
 
+resourceList:
+  title: Bronnen
+  description: Waarden die één keer worden ingesteld, en bij naam worden gebruikt door modules en andere bronnen.
+  add: Bron toevoegen
+  delete: Verwijderen
+  deleting: Verwijderen…
+  empty: Er zijn geen bronnen geconfigureerd voor deze gemeenschap.
+  deleteConfirm: "{{name}} verwijderen? De waarde kan niet worden hersteld."
+  inUse: "{{name}} wordt nog gebruikt door {{users}}. Verwijder die verwijzingen eerst."
+  columns:
+    resource: Bron
+    kind: Soort
+    description: Beschrijving
+    actions: Acties
+
 settings:
   open: Instellingen
   theme:

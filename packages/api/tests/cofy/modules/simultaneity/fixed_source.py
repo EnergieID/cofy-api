@@ -2,13 +2,14 @@ import datetime as dt
 
 import polars as pl
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
+from cofy.modules.simultaneity import NetVolumeSource
+from cofy.modules.timeseries import ISODuration, Timeseries
 
 START = dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC)
 QUARTER = dt.timedelta(minutes=15)
 
 
-class FixedSource(TimeseriesSource):
+class FixedSource(NetVolumeSource):
     """Returns the given values at consecutive quarter-hours from START."""
 
     def __init__(
@@ -19,12 +20,13 @@ class FixedSource(TimeseriesSource):
         resolutions: list[str] | None = None,
         max_age: dt.timedelta | None = None,
     ):
+        super().__init__()
         self.values = values
         self.metadata = metadata or {}
         self.resolutions = resolutions or []
         self._max_age = max_age
 
-    async def fetch_timeseries(
+    async def _fetch_timeseries(
         self, start: dt.datetime, end: dt.datetime, resolution: ISODuration, **kwargs
     ) -> Timeseries:
         data = {"timestamp": [START + i * QUARTER for i in range(len(self.values))], "value": self.values}

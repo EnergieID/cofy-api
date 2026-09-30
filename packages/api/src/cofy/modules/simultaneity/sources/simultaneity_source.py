@@ -4,19 +4,20 @@ from typing import TYPE_CHECKING, Literal
 import narwhals as nw
 from pydantic import Field
 
-from cofy.modules.timeseries import Timeseries, TimeseriesSourceSettings
+from cofy.modules.timeseries import Timeseries
 
+from ..source import NetVolumeSourceSettings, RatioSourceSettings
 from .base_simultaneity_source import BaseSimultaneitySource
 
 if TYPE_CHECKING:
     # Published at runtime by finalize(); the base class is the static stand-in.
-    AnyTimeseriesSourceSettings = TimeseriesSourceSettings
+    AnyNetVolumeSourceSettings = NetVolumeSourceSettings
 
 
-class SimultaneitySourceSettings(TimeseriesSourceSettings):
+class SimultaneitySourceSettings(RatioSourceSettings):
     type: Literal["simultaneity"] = "simultaneity"
     # Unresolved until cofy.api.finalize() publishes the discriminated unions.
-    sources: "list[AnyTimeseriesSourceSettings]" = Field(min_length=1)
+    sources: "list[AnyNetVolumeSourceSettings]" = Field(min_length=1)
 
 
 class SimultaneitySource(BaseSimultaneitySource, settings=SimultaneitySourceSettings):

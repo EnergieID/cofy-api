@@ -42,3 +42,11 @@ class TimeseriesFormat(FromSettingsMixin, ABC, settings=TimeseriesFormatSettings
     def response_class(self) -> type[Response]:
         """Return the response class for this format."""
         return JSONResponse
+
+
+class GenericTimeseriesFormatSettings(TimeseriesFormatSettings):
+    type: Literal["generic_timeseries_format"] = "generic_timeseries_format"
+
+
+class GenericTimeseriesFormat(TimeseriesFormat, ABC, settings=GenericTimeseriesFormatSettings, abstract=True):
+    """A format that fits any timeseries."""

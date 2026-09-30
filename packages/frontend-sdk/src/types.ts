@@ -32,3 +32,38 @@ export interface ModuleId {
 export function moduleKey(id: ModuleId): string {
   return `${id.type}:${id.name}`;
 }
+
+/** One resource kind a community may configure, with the JSON Schema for its settings. */
+export type AllowedResource = components["schemas"]["AllowedResource"];
+
+/** What references a resource, and so keeps it from being deleted. */
+export type ResourceUsages = components["schemas"]["ResourceUsages"];
+
+/**
+ * A resource's settings as stored: a named value that modules and other resources reference.
+ *
+ * Opaque beyond its identity and kind, for the same reason as {@link ModuleSettings}: what a
+ * resource holds depends on its kind, which {@link AllowedResource} describes.
+ */
+export interface ResourceSettings {
+  type: string;
+  name: string;
+  description?: string | null;
+  value?: unknown;
+  [field: string]: unknown;
+}
+
+/** A reference to a resource, in place of a value. */
+export interface ResourceRef {
+  type: "ref";
+  name: string;
+}
+
+/**
+ * What a field accepts a reference to, from its schema's `x-referable`: resources of `kind`,
+ * holding a value of one of `types` if given.
+ */
+export interface Referable {
+  kind: string;
+  types?: readonly string[];
+}

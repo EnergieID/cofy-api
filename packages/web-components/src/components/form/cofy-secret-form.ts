@@ -17,7 +17,7 @@ export class CofySecretForm extends CofyFormField {
         <wa-input
           type="password"
           password-toggle
-          label=${this.label}
+          label=${this.bare ? "" : this.label}
           hint=${ifDefined(this.description || undefined)}
           .value=${typeof this.value === "string" ? this.value : ""}
           ?required=${this.required}

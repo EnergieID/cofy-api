@@ -98,10 +98,371 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/management/communities/{slug}/resources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All */
+        get: operations["all_management_communities__slug__resources_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_management_communities__slug__resources_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/management/communities/{slug}/resources/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["get_management_communities__slug__resources__name__get"];
+        /** Put */
+        put: operations["put_management_communities__slug__resources__name__put"];
+        post?: never;
+        /** Delete */
+        delete: operations["delete_management_communities__slug__resources__name__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/management/communities/{slug}/resources/{name}/usages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Usages
+         * @description What references this resource, and so keeps it from being deleted.
+         */
+        get: operations["usages_management_communities__slug__resources__name__usages_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/management/communities/{slug}/allowed-resources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * All
+         * @description List the resource kinds this community may configure.
+         */
+        get: operations["all_management_communities__slug__allowed_resources_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccCapacityMemberSettings */
+        "AccCapacityMemberSettings-Input": {
+            /** Source */
+            source: (components["schemas"]["AccForecastSettings-Input"] | components["schemas"]["RefSettings"]) | (components["schemas"]["AccPoolClusterSettings-Input"] | components["schemas"]["AccProducerPriorityClusterSettings-Input"] | components["schemas"]["AccCapacityPriorityClusterSettings-Input"] | components["schemas"]["AccProducerShareClusterSettings-Input"]);
+            /**
+             * Type
+             * @default acc_capacity_member
+             * @constant
+             */
+            type?: "acc_capacity_member";
+            /**
+             * Role
+             * @default prosumer
+             * @enum {string}
+             */
+            role?: "consumer" | "producer" | "prosumer";
+            /** Consumption Capacity Kwh */
+            consumption_capacity_kwh?: number | null;
+            /** Production Capacity Kwh */
+            production_capacity_kwh?: number | null;
+        };
+        /** AccCapacityMemberSettings */
+        "AccCapacityMemberSettings-Output": {
+            /** Source */
+            source: (components["schemas"]["AccForecastSettings-Output"] | components["schemas"]["RefSettings"]) | (components["schemas"]["AccPoolClusterSettings-Output"] | components["schemas"]["AccProducerPriorityClusterSettings-Output"] | components["schemas"]["AccCapacityPriorityClusterSettings-Output"] | components["schemas"]["AccProducerShareClusterSettings-Output"]);
+            /**
+             * Type
+             * @default acc_capacity_member
+             * @constant
+             */
+            type?: "acc_capacity_member";
+            /**
+             * Role
+             * @default prosumer
+             * @enum {string}
+             */
+            role?: "consumer" | "producer" | "prosumer";
+            /** Consumption Capacity Kwh */
+            consumption_capacity_kwh?: number | null;
+            /** Production Capacity Kwh */
+            production_capacity_kwh?: number | null;
+        };
+        /** AccCapacityPriorityClusterSettings */
+        "AccCapacityPriorityClusterSettings-Input": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "capacity_priority";
+            /** Members */
+            members: components["schemas"]["AccCapacityMemberSettings-Input"][];
+        };
+        /** AccCapacityPriorityClusterSettings */
+        "AccCapacityPriorityClusterSettings-Output": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "capacity_priority";
+            /** Members */
+            members: components["schemas"]["AccCapacityMemberSettings-Output"][];
+        };
+        /** AccForecastSettings */
+        "AccForecastSettings-Input": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "acc_forecast";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Input"] | null;
+            /** Ean */
+            ean: string;
+            /** Credentials */
+            credentials: string | components["schemas"]["RefSettings"];
+            /**
+             * Base Url
+             * @default https://connection-usage-service-prd-730943142752.europe-west1.run.app
+             */
+            base_url?: string;
+        };
+        /** AccForecastSettings */
+        "AccForecastSettings-Output": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "acc_forecast";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Output"] | null;
+            /** Ean */
+            ean: string;
+            /** Credentials */
+            credentials: string | components["schemas"]["RefSettings"];
+            /**
+             * Base Url
+             * @default https://connection-usage-service-prd-730943142752.europe-west1.run.app
+             */
+            base_url?: string;
+        };
+        /** AccPoolClusterSettings */
+        "AccPoolClusterSettings-Input": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "pool";
+            /** Members */
+            members: components["schemas"]["AccPoolMemberSettings-Input"][];
+        };
+        /** AccPoolClusterSettings */
+        "AccPoolClusterSettings-Output": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "pool";
+            /** Members */
+            members: components["schemas"]["AccPoolMemberSettings-Output"][];
+        };
+        /** AccPoolMemberSettings */
+        "AccPoolMemberSettings-Input": {
+            /** Source */
+            source: (components["schemas"]["AccForecastSettings-Input"] | components["schemas"]["RefSettings"]) | (components["schemas"]["AccPoolClusterSettings-Input"] | components["schemas"]["AccProducerPriorityClusterSettings-Input"] | components["schemas"]["AccCapacityPriorityClusterSettings-Input"] | components["schemas"]["AccProducerShareClusterSettings-Input"]);
+            /**
+             * Type
+             * @default acc_pool_member
+             * @constant
+             */
+            type?: "acc_pool_member";
+        };
+        /** AccPoolMemberSettings */
+        "AccPoolMemberSettings-Output": {
+            /** Source */
+            source: (components["schemas"]["AccForecastSettings-Output"] | components["schemas"]["RefSettings"]) | (components["schemas"]["AccPoolClusterSettings-Output"] | components["schemas"]["AccProducerPriorityClusterSettings-Output"] | components["schemas"]["AccCapacityPriorityClusterSettings-Output"] | components["schemas"]["AccProducerShareClusterSettings-Output"]);
+            /**
+             * Type
+             * @default acc_pool_member
+             * @constant
+             */
+            type?: "acc_pool_member";
+        };
+        /** AccPriorityMemberSettings */
+        "AccPriorityMemberSettings-Input": {
+            /** Source */
+            source: (components["schemas"]["AccForecastSettings-Input"] | components["schemas"]["RefSettings"]) | (components["schemas"]["AccPoolClusterSettings-Input"] | components["schemas"]["AccProducerPriorityClusterSettings-Input"] | components["schemas"]["AccCapacityPriorityClusterSettings-Input"] | components["schemas"]["AccProducerShareClusterSettings-Input"]);
+            /**
+             * Type
+             * @default acc_priority_member
+             * @constant
+             */
+            type?: "acc_priority_member";
+            /**
+             * Role
+             * @default prosumer
+             * @enum {string}
+             */
+            role?: "consumer" | "producer" | "prosumer";
+        };
+        /** AccPriorityMemberSettings */
+        "AccPriorityMemberSettings-Output": {
+            /** Source */
+            source: (components["schemas"]["AccForecastSettings-Output"] | components["schemas"]["RefSettings"]) | (components["schemas"]["AccPoolClusterSettings-Output"] | components["schemas"]["AccProducerPriorityClusterSettings-Output"] | components["schemas"]["AccCapacityPriorityClusterSettings-Output"] | components["schemas"]["AccProducerShareClusterSettings-Output"]);
+            /**
+             * Type
+             * @default acc_priority_member
+             * @constant
+             */
+            type?: "acc_priority_member";
+            /**
+             * Role
+             * @default prosumer
+             * @enum {string}
+             */
+            role?: "consumer" | "producer" | "prosumer";
+        };
+        /** AccProducerPriorityClusterSettings */
+        "AccProducerPriorityClusterSettings-Input": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "producer_priority";
+            /** Members */
+            members: components["schemas"]["AccPriorityMemberSettings-Input"][];
+        };
+        /** AccProducerPriorityClusterSettings */
+        "AccProducerPriorityClusterSettings-Output": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "producer_priority";
+            /** Members */
+            members: components["schemas"]["AccPriorityMemberSettings-Output"][];
+        };
+        /** AccProducerShareClusterSettings */
+        "AccProducerShareClusterSettings-Input": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "producer_share";
+            /** Members */
+            members: components["schemas"]["AccShareMemberSettings-Input"][];
+        };
+        /** AccProducerShareClusterSettings */
+        "AccProducerShareClusterSettings-Output": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "producer_share";
+            /** Members */
+            members: components["schemas"]["AccShareMemberSettings-Output"][];
+        };
+        /** AccShareMemberSettings */
+        "AccShareMemberSettings-Input": {
+            /**
+             * Type
+             * @default acc_share_member
+             * @constant
+             */
+            type?: "acc_share_member";
+            /** Source */
+            source: components["schemas"]["AccForecastSettings-Input"] | components["schemas"]["RefSettings"];
+            /**
+             * Role
+             * @default prosumer
+             * @enum {string}
+             */
+            role?: "consumer" | "producer" | "prosumer";
+            /**
+             * Share Ratio
+             * @default 1
+             */
+            share_ratio?: number;
+        };
+        /** AccShareMemberSettings */
+        "AccShareMemberSettings-Output": {
+            /**
+             * Type
+             * @default acc_share_member
+             * @constant
+             */
+            type?: "acc_share_member";
+            /** Source */
+            source: components["schemas"]["AccForecastSettings-Output"] | components["schemas"]["RefSettings"];
+            /**
+             * Role
+             * @default prosumer
+             * @enum {string}
+             */
+            role?: "consumer" | "producer" | "prosumer";
+            /**
+             * Share Ratio
+             * @default 1
+             */
+            share_ratio?: number;
+        };
+        /** AccSimultaneitySourceSettings */
+        "AccSimultaneitySourceSettings-Input": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "acc_simultaneity";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Input"] | null;
+            /** Cluster */
+            cluster: components["schemas"]["AccPoolClusterSettings-Input"] | components["schemas"]["AccProducerPriorityClusterSettings-Input"] | components["schemas"]["AccCapacityPriorityClusterSettings-Input"] | components["schemas"]["AccProducerShareClusterSettings-Input"];
+        };
+        /** AccSimultaneitySourceSettings */
+        "AccSimultaneitySourceSettings-Output": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "acc_simultaneity";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Output"] | null;
+            /** Cluster */
+            cluster: components["schemas"]["AccPoolClusterSettings-Output"] | components["schemas"]["AccProducerPriorityClusterSettings-Output"] | components["schemas"]["AccCapacityPriorityClusterSettings-Output"] | components["schemas"]["AccProducerShareClusterSettings-Output"];
+        };
         /**
          * AllowedModule
          * @description One module type a community may configure.
@@ -120,6 +481,29 @@ export interface components {
             /**
              * Schema
              * @description Self-contained JSON Schema for a full module settings payload of this type.
+             */
+            schema: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * AllowedResource
+         * @description One resource kind a community may configure.
+         */
+        AllowedResource: {
+            /**
+             * Type
+             * @description Machine name, and the discriminator value in a resource payload.
+             */
+            type: string;
+            /**
+             * Description
+             * @description What a resource of this kind holds.
+             */
+            description: string;
+            /**
+             * Schema
+             * @description Self-contained JSON Schema for a full resource payload of this kind.
              */
             schema: {
                 [key: string]: unknown;
@@ -149,6 +533,26 @@ export interface components {
              */
             description?: string | null;
         };
+        /** BoundarySourceSettings */
+        "BoundarySourceSettings-Input": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "boundary_source";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Input"] | null;
+        };
+        /** BoundarySourceSettings */
+        "BoundarySourceSettings-Output": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "boundary_source";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Output"] | null;
+        };
         /** CSVFormatSettings */
         CSVFormatSettings: {
             /**
@@ -156,6 +560,57 @@ export interface components {
              * @enum {string}
              */
             type: "csv";
+        };
+        /**
+         * CacheSettings
+         * @description How a source caches what it fetches.
+         */
+        "CacheSettings-Input": {
+            /**
+             * Max Age
+             * @description How long fetched data stays valid. Defaults to how long the source says its data does.
+             */
+            max_age?: string | null;
+            /**
+             * Chunk Size
+             * Format: duration
+             * @description The size of the chunks of time that are fetched and cached as a whole.
+             * @default P1D
+             * @example PT15M
+             * @example P1D
+             */
+            chunk_size?: string;
+            /**
+             * Max Chunks
+             * @description The most chunks kept in memory, the least recently used evicted first.
+             * @default 1024
+             */
+            max_chunks?: number;
+        };
+        /**
+         * CacheSettings
+         * @description How a source caches what it fetches.
+         */
+        "CacheSettings-Output": {
+            /**
+             * Max Age
+             * @description How long fetched data stays valid. Defaults to how long the source says its data does.
+             */
+            max_age?: string | null;
+            /**
+             * Chunk Size
+             * @description The size of the chunks of time that are fetched and cached as a whole.
+             * @default P1D
+             * @example PT15M
+             * @example P1D
+             */
+            chunk_size?: string;
+            /**
+             * Max Chunks
+             * @description The most chunks kept in memory, the least recently used evicted first.
+             * @default 1024
+             */
+            max_chunks?: number;
         };
         /**
          * CommunityBody
@@ -280,9 +735,9 @@ export interface components {
              */
             description?: string | null;
             /** Source */
-            source: components["schemas"]["DirectiveSourceSettings-Input"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Input"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            source: (components["schemas"]["DirectiveSourceSettings-Input"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Input"]) | components["schemas"]["RefSettings"];
             /** Formats */
-            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["DirectiveFormatSettings"] | components["schemas"]["KiwattFormatSettings"])[] | null;
+            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["DirectiveFormatSettings"])[] | null;
         };
         /** DirectiveModuleSettings */
         "DirectiveModuleSettings-Output": {
@@ -308,9 +763,9 @@ export interface components {
              */
             description?: string | null;
             /** Source */
-            source: components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            source: (components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"]) | components["schemas"]["RefSettings"];
             /** Formats */
-            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["DirectiveFormatSettings"] | components["schemas"]["KiwattFormatSettings"])[] | null;
+            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["DirectiveFormatSettings"])[] | null;
         };
         /** DirectiveSourceSettings */
         "DirectiveSourceSettings-Input": {
@@ -319,8 +774,10 @@ export interface components {
              * @enum {string}
              */
             type: "directive";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Input"] | null;
             /** Source */
-            source: components["schemas"]["DirectiveSourceSettings-Input"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Input"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            source: (components["schemas"]["AccSimultaneitySourceSettings-Input"] | components["schemas"]["SimultaneitySourceSettings-Input"] | components["schemas"]["AccForecastSettings-Input"] | components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EnergyIDProductionSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Input"]) | components["schemas"]["RefSettings"];
             /** Boundaries */
             boundaries: [
                 number,
@@ -341,8 +798,10 @@ export interface components {
              * @enum {string}
              */
             type: "directive";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Output"] | null;
             /** Source */
-            source: components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            source: (components["schemas"]["AccSimultaneitySourceSettings-Output"] | components["schemas"]["SimultaneitySourceSettings-Output"] | components["schemas"]["AccForecastSettings-Output"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Output"]) | components["schemas"]["RefSettings"];
             /** Boundaries */
             boundaries: [
                 number,
@@ -363,10 +822,12 @@ export interface components {
              * @enum {string}
              */
             type: "dynamic_boundary_directive";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Input"] | null;
             /** Signal Source */
-            signal_source: components["schemas"]["DirectiveSourceSettings-Input"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Input"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            signal_source: (components["schemas"]["AccSimultaneitySourceSettings-Input"] | components["schemas"]["SimultaneitySourceSettings-Input"] | components["schemas"]["AccForecastSettings-Input"] | components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EnergyIDProductionSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Input"]) | components["schemas"]["RefSettings"];
             /** Boundary Source */
-            boundary_source: components["schemas"]["DirectiveSourceSettings-Input"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Input"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            boundary_source: components["schemas"]["BoundarySourceSettings-Input"] | components["schemas"]["RefSettings"];
             /**
              * Reverse
              * @default false
@@ -380,10 +841,12 @@ export interface components {
              * @enum {string}
              */
             type: "dynamic_boundary_directive";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Output"] | null;
             /** Signal Source */
-            signal_source: components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            signal_source: (components["schemas"]["AccSimultaneitySourceSettings-Output"] | components["schemas"]["SimultaneitySourceSettings-Output"] | components["schemas"]["AccForecastSettings-Output"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Output"]) | components["schemas"]["RefSettings"];
             /** Boundary Source */
-            boundary_source: components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            boundary_source: components["schemas"]["BoundarySourceSettings-Output"] | components["schemas"]["RefSettings"];
             /**
              * Reverse
              * @default false
@@ -397,8 +860,13 @@ export interface components {
              * @enum {string}
              */
             type: "energy_cost";
-            /** @description Energy cost tariff instance */
-            tariff: components["schemas"]["Tariff-Input"];
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Input"] | null;
+            /**
+             * Tariff
+             * @description Energy cost tariff instance
+             */
+            tariff: components["schemas"]["Tariff-Input"] | components["schemas"]["RefSettings"];
             cost_group?: components["schemas"]["CostGroup"] | null;
         };
         /** EnergyCostTariffSourceSettings */
@@ -408,37 +876,68 @@ export interface components {
              * @enum {string}
              */
             type: "energy_cost";
-            /** @description Energy cost tariff instance */
-            tariff: components["schemas"]["Tariff-Output"];
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Output"] | null;
+            /**
+             * Tariff
+             * @description Energy cost tariff instance
+             */
+            tariff: components["schemas"]["Tariff-Output"] | components["schemas"]["RefSettings"];
             cost_group?: components["schemas"]["CostGroup"] | null;
         };
         /** EnergyIDProductionSettings */
-        EnergyIDProductionSettings: {
+        "EnergyIDProductionSettings-Input": {
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
             type: "energyid_production";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Input"] | null;
+            /** Api Key */
+            api_key: string | components["schemas"]["RefSettings"];
+            /** Record Id */
+            record_id: string;
+        };
+        /** EnergyIDProductionSettings */
+        "EnergyIDProductionSettings-Output": {
             /**
-             * Api Key
-             * Format: password
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
              */
-            api_key: string;
+            type: "energyid_production";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Output"] | null;
+            /** Api Key */
+            api_key: string | components["schemas"]["RefSettings"];
             /** Record Id */
             record_id: string;
         };
         /** EntsoeDayAheadTariffSourceSettings */
-        EntsoeDayAheadTariffSourceSettings: {
+        "EntsoeDayAheadTariffSourceSettings-Input": {
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
             type: "entsoe_day_ahead";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Input"] | null;
+            /** Api Key */
+            api_key: string | components["schemas"]["RefSettings"];
+            /** Country Code */
+            country_code?: string | null;
+        };
+        /** EntsoeDayAheadTariffSourceSettings */
+        "EntsoeDayAheadTariffSourceSettings-Output": {
             /**
-             * Api Key
-             * Format: password
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
              */
-            api_key: string;
+            type: "entsoe_day_ahead";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Output"] | null;
+            /** Api Key */
+            api_key: string | components["schemas"]["RefSettings"];
             /** Country Code */
             country_code?: string | null;
         };
@@ -677,6 +1176,13 @@ export interface components {
             /** Minimum */
             minimum?: (components["schemas"]["IndexFormula"] | components["schemas"]["PeriodicFormula"] | components["schemas"]["ScheduledFormulas-Output"] | components["schemas"]["TieredFormula-Output"] | components["schemas"]["MinimumFormula-Output"] | components["schemas"]["MaximumFormula-Output"] | components["schemas"]["MeterTypeFormula-Output"])[];
         };
+        /** ModuleId */
+        ModuleId: {
+            /** Type */
+            type: string;
+            /** Name */
+            name: string;
+        };
         /** PeriodicFormula */
         PeriodicFormula: {
             /**
@@ -723,9 +1229,9 @@ export interface components {
              */
             description?: string | null;
             /** Source */
-            source: components["schemas"]["DirectiveSourceSettings-Input"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Input"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            source: components["schemas"]["EnergyIDProductionSettings-Input"] | components["schemas"]["RefSettings"];
             /** Formats */
-            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["DirectiveFormatSettings"] | components["schemas"]["KiwattFormatSettings"])[] | null;
+            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"])[] | null;
         };
         /** ProductionModuleSettings */
         "ProductionModuleSettings-Output": {
@@ -751,9 +1257,42 @@ export interface components {
              */
             description?: string | null;
             /** Source */
-            source: components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            source: components["schemas"]["EnergyIDProductionSettings-Output"] | components["schemas"]["RefSettings"];
             /** Formats */
-            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["DirectiveFormatSettings"] | components["schemas"]["KiwattFormatSettings"])[] | null;
+            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"])[] | null;
+        };
+        /**
+         * RefSettings
+         * @description A reference to a named resource.
+         */
+        RefSettings: {
+            /**
+             * Type
+             * @default ref
+             * @constant
+             */
+            type?: "ref";
+            /**
+             * Name
+             * @description The name of the referenced resource.
+             */
+            name: string;
+        };
+        /**
+         * ResourceUsages
+         * @description What references a resource.
+         */
+        ResourceUsages: {
+            /**
+             * Modules
+             * @description The modules referencing the resource.
+             */
+            modules: components["schemas"]["ModuleId"][];
+            /**
+             * Resources
+             * @description The names of the resources referencing the resource.
+             */
+            resources: string[];
         };
         /** ScheduledFormula */
         "ScheduledFormula-Input": {
@@ -811,6 +1350,149 @@ export interface components {
             /** Schedule */
             schedule?: components["schemas"]["ScheduledFormula-Output"][];
         };
+        /** SecretResourceSettings */
+        SecretResourceSettings: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "secret";
+            /**
+             * Name
+             * @description The machine name of the resource, by which it is referenced. No spaces, no special characters.
+             */
+            name: string;
+            /**
+             * Description
+             * @description A short description of the resource.
+             */
+            description?: string | null;
+            /**
+             * Value
+             * Format: password
+             */
+            value: string;
+        };
+        /** SimultaneityModuleSettings */
+        "SimultaneityModuleSettings-Input": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "simultaneity";
+            /**
+             * Name
+             * @description The machine name of the module instance. No spaces, no special characters. Use it to differentiate between multiple instances/implementations of the same module type.
+             * @default default
+             */
+            name?: string;
+            /**
+             * Display Name
+             * @description The human-readable name of the module instance. If not provided, the machine name will be used.
+             */
+            display_name?: string | null;
+            /**
+             * Description
+             * @description A short description of the module instance. If not provided, the module type description will be used.
+             */
+            description?: string | null;
+            /** Source */
+            source: (components["schemas"]["AccSimultaneitySourceSettings-Input"] | components["schemas"]["SimultaneitySourceSettings-Input"]) | components["schemas"]["RefSettings"];
+            /** Formats */
+            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"])[] | null;
+        };
+        /** SimultaneityModuleSettings */
+        "SimultaneityModuleSettings-Output": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "simultaneity";
+            /**
+             * Name
+             * @description The machine name of the module instance. No spaces, no special characters. Use it to differentiate between multiple instances/implementations of the same module type.
+             * @default default
+             */
+            name?: string;
+            /**
+             * Display Name
+             * @description The human-readable name of the module instance. If not provided, the machine name will be used.
+             */
+            display_name?: string | null;
+            /**
+             * Description
+             * @description A short description of the module instance. If not provided, the module type description will be used.
+             */
+            description?: string | null;
+            /** Source */
+            source: (components["schemas"]["AccSimultaneitySourceSettings-Output"] | components["schemas"]["SimultaneitySourceSettings-Output"]) | components["schemas"]["RefSettings"];
+            /** Formats */
+            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"])[] | null;
+        };
+        /** SimultaneitySourceSettings */
+        "SimultaneitySourceSettings-Input": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "simultaneity";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Input"] | null;
+            /** Sources */
+            sources: (components["schemas"]["AccForecastSettings-Input"] | components["schemas"]["RefSettings"])[];
+        };
+        /** SimultaneitySourceSettings */
+        "SimultaneitySourceSettings-Output": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "simultaneity";
+            /** @description Cache what this source fetches, if set. */
+            cache?: components["schemas"]["CacheSettings-Output"] | null;
+            /** Sources */
+            sources: (components["schemas"]["AccForecastSettings-Output"] | components["schemas"]["RefSettings"])[];
+        };
+        /** SourceResourceSettings */
+        "SourceResourceSettings-Input": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "source";
+            /**
+             * Name
+             * @description The machine name of the resource, by which it is referenced. No spaces, no special characters.
+             */
+            name: string;
+            /**
+             * Description
+             * @description A short description of the resource.
+             */
+            description?: string | null;
+            /** Value */
+            value: (components["schemas"]["DirectiveSourceSettings-Input"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Input"] | components["schemas"]["AccSimultaneitySourceSettings-Input"] | components["schemas"]["SimultaneitySourceSettings-Input"] | components["schemas"]["AccForecastSettings-Input"] | components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EnergyIDProductionSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Input"]) | components["schemas"]["RefSettings"];
+        };
+        /** SourceResourceSettings */
+        "SourceResourceSettings-Output": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "source";
+            /**
+             * Name
+             * @description The machine name of the resource, by which it is referenced. No spaces, no special characters.
+             */
+            name: string;
+            /**
+             * Description
+             * @description A short description of the resource.
+             */
+            description?: string | null;
+            /** Value */
+            value: (components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"] | components["schemas"]["AccSimultaneitySourceSettings-Output"] | components["schemas"]["SimultaneitySourceSettings-Output"] | components["schemas"]["AccForecastSettings-Output"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Output"]) | components["schemas"]["RefSettings"];
+        };
         /** Tariff */
         "Tariff-Input": components["schemas"]["TariffVersion-Input"][];
         /** Tariff */
@@ -839,9 +1521,9 @@ export interface components {
              */
             description?: string | null;
             /** Source */
-            source: components["schemas"]["DirectiveSourceSettings-Input"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Input"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            source: (components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Input"]) | components["schemas"]["RefSettings"];
             /** Formats */
-            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["DirectiveFormatSettings"] | components["schemas"]["KiwattFormatSettings"])[] | null;
+            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["KiwattFormatSettings"])[] | null;
         };
         /** TariffModuleSettings */
         "TariffModuleSettings-Output": {
@@ -867,9 +1549,49 @@ export interface components {
              */
             description?: string | null;
             /** Source */
-            source: components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            source: (components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Output"]) | components["schemas"]["RefSettings"];
             /** Formats */
-            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["DirectiveFormatSettings"] | components["schemas"]["KiwattFormatSettings"])[] | null;
+            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["KiwattFormatSettings"])[] | null;
+        };
+        /** TariffResourceSettings */
+        "TariffResourceSettings-Input": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "tariff";
+            /**
+             * Name
+             * @description The machine name of the resource, by which it is referenced. No spaces, no special characters.
+             */
+            name: string;
+            /**
+             * Description
+             * @description A short description of the resource.
+             */
+            description?: string | null;
+            /** @description Energy cost tariff instance */
+            value: components["schemas"]["Tariff-Input"];
+        };
+        /** TariffResourceSettings */
+        "TariffResourceSettings-Output": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "tariff";
+            /**
+             * Name
+             * @description The machine name of the resource, by which it is referenced. No spaces, no special characters.
+             */
+            name: string;
+            /**
+             * Description
+             * @description A short description of the resource.
+             */
+            description?: string | null;
+            /** @description Energy cost tariff instance */
+            value: components["schemas"]["Tariff-Output"];
         };
         /** TariffVersion */
         "TariffVersion-Input": {
@@ -1006,9 +1728,9 @@ export interface components {
              */
             description?: string | null;
             /** Source */
-            source: components["schemas"]["DirectiveSourceSettings-Input"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Input"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            source: (components["schemas"]["DirectiveSourceSettings-Input"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Input"] | components["schemas"]["AccSimultaneitySourceSettings-Input"] | components["schemas"]["SimultaneitySourceSettings-Input"] | components["schemas"]["AccForecastSettings-Input"] | components["schemas"]["EnergyCostTariffSourceSettings-Input"] | components["schemas"]["EnergyIDProductionSettings-Input"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Input"]) | components["schemas"]["RefSettings"];
             /** Formats */
-            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["DirectiveFormatSettings"] | components["schemas"]["KiwattFormatSettings"])[] | null;
+            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"])[] | null;
         };
         /** TimeseriesModuleSettings */
         "TimeseriesModuleSettings-Output": {
@@ -1034,9 +1756,9 @@ export interface components {
              */
             description?: string | null;
             /** Source */
-            source: components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings"];
+            source: (components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"] | components["schemas"]["AccSimultaneitySourceSettings-Output"] | components["schemas"]["SimultaneitySourceSettings-Output"] | components["schemas"]["AccForecastSettings-Output"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Output"]) | components["schemas"]["RefSettings"];
             /** Formats */
-            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"] | components["schemas"]["DirectiveFormatSettings"] | components["schemas"]["KiwattFormatSettings"])[] | null;
+            formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"])[] | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -1240,7 +1962,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": (components["schemas"]["TimeseriesModuleSettings-Output"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Output"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Output"] | components["schemas"]["TariffModuleSettings-Output"])[];
+                    "application/json": (components["schemas"]["TimeseriesModuleSettings-Output"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Output"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Output"] | components["schemas"]["SimultaneityModuleSettings-Output"] | components["schemas"]["TariffModuleSettings-Output"])[];
                 };
             };
             /** @description Validation Error */
@@ -1265,7 +1987,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TimeseriesModuleSettings-Input"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Input"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Input"] | components["schemas"]["TariffModuleSettings-Input"];
+                "application/json": components["schemas"]["TimeseriesModuleSettings-Input"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Input"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Input"] | components["schemas"]["SimultaneityModuleSettings-Input"] | components["schemas"]["TariffModuleSettings-Input"];
             };
         };
         responses: {
@@ -1275,7 +1997,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TimeseriesModuleSettings-Output"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Output"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Output"] | components["schemas"]["TariffModuleSettings-Output"];
+                    "application/json": components["schemas"]["TimeseriesModuleSettings-Output"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Output"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Output"] | components["schemas"]["SimultaneityModuleSettings-Output"] | components["schemas"]["TariffModuleSettings-Output"];
                 };
             };
             /** @description Validation Error */
@@ -1308,7 +2030,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TimeseriesModuleSettings-Output"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Output"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Output"] | components["schemas"]["TariffModuleSettings-Output"];
+                    "application/json": components["schemas"]["TimeseriesModuleSettings-Output"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Output"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Output"] | components["schemas"]["SimultaneityModuleSettings-Output"] | components["schemas"]["TariffModuleSettings-Output"];
                 };
             };
             /** @description Validation Error */
@@ -1335,7 +2057,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TimeseriesModuleSettings-Input"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Input"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Input"] | components["schemas"]["TariffModuleSettings-Input"];
+                "application/json": components["schemas"]["TimeseriesModuleSettings-Input"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Input"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Input"] | components["schemas"]["SimultaneityModuleSettings-Input"] | components["schemas"]["TariffModuleSettings-Input"];
             };
         };
         responses: {
@@ -1345,7 +2067,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TimeseriesModuleSettings-Output"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Output"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Output"] | components["schemas"]["TariffModuleSettings-Output"];
+                    "application/json": components["schemas"]["TimeseriesModuleSettings-Output"] | components["schemas"]["BillingModuleSettings"] | components["schemas"]["DirectiveModuleSettings-Output"] | components["schemas"]["MembersModuleSettings"] | components["schemas"]["ProductionModuleSettings-Output"] | components["schemas"]["SimultaneityModuleSettings-Output"] | components["schemas"]["TariffModuleSettings-Output"];
                 };
             };
             /** @description Validation Error */
@@ -1409,6 +2131,235 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AllowedModule"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    all_management_communities__slug__resources_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": (components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"])[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_management_communities__slug__resources_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Input"] | components["schemas"]["TariffResourceSettings-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_management_communities__slug__resources__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_management_communities__slug__resources__name__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Input"] | components["schemas"]["TariffResourceSettings-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_management_communities__slug__resources__name__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    usages_management_communities__slug__resources__name__usages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResourceUsages"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    all_management_communities__slug__allowed_resources_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllowedResource"][];
                 };
             };
             /** @description Validation Error */

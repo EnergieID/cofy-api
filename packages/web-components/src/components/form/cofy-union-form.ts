@@ -135,6 +135,7 @@ export class CofyUnionForm extends CofyFormField {
         .value=${typeof tag === "string" ? tag : ""}
         lang=${this.i18n?.resolvedLanguage ?? "en"}
         ?required=${this.required}
+        ?disabled=${this.onlyChoice(options, typeof tag === "string" ? tag : undefined)}
         @change=${(event: Event): void => this.chooseTag(event, discriminator)}
       >
         ${repeat(
@@ -146,6 +147,15 @@ export class CofyUnionForm extends CofyFormField {
     `;
   }
   
+  /**
+   * Whether *selected* is the only option there is, so the picker has nothing left to choose - shown
+   * disabled, but still shown, so the type is visible. Not while nothing is chosen yet, or there
+   * would be no way to choose it.
+   */
+  private onlyChoice(options: readonly string[], selected: string | undefined): boolean {
+    return options.length === 1 && selected === options[0];
+  }
+
   private optionValue(branch: JsonSchema, index: number): string {
     return schemaTypeName(branch) ?? String(index);
   }
@@ -153,14 +163,17 @@ export class CofyUnionForm extends CofyFormField {
   private renderBareChoice(branches: readonly JsonSchema[]): TemplateResult {
     const selectedIndex =
       this.value === undefined || this.value === null ? undefined : matchBranch(this.value, branches, this.root);
+    const options = branches.map((branch, index) => this.optionValue(branch, index));
+    const selected = selectedIndex === undefined ? undefined : options[selectedIndex];
 
     return html`
       <wa-select
         label=${this.t("form.type")}
         placeholder=${this.t("form.choose")}
-        .value=${selectedIndex === undefined ? "" : this.optionValue(branches[selectedIndex]!, selectedIndex)}
+        .value=${selected ?? ""}
         lang=${this.i18n?.resolvedLanguage ?? "en"}
         ?required=${this.required}
+        ?disabled=${this.onlyChoice(options, selected)}
         @change=${(event: Event): void => this.chooseBranch(event, branches)}
       >
         ${repeat(

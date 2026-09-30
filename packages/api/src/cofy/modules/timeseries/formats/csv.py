@@ -2,7 +2,7 @@ from typing import Literal
 
 from fastapi.responses import StreamingResponse
 
-from ..format import TimeseriesFormat, TimeseriesFormatSettings
+from ..format import GenericTimeseriesFormat, TimeseriesFormatSettings
 from ..model import Timeseries
 from .json import DefaultMetadataType
 
@@ -11,7 +11,7 @@ class CSVFormatSettings(TimeseriesFormatSettings):
     type: Literal["csv"] = "csv"
 
 
-class CSVFormat(TimeseriesFormat, settings=CSVFormatSettings):
+class CSVFormat(GenericTimeseriesFormat, settings=CSVFormatSettings):
     """Timeseries format for CSV."""
 
     name = "csv"

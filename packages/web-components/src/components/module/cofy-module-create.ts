@@ -1,4 +1,4 @@
-import { consume } from "@lit/context";
+import { consume, provide } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -16,7 +16,7 @@ import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { allowedModulesStoreContext, moduleStoreContext } from "../../context.js";
+import { allowedModulesStoreContext, communitySlugContext, moduleStoreContext } from "../../context.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import "../cofy-problem-details.js";
@@ -51,7 +51,10 @@ export class CofyModuleCreate extends CofyElement {
   @state()
   public allowedModules!: AllowedModulesStore;
 
-  @property({ type: String }) public slug = "";
+  // Provided, so the reference fields in the form list this community's resources.
+  @provide({ context: communitySlugContext })
+  @property({ type: String })
+  public slug = "";
 
   @state() private draft: EditableValue<ModuleSettings> | null = null;
   @state() private saving = false;

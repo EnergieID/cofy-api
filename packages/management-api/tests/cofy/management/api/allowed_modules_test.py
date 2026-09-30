@@ -85,7 +85,8 @@ def test_schema_has_no_input_output_split(catalog: list[dict]):
 
 def test_polymorphic_field_keeps_its_discriminator(catalog: list[dict]):
     """Without this a client cannot tell which `oneOf` branch a `type` selects."""
-    source = _by_type(catalog, "tariff")["schema"]["properties"]["source"]
+    # The value branch of a referable field - the other one is a reference to a resource.
+    source, _ref = _by_type(catalog, "tariff")["schema"]["properties"]["source"]["oneOf"]
 
     assert source["discriminator"]["propertyName"] == "type"
     mapping = source["discriminator"]["mapping"]
@@ -99,13 +100,16 @@ def test_type_property_pins_the_discriminator_value(catalog: list[dict]):
     assert schema["properties"]["type"]["const"] == "tariff"
 
 
-def test_credentials_are_marked_write_only_passwords(catalog: list[dict]):
-    """So a generated form renders a password input without needing a UI hint."""
+def test_credentials_are_marked_write_only_passwords_or_references_to_a_secret(catalog: list[dict]):
+    """So a generated form renders a password input without needing a UI hint, or a picker of secrets."""
     defs = _by_type(catalog, "tariff")["schema"]["$defs"]
     api_key = defs["EntsoeDayAheadTariffSourceSettings"]["properties"]["api_key"]
+    value, ref = api_key["oneOf"]
 
-    assert api_key["format"] == "password"
-    assert api_key["writeOnly"] is True
+    assert value["format"] == "password"
+    assert value["writeOnly"] is True
+    assert ref["$ref"] == "#/$defs/RefSettings"
+    assert api_key["x-referable"] == {"kind": "secret"}
 
 
 def _all_refs(node: object) -> list[str]:

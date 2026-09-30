@@ -37,10 +37,18 @@ _resolving = False
 
 class BaseSettingsModel(BaseModel):
     _model: ClassVar[Any]  # wired automatically on registration
+    # Fields that aren't passed on to the object being built.
+    _not_converted: ClassVar[frozenset[str]] = frozenset({"type"})
 
     def convert(self) -> Any:
-        kwargs = {name: _resolve(getattr(self, name)) for name in self.__class__.model_fields if name != "type"}
+        fields = self.__class__.model_fields
+        kwargs = {name: _resolve(getattr(self, name)) for name in fields if name not in self._not_converted}
         return self._model(**kwargs)
+
+    @classmethod
+    def union_annotations(cls) -> tuple[Any, ...]:
+        """Annotations applied to the union of this family, e.g. to make its members referable."""
+        return ()
 
     @classmethod
     def union_type(cls) -> Any:
@@ -58,7 +66,7 @@ class BaseSettingsModel(BaseModel):
             )
             members = [cls]
         union = reduce(or_, members)
-        return Annotated[union, Field(discriminator="type")]
+        return Annotated[union, Field(discriminator="type"), *cls.union_annotations()]
 
     @classmethod
     def registry(cls) -> dict[str, type[Self]]:

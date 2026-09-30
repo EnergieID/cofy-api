@@ -6,4 +6,7 @@ newModule:
   crumb: Nieuwe module
   heading: Module toevoegen
 
+newResource:
+  crumb: Nieuwe bron
+
 notFound: Geen pagina voor {{path}}.

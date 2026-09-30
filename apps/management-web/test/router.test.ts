@@ -6,17 +6,17 @@ import { buildHash, buildPath, matchRoute, pathFromHash, type RouteTable } from 
 
 const routes = {
   communities: { path: "/", render: (): TemplateResult => html`root` },
-  modules: { path: "/c/:slug", render: (): TemplateResult => html`modules` },
-  newModule: { path: "/c/:slug/new", render: (): TemplateResult => html`new` },
-  module: { path: "/c/:slug/:type/:name", render: (): TemplateResult => html`module` },
+  modules: { path: "/communities/:slug", render: (): TemplateResult => html`modules` },
+  newModule: { path: "/communities/:slug/modules/new", render: (): TemplateResult => html`new` },
+  module: { path: "/communities/:slug/modules/:type/:name", render: (): TemplateResult => html`module` },
 } satisfies RouteTable;
 
 describe("matchRoute", () => {
   it.each([
     ["/", "communities", {}],
-    ["/c/foo", "modules", { slug: "foo" }],
-    ["/c/foo/new", "newModule", { slug: "foo" }],
-    ["/c/foo/tariff/spot", "module", { slug: "foo", type: "tariff", name: "spot" }],
+    ["/communities/foo", "modules", { slug: "foo" }],
+    ["/communities/foo/modules/new", "newModule", { slug: "foo" }],
+    ["/communities/foo/modules/tariff/spot", "module", { slug: "foo", type: "tariff", name: "spot" }],
   ])("matches %s to the %s route", (path, name, params) => {
     const match = matchRoute(routes, path)!;
 
@@ -25,13 +25,13 @@ describe("matchRoute", () => {
   });
 
   it("prefers a literal segment over a parameter that would also match", () => {
-    // `/c/foo/new` must be the create page, never a module named "new"
-    expect(matchRoute(routes, "/c/foo/new")!.name).toBe("newModule");
+    // `/communities/foo/modules/new` must be the create page, never a module type named "new"
+    expect(matchRoute(routes, "/communities/foo/modules/new")!.name).toBe("newModule");
   });
 
   it("does not match a path with the wrong number of segments", () => {
     expect(matchRoute(routes, "/c")).toBeUndefined();
-    expect(matchRoute(routes, "/c/foo/tariff/spot/extra")).toBeUndefined();
+    expect(matchRoute(routes, "/communities/foo/modules/tariff/spot/extra")).toBeUndefined();
   });
 
   it("returns nothing when no route claims the path", () => {
@@ -39,35 +39,35 @@ describe("matchRoute", () => {
   });
 
   it("decodes captured segments", () => {
-    expect(matchRoute(routes, "/c/a%2Fb")!.params["slug"]).toBe("a/b");
+    expect(matchRoute(routes, "/communities/a%2Fb")!.params["slug"]).toBe("a/b");
   });
 
   it("ignores a trailing slash", () => {
-    expect(matchRoute(routes, "/c/foo/")!.name).toBe("modules");
+    expect(matchRoute(routes, "/communities/foo/")!.name).toBe("modules");
   });
 });
 
 describe("buildPath", () => {
   it("fills parameters", () => {
-    expect(buildPath("/c/:slug/:type/:name", { slug: "foo", type: "tariff", name: "spot" })).toBe(
-      "/c/foo/tariff/spot",
+    expect(buildPath("/communities/:slug/modules/:type/:name", { slug: "foo", type: "tariff", name: "spot" })).toBe(
+      "/communities/foo/modules/tariff/spot",
     );
   });
 
   it("encodes a value that would otherwise add a segment", () => {
-    expect(buildPath("/c/:slug", { slug: "a/b" })).toBe("/c/a%2Fb");
+    expect(buildPath("/communities/:slug", { slug: "a/b" })).toBe("/communities/a%2Fb");
   });
 
   it("round trips through matchRoute", () => {
     const params = { slug: "a/b", type: "tariff", name: "spot" };
 
-    const match = matchRoute(routes, buildPath("/c/:slug/:type/:name", params))!;
+    const match = matchRoute(routes, buildPath("/communities/:slug/modules/:type/:name", params))!;
 
     expect(match.params).toEqual(params);
   });
 
   it("refuses a pattern it cannot fill, rather than producing a broken link", () => {
-    expect(() => buildPath("/c/:slug", {})).toThrow("Missing route parameter");
+    expect(() => buildPath("/communities/:slug", {})).toThrow("Missing route parameter");
   });
 
   it("builds the root path", () => {
@@ -77,11 +77,11 @@ describe("buildPath", () => {
 
 describe("hashes", () => {
   it("prefixes a built path", () => {
-    expect(buildHash("/c/:slug", { slug: "foo" })).toBe("#/c/foo");
+    expect(buildHash("/communities/:slug", { slug: "foo" })).toBe("#/communities/foo");
   });
 
   it.each([
-    ["#/c/foo", "/c/foo"],
+    ["#/communities/foo", "/communities/foo"],
     ["#/", "/"],
     ["", "/"],
   ])("reads %s as %s", (hash, path) => {

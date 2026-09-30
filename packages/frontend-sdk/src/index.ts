@@ -3,16 +3,24 @@ export { ApiClient, type ApiClientOptions } from "./api-client.js";
 export {
   moduleKey,
   type AllowedModule,
+  type AllowedResource,
   type CommunityBody,
   type CommunityCreate,
   type CommunityInfo,
   type ModuleId,
   type ModuleSettings,
+  type Referable,
+  type ResourceRef,
+  type ResourceSettings,
+  type ResourceUsages,
 } from "./types.js";
 export { narrowToInstance, validate, type JsonSchema, type ValidationIssue } from "./validation.js";
 export { CommunityStore } from "./stores/community-store.js";
 export { ModuleStore } from "./stores/module-store.js";
 export { AllowedModulesStore } from "./stores/allowed-modules-store.js";
+export { ResourceStore } from "./stores/resource-store.js";
+export { AllowedResourcesStore } from "./stores/allowed-resources-store.js";
 export { EditableValue } from "./drafts/editable-value.js";
 export { ModuleDraft } from "./drafts/module-draft.js";
+export { ResourceDraft } from "./drafts/resource-draft.js";
 export type { components, operations, paths } from "./generated/api.js";

@@ -5,12 +5,17 @@ from typing import Literal
 import pytest
 from pydantic import BaseModel, SecretStr
 
-from cofy.api.secret import MASK, Secret, restore_masked_secrets
+from cofy.api.references import RefSettings
+from cofy.api.secret import MASK, Secret, SecretValue, restore_masked_secrets
 
 
 class Credentials(BaseModel):
-    api_key: Secret
+    api_key: SecretValue
     label: str = "unnamed"
+
+
+class ReferableCredentials(BaseModel):
+    api_key: Secret
 
 
 class Wrapper(BaseModel):
@@ -34,11 +39,26 @@ def test_masked_dump_is_json_serializable():
     assert Credentials(api_key="real").model_dump(mode="json")["api_key"] == MASK
 
 
-def test_schema_marks_the_field_as_a_write_only_password():
-    field = Credentials.model_json_schema()["properties"]["api_key"]
-    assert field["type"] == "string"
-    assert field["format"] == "password"
-    assert field["writeOnly"] is True
+def test_schema_marks_the_field_as_a_write_only_password_or_a_reference_to_a_secret():
+    field = ReferableCredentials.model_json_schema()["properties"]["api_key"]
+    value, ref = field["oneOf"]
+
+    assert value["type"] == "string"
+    assert value["format"] == "password"
+    assert value["writeOnly"] is True
+    assert ref["$ref"] == "#/$defs/RefSettings"
+    assert field["x-referable"] == {"kind": "secret"}
+
+
+def test_a_reference_is_accepted_in_place_of_the_secret():
+    assert isinstance(
+        ReferableCredentials.model_validate({"api_key": {"type": "ref", "name": "key"}}).api_key, RefSettings
+    )
+    assert ReferableCredentials(api_key="real").model_dump()["api_key"] == MASK
+    assert ReferableCredentials.model_validate({"api_key": {"type": "ref", "name": "key"}}).model_dump()["api_key"] == {
+        "type": "ref",
+        "name": "key",
+    }
 
 
 def test_repr_does_not_leak_the_secret():
@@ -114,7 +134,7 @@ def test_mismatched_shapes_restore_nothing():
 
     class OtherCredentials(BaseModel):
         type: Literal["other"] = "other"
-        token: Secret
+        token: SecretValue
 
     incoming = OtherCredentials(token=MASK)
     restore_masked_secrets(incoming, Credentials(api_key="stored"))
@@ -127,7 +147,7 @@ def test_same_named_field_on_a_different_concrete_class_restores_nothing():
 
     class OtherCredentialsSameFieldName(BaseModel):
         type: Literal["other"] = "other"
-        api_key: Secret
+        api_key: SecretValue
 
     incoming = OtherCredentialsSameFieldName(api_key=MASK)
     restore_masked_secrets(incoming, Credentials(api_key="stored"))

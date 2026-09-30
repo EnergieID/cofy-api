@@ -8,4 +8,7 @@ newModule:
   crumb: New module
   heading: Add module
 
+newResource:
+  crumb: New resource
+
 notFound: No page for {{path}}.

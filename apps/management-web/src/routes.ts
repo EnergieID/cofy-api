@@ -5,6 +5,8 @@ import "./pages/communities-page.js";
 import "./pages/module-page.js";
 import "./pages/modules-page.js";
 import "./pages/new-module-page.js";
+import "./pages/new-resource-page.js";
+import "./pages/resource-page.js";
 
 /**
  * Every page, keyed by the name the rest of the app navigates by.
@@ -22,15 +24,23 @@ export const routes = {
     render: () => html`<cofy-communities-page></cofy-communities-page>`,
   },
   modules: {
-    path: "/c/:slug",
+    path: "/communities/:slug",
     render: ({ slug }) => html`<cofy-modules-page .slug=${slug}></cofy-modules-page>`,
   },
   newModule: {
-    path: "/c/:slug/new",
+    path: "/communities/:slug/modules/new",
     render: ({ slug }) => html`<cofy-new-module-page .slug=${slug}></cofy-new-module-page>`,
   },
+  newResource: {
+    path: "/communities/:slug/resources/new",
+    render: ({ slug }) => html`<cofy-new-resource-page .slug=${slug}></cofy-new-resource-page>`,
+  },
+  resource: {
+    path: "/communities/:slug/resources/:name",
+    render: ({ slug, name }) => html`<cofy-resource-page .slug=${slug} .name=${name}></cofy-resource-page>`,
+  },
   module: {
-    path: "/c/:slug/:type/:name",
+    path: "/communities/:slug/modules/:type/:name",
     render: ({ slug, type, name }) =>
       html`<cofy-module-page .slug=${slug} .moduleId=${{ type, name }}></cofy-module-page>`,
   },

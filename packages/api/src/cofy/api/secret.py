@@ -4,6 +4,8 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, PlainSerializer, SecretStr, SerializationInfo
 
+from .references import Referable
+
 MASK = "**********"
 """Placeholder serialized in place of a secret's value. Sent back unchanged, it means "keep
 the stored value"."""
@@ -15,12 +17,16 @@ def _dump_secret(value: SecretStr, info: SerializationInfo) -> str:
     return value.get_secret_value() if info.round_trip else MASK
 
 
-Secret = Annotated[SecretStr, PlainSerializer(_dump_secret, return_type=str, when_used="always")]
-"""A settings field holding a credential.
+SecretValue = Annotated[SecretStr, PlainSerializer(_dump_secret, return_type=str, when_used="always")]
+"""A credential itself.
 
 Validates from a plain string, serializes to `MASK` everywhere except the persistence round
 trip, and carries `format: password` and `writeOnly: true` into the JSON Schema.
 """
+
+
+Secret = Annotated[SecretValue, Referable("secret")]
+"""A settings field holding a credential, or a reference to a secret resource holding it."""
 
 
 def restore_masked_secrets(incoming: Any, stored: Any) -> None:

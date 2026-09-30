@@ -10,7 +10,7 @@ import "@cofy/web-components";
 
 import { CofyPage } from "./cofy-page.js";
 
-/** The modules configured in one community. */
+/** The modules and resources configured in one community. */
 @customElement("cofy-modules-page")
 export class CofyModulesPage extends CofyPage {
   public static override styles = css`
@@ -29,18 +29,26 @@ export class CofyModulesPage extends CofyPage {
   }
 
   public override render(): TemplateResult {
-    // The table carries its own title and toolbar, so the page adds no chrome of its own.
+    // The tables carry their own titles and toolbars, so the page adds no chrome of its own.
     return html`
-      <cofy-module-list
-        .slug=${this.slug}
-        @module-create=${(): void => this.routes.navigate("newModule", { slug: this.slug })}
-        @module-edit=${(event: CustomEvent<{ slug: string; id: { type: string; name: string } }>): void =>
-          this.routes.navigate("module", {
-            slug: event.detail.slug,
-            type: event.detail.id.type,
-            name: event.detail.id.name,
-          })}
-      ></cofy-module-list>
+      <div class="wa-stack wa-gap-2xl">
+        <cofy-module-list
+          .slug=${this.slug}
+          @module-create=${(): void => this.routes.navigate("newModule", { slug: this.slug })}
+          @module-edit=${(event: CustomEvent<{ slug: string; id: { type: string; name: string } }>): void =>
+            this.routes.navigate("module", {
+              slug: event.detail.slug,
+              type: event.detail.id.type,
+              name: event.detail.id.name,
+            })}
+        ></cofy-module-list>
+        <cofy-resource-list
+          .slug=${this.slug}
+          @resource-create=${(): void => this.routes.navigate("newResource", { slug: this.slug })}
+          @resource-edit=${(event: CustomEvent<{ slug: string; name: string }>): void =>
+            this.routes.navigate("resource", { slug: event.detail.slug, name: event.detail.name })}
+        ></cofy-resource-list>
+      </div>
     `;
   }
 

@@ -53,3 +53,56 @@ describe("cofy-union-form with untitled, non-discriminated branches", () => {
     expect(events).toEqual([{ pointer: "/value", value: "" }]);
   });
 });
+
+/** A discriminated union with a single member - a family with one source installed. */
+const single: JsonSchema = {
+  oneOf: [{ $ref: "#/$defs/EnergyID" }],
+  discriminator: { propertyName: "type", mapping: { energyid_production: "#/$defs/EnergyID" } },
+  $defs: { EnergyID: { type: "object", properties: { type: { const: "energyid_production" } } } },
+};
+
+async function mountSingle(unionSchema: JsonSchema, value: unknown): Promise<CofyUnionForm> {
+  const element = document.createElement("cofy-union-form");
+  element.i18n = await testI18n();
+  element.schema = unionSchema;
+  element.root = unionSchema;
+  element.pointer = "/source";
+  element.value = value;
+  document.body.append(element);
+  await element.updateComplete;
+  return element;
+}
+
+function picker(element: CofyUnionForm): HTMLElement {
+  return element.shadowRoot!.querySelector("wa-select")!;
+}
+
+describe("cofy-union-form with a single option", () => {
+  beforeEach(() => {
+    document.body.replaceChildren();
+  });
+
+  it("shows the only type, disabled, once it is chosen", async () => {
+    const element = await mountSingle(single, { type: "energyid_production" });
+
+    expect(picker(element).hasAttribute("disabled")).toBe(true);
+  });
+
+  it("still lets the only type be chosen while nothing is", async () => {
+    const element = await mountSingle(single, undefined);
+
+    expect(picker(element).hasAttribute("disabled")).toBe(false);
+  });
+
+  it("disables an untagged union's only branch too", async () => {
+    const element = await mountSingle({ oneOf: [{ type: "integer" }] }, 3);
+
+    expect(picker(element).hasAttribute("disabled")).toBe(true);
+  });
+
+  it("keeps a picker with a real choice enabled", async () => {
+    const element = await mountSingle(schema, 0);
+
+    expect(picker(element).hasAttribute("disabled")).toBe(false);
+  });
+});

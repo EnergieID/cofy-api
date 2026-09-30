@@ -1,27 +1,29 @@
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import TYPE_CHECKING, Literal
 
 import narwhals as nw
 from pydantic import Field, NonNegativeFloat
 
 from cofy.api import BaseSettingsModel, FromSettingsMixin
-from cofy.modules.timeseries import TimeseriesSource, TimeseriesSourceSettings
+
+from ..source import NetVolumeSource, NetVolumeSourceSettings
 
 if TYPE_CHECKING:
     from .clusters import AccCluster, AccClusterSettings
 
     # Published at runtime by finalize(); the base classes are the static stand-ins.
-    AnyTimeseriesSourceSettings = TimeseriesSourceSettings
+    AnyNetVolumeSourceSettings = NetVolumeSourceSettings
     AnyAccClusterSettings = AccClusterSettings
 
 Role = Literal["consumer", "producer", "prosumer"]
 
 
 class AccMemberSettings(BaseSettingsModel):
-    source: 'Annotated[AnyTimeseriesSourceSettings | AnyAccClusterSettings, Field(discriminator="type")]'
+    # Not discriminated as one union: the sources' union holds references too, dispatched on more than their tag.
+    source: "AnyNetVolumeSourceSettings | AnyAccClusterSettings"
 
 
 class AccMember(FromSettingsMixin):
-    def __init__(self, source: "TimeseriesSource | AccCluster"):
+    def __init__(self, source: "NetVolumeSource | AccCluster"):
         """A member of an ACC cluster.
 
         Args:
@@ -118,13 +120,13 @@ class AccCapacityMember(AccMember, settings=AccCapacityMemberSettings):
 class AccShareMemberSettings(BaseSettingsModel):
     type: Literal["acc_share_member"] = "acc_share_member"
     # ACC doesn't support nesting clusters in a producer share cluster, so members are sources only.
-    source: "AnyTimeseriesSourceSettings"
+    source: "AnyNetVolumeSourceSettings"
     role: Role = "prosumer"
     share_ratio: float = Field(default=1.0, ge=0, le=1)
 
 
 class AccShareMember(AccMember, settings=AccShareMemberSettings):
-    def __init__(self, source: TimeseriesSource, role: Role = "prosumer", share_ratio: float = 1.0):
+    def __init__(self, source: NetVolumeSource, role: Role = "prosumer", share_ratio: float = 1.0):
         """A producer share member, of which the share of its volume fitting its role takes part.
 
         Args:

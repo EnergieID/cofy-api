@@ -320,14 +320,17 @@ def test_put_switching_source_type_does_not_restore_across_branches(client: Test
     payload = {
         "type": "tariff",
         "name": "spot",
-        "source": {"type": "energyid_production", "api_key": "eid-key", "record_id": "r1"},
+        "source": {
+            "type": "energy_cost",
+            "tariff": [{"start": "2024-01-01T00:00:00+01:00", "consumption": {"constant_cost": 1.0}}],
+        },
     }
     r = client.put("/management/communities/test/modules/tariff/spot", json=payload)
     assert r.status_code == 200
 
     spot = next(m for m in _read_modules(tmp_data) if m["name"] == "spot")
-    assert spot["source"]["type"] == "energyid_production"
-    assert spot["source"]["api_key"] == "eid-key"
+    assert spot["source"]["type"] == "energy_cost"
+    assert "api_key" not in spot["source"]
 
 
 # ── module types that may not be stored ───────────────────────────────────

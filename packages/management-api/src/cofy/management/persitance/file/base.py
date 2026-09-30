@@ -52,11 +52,14 @@ class FilePersistence:
     def _serialize(config: CofyAPISettings) -> str:
         """The on-disk YAML form of *config* - the one place a validated config is turned back
         into text, so every write path (a fresh `create`, or a read-modify-write) stays
-        byte-for-byte consistent instead of quietly drifting apart."""
-        return yaml.safe_dump(
-            config.model_dump(exclude_none=True, polymorphic_serialization=True, round_trip=True),
-            sort_keys=True,
-        )
+        byte-for-byte consistent instead of quietly drifting apart.
+
+        The config is validated again as a whole, exactly as it will be read back: a write
+        that edits one part can break a rule spanning several, like a module referencing a
+        resource, and must fail rather than store a config that can't be read anymore."""
+        dumped = config.model_dump(exclude_none=True, polymorphic_serialization=True, round_trip=True)
+        CofyAPISettings.model_validate(dumped)
+        return yaml.safe_dump(dumped, sort_keys=True)
 
     @contextmanager
     def _locked_file(self, slug: str, *, exclusive: bool, writable: bool = False) -> Generator[IO[str]]:

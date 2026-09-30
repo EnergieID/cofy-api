@@ -3,7 +3,7 @@ from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
-from ..format import TimeseriesFormat, TimeseriesFormatSettings
+from ..format import GenericTimeseriesFormat, TimeseriesFormat, TimeseriesFormatSettings
 from ..model import ISODuration, Timeseries
 
 DataType = TypeVar("DataType", bound=BaseModel)
@@ -29,12 +29,8 @@ class ResponseModel(BaseModel, Generic[DataType, MetadataType]):
     data: list[DataType]
 
 
-class JSONFormatSettings(TimeseriesFormatSettings):
-    type: Literal["json"] = "json"
-
-
-class JSONFormat(TimeseriesFormat, Generic[DataType, MetadataType], settings=JSONFormatSettings):
-    """Timeseries format for JSON."""
+class BaseJSONFormat(TimeseriesFormat, Generic[DataType, MetadataType]):
+    """Timeseries format for JSON, shared by the formats of each family that respond with it."""
 
     name = "json"
 
@@ -55,3 +51,16 @@ class JSONFormat(TimeseriesFormat, Generic[DataType, MetadataType], settings=JSO
     @property
     def ReturnType(self) -> type:
         return self.ResponseModel
+
+
+class JSONFormatSettings(TimeseriesFormatSettings):
+    type: Literal["json"] = "json"
+
+
+class JSONFormat(
+    BaseJSONFormat[DataType, MetadataType],
+    GenericTimeseriesFormat,
+    Generic[DataType, MetadataType],
+    settings=JSONFormatSettings,
+):
+    """Timeseries format for JSON."""

@@ -14,11 +14,16 @@ pip install "cofy-api[all]"
 ```
 
 Cofy is modular — install only what you need via [extras](https://packaging.python.org/en/latest/specifications/dependency-specifiers/#extras).
-Example — install with only the tarrif and members modules:
+Each module has an extra of its own name, and each integration providing data for those modules has one too, so
+you only install the libraries of the sources you use. Example — the tariff module with ENTSO-E prices:
 
 ```sh
-pip install "cofy-api[tariff,members]"
+pip install "cofy-api[tariff,entsoe]"
 ```
+
+| Module extras | Integration extras |
+|---|---|
+| `tariff`, `production`, `simultaneity`, `directive`, `billing`, `members` | `entsoe`, `energy-cost`, `energyid`, `acc` |
 
 ## Quick start
 
@@ -26,10 +31,11 @@ Create an app.py file with a minimal Cofy API:
 
 ```python
 from cofy.api import CofyAPI
+from cofy.integrations.entsoe import EntsoeDayAheadTariffSource
 from cofy.modules.tariff import TariffModule
 
 app = CofyAPI()
-app.register_module(TariffModule(api_key="YOUR_ENTSOE_KEY", name="entsoe"))
+app.register_module(TariffModule(source=EntsoeDayAheadTariffSource(api_key="YOUR_ENTSOE_KEY"), name="entsoe"))
 ```
 
 Run it:
@@ -39,6 +45,101 @@ fastapi dev app.py
 ```
 
 The API is now available at `http://127.0.0.1:8000` with interactive docs at `/docs`.
+
+## Sources and families
+
+Every timeseries source belongs to a family describing what it produces, and every field taking a source accepts
+one family. A tariff module only takes prices, a directive only takes numeric values, and so on, so only valid
+combinations can be configured.
+
+```
+TimeseriesSource
+├── NumericSource           cofy.modules.timeseries
+│   ├── PriceSource         cofy.modules.tariff
+│   ├── ProductionSource    cofy.modules.production
+│   ├── NetVolumeSource     cofy.modules.simultaneity
+│   └── RatioSource         cofy.modules.simultaneity
+├── DirectiveSeriesSource   cofy.modules.directive
+└── BoundarySource          cofy.modules.directive
+```
+
+A source of your own subclasses the family it belongs to, and implements `_fetch_timeseries`:
+
+```python
+class MyPriceSourceSettings(PriceSourceSettings):
+    type: Literal["my_price"] = "my_price"
+
+
+class MyPriceSource(PriceSource, settings=MyPriceSourceSettings):
+    async def _fetch_timeseries(self, start, end, resolution, **kwargs) -> Timeseries: ...
+```
+
+A family of your own is an abstract subclass of the family it narrows, and a field accepting it is typed with its
+union, which is published once every type is registered:
+
+```python
+class TemperatureSourceSettings(NumericSourceSettings):
+    type: Literal["temperature_source"] = "temperature_source"
+
+
+class TemperatureSource(NumericSource, settings=TemperatureSourceSettings, abstract=True): ...
+
+
+if TYPE_CHECKING:
+    AnyTemperatureSourceSettings = TemperatureSourceSettings
+
+
+class HeatingModuleSettings(TimeseriesModuleSettings):
+    type: Literal["heating"] = "heating"
+    source: "AnyTemperatureSourceSettings"
+```
+
+Every family's union also accepts a reference to a source resource, so a field accepts one family: for sources of two
+families that aren't nested, use their common ancestor.
+
+## Caching
+
+Any source can cache what it fetches, in memory and in aligned chunks of time, by giving it a `cache`:
+
+```yaml
+source:
+  type: acc_forecast
+  ean: "541448800000000000"
+  credentials: ${ACC_CREDENTIALS}
+  cache:
+    max_age: PT15M  # defaults to how long the source says its data stays valid
+```
+
+From Python, pass `cache=CacheSettings(...)` to the source's constructor. A source implements `_fetch_timeseries`, and
+takes `cache` and passes it on to `super().__init__`; the public `fetch_timeseries` serves from the cache when there is
+one, and a source can override it to cache differently.
+
+## Resources
+
+A value used in several places - a credential, a tariff, a source - can be configured once as a named resource and
+referenced by name wherever one of its kind fits. A referenced source is built once, so every module referencing it
+shares its cache.
+
+```yaml
+resources:
+  - type: secret
+    name: entsoe_key
+    value: ${ENTSOE_API_KEY}
+  - type: source
+    name: day_ahead
+    value:
+      type: entsoe_day_ahead
+      api_key: { type: ref, name: entsoe_key }
+      cache: {}
+
+modules:
+  - type: tariff
+    name: prices
+    source: { type: ref, name: day_ahead }
+```
+
+A reference to a source resource fits wherever the source it holds would. Secret fields (`Secret`) and energy-cost
+tariffs accept references too, and a field of your own opts in with `Annotated[..., Referable("<kind>")]`.
 
 ## Authentication
 

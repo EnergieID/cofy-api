@@ -3,9 +3,10 @@ from typing import TYPE_CHECKING, Literal
 
 import narwhals as nw
 
-from cofy.modules.timeseries import Timeseries, TimeseriesSourceSettings
+from cofy.modules.timeseries import CacheSettings, Timeseries
 
 from ..acc.clusters import AccCluster
+from ..source import RatioSourceSettings
 from .base_simultaneity_source import BaseSimultaneitySource
 
 if TYPE_CHECKING:
@@ -15,14 +16,14 @@ if TYPE_CHECKING:
     AnyAccClusterSettings = AccClusterSettings
 
 
-class AccSimultaneitySourceSettings(TimeseriesSourceSettings):
+class AccSimultaneitySourceSettings(RatioSourceSettings):
     type: Literal["acc_simultaneity"] = "acc_simultaneity"
     # Unresolved until cofy.api.finalize() publishes the discriminated unions.
     cluster: "AnyAccClusterSettings"
 
 
 class AccSimultaneitySource(BaseSimultaneitySource, settings=AccSimultaneitySourceSettings):
-    def __init__(self, cluster: AccCluster):
+    def __init__(self, cluster: AccCluster, cache: CacheSettings | None = None):
         """Simultaneity of a tree of clusters following ACC's concurrency matching, as a percentage per timestamp.
 
         This is the consumption as a percentage of the production, counting only volumes the clusters can match:
@@ -30,24 +31,26 @@ class AccSimultaneitySource(BaseSimultaneitySource, settings=AccSimultaneitySour
 
         Args:
             cluster: The root cluster.
+            cache: Cache what this source fetches, see `TimeseriesSource`.
         """
-        super().__init__(cluster.sources())
+        super().__init__(cluster.sources(), cache=cache)
         self.cluster = cluster
 
     def volumes(self, results: Sequence[Timeseries]) -> nw.DataFrame:
-        columns = {id(source): f"member_{i}" for i, source in enumerate(self.sources)}
+        # by position, since one source can take part more than once
+        columns = [f"member_{i}" for i in range(len(self.sources))]
         wide = nw.concat(
             [
-                ts.frame.select("timestamp", "value").with_columns(member=nw.lit(columns[id(source)]))
-                for source, ts in zip(self.sources, results, strict=True)
+                ts.frame.select("timestamp", "value").with_columns(member=nw.lit(column))
+                for column, ts in zip(columns, results, strict=True)
             ]
         ).pivot(on="member", index="timestamp", values="value", aggregate_function="sum")
         # a source without data at a timestamp has no volume there
         wide = wide.with_columns(
-            nw.col(c).fill_null(0.0) if c in wide.columns else nw.lit(0.0).alias(c) for c in columns.values()
+            nw.col(c).fill_null(0.0) if c in wide.columns else nw.lit(0.0).alias(c) for c in columns
         )
 
-        volumes = self.cluster.volumes(lambda source: nw.col(columns[id(source)]))
+        volumes = self.cluster.volumes(nw.col(column) for column in columns)
         # all that is matched in the tree, plus what the root cluster could still match on either side
         nested_matched = volumes.matched_in_tree - volumes.matched
         return wide.select(

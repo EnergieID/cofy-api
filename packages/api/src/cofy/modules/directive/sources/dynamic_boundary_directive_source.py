@@ -5,30 +5,33 @@ from typing import TYPE_CHECKING, Literal
 import narwhals as nw
 from pydantic import Field
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource, TimeseriesSourceSettings
+from cofy.modules.timeseries import CacheSettings, ISODuration, NumericSource, NumericSourceSettings, Timeseries
 
 from ..formats.directive import DIRECTIVE_STEPS
+from ..source import BoundarySource, BoundarySourceSettings, DirectiveSeriesSource, DirectiveSeriesSourceSettings
 
 if TYPE_CHECKING:
     # Published at runtime by finalize(); the base class is the static stand-in.
-    AnyTimeseriesSourceSettings = TimeseriesSourceSettings
+    AnyNumericSourceSettings = NumericSourceSettings
+    AnyBoundarySourceSettings = BoundarySourceSettings
 
 BOUNDARY_COLUMNS = ("b0", "b1", "b2", "b3")
 
 
-class DynamicBoundaryDirectiveSourceSettings(TimeseriesSourceSettings):
+class DynamicBoundaryDirectiveSourceSettings(DirectiveSeriesSourceSettings):
     type: Literal["dynamic_boundary_directive"] = "dynamic_boundary_directive"
-    signal_source: "AnyTimeseriesSourceSettings"
-    boundary_source: "AnyTimeseriesSourceSettings"
+    signal_source: "AnyNumericSourceSettings"
+    boundary_source: "AnyBoundarySourceSettings"
     reverse: bool = Field(default=False)
 
 
-class DynamicBoundaryDirectiveSource(TimeseriesSource, settings=DynamicBoundaryDirectiveSourceSettings):
+class DynamicBoundaryDirectiveSource(DirectiveSeriesSource, settings=DynamicBoundaryDirectiveSourceSettings):
     def __init__(
         self,
-        signal_source: TimeseriesSource,
-        boundary_source: TimeseriesSource,
+        signal_source: NumericSource,
+        boundary_source: BoundarySource,
         reverse: bool = False,
+        cache: CacheSettings | None = None,
     ):
         """A TimeseriesSource that maps numeric values to directive steps using per-timestamp dynamic boundaries.
 
@@ -39,12 +42,14 @@ class DynamicBoundaryDirectiveSource(TimeseriesSource, settings=DynamicBoundaryD
                 thresholds between directive steps at each timestamp.
             reverse: If True, the mapping of values to directive steps will be reversed (i.e.,
                 higher values will correspond to more negative steps).
+            cache: Cache what this source fetches, see `TimeseriesSource`.
         """
+        super().__init__(cache=cache)
         self.signal_source = signal_source
         self.boundary_source = boundary_source
         self.reverse = reverse
 
-    async def fetch_timeseries(
+    async def _fetch_timeseries(
         self,
         start: dt.datetime,
         end: dt.datetime,

@@ -4,11 +4,14 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from .api.allowed_modules import AllowedModulesRouter
+from .api.allowed_resources import AllowedResourcesRouter
 from .api.communities import CommunitiesRouter
 from .api.modules import ModulesRouter
+from .api.resources import ResourcesRouter
 from .errors import add_exception_handlers
 from .persitance.file.communities import FileCommunitiesPersistence
 from .persitance.file.modules import FileModulesPersistence
+from .persitance.file.resources import FileResourcesPersistence
 
 STATIC_DIR_ENV_VAR = "COFY_MANAGEMENT_STATIC_DIR"
 
@@ -18,6 +21,8 @@ add_exception_handlers(app)
 app.include_router(CommunitiesRouter(FileCommunitiesPersistence()).router)
 app.include_router(ModulesRouter(FileModulesPersistence()).router)
 app.include_router(AllowedModulesRouter().router)
+app.include_router(ResourcesRouter(FileResourcesPersistence(), FileModulesPersistence()).router)
+app.include_router(AllowedResourcesRouter().router)
 
 # Serving the console's built assets is optional and off by default, so the API stays usable
 # on its own (e.g. behind the Vite dev server's proxy). A deployment that wants a single

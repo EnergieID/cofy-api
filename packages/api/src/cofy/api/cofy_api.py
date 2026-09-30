@@ -1,13 +1,16 @@
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
+from pydantic import model_validator
 
 from .docs_router import DocsRouter
 from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
 from .module import Module, ModuleSettings
+from .references import check_references, resolving
+from .resource import ResourceSettings
 from .token_auth import Auth, AuthSettings
 from .version import get_installed_version
 
@@ -15,6 +18,7 @@ if TYPE_CHECKING:
     # Published at runtime by finalize(); the base class is the static stand-in.
     AnyModuleSettings = ModuleSettings
     AnyAuthSettings = AuthSettings
+    AnyResourceSettings = ResourceSettings
 
 DEFAULT_ARGS: dict[str, Any] = {
     "title": "Cofy API",
@@ -34,6 +38,19 @@ class CofyAPISettings(BaseSettingsModel):
     debug_dir: Path | None = None
     modules: "list[AnyModuleSettings]" = []
     auth: "AnyAuthSettings | None" = None
+    resources: "list[AnyResourceSettings]" = []
+
+    # Resources are only built when referenced, see convert().
+    _not_converted: ClassVar[frozenset[str]] = frozenset({"type", "resources"})
+
+    @model_validator(mode="after")
+    def _check_references(self):
+        check_references(self.resources, self.modules, self.auth)
+        return self
+
+    def convert(self) -> Any:
+        with resolving(self.resources):
+            return super().convert()
 
 
 class CofyAPI(FastAPI, FromSettingsMixin, settings=CofyAPISettings):

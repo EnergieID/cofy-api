@@ -5,18 +5,11 @@ import yaml
 from energy_cost.index import CachedEntsoeDayAheadIndex, CSVIndex, Index
 from isodate import Duration
 
-# Import concrete modules/sources/formats so they register for FromSettingsMixin.create.
-from cofy.api import CofyAPI, TokenAuth  # noqa: F401
-from cofy.modules.billing import BillingModule  # noqa: F401
-from cofy.modules.directive import DirectiveFormat, DirectiveModule, DirectiveSource  # noqa: F401
-from cofy.modules.production import AccForecastSource, EnergyIDProduction, ProductionModule  # noqa: F401
-from cofy.modules.simultaneity import AccSimultaneitySource, SimultaneitySource  # noqa: F401
-from cofy.modules.tariff import (  # noqa: F401
-    EnergyCostTariffSource,
-    EntsoeDayAheadTariffSource,
-    KiwattFormat,
-    TariffModule,
-)
+from cofy.api import CofyAPI
+from cofy.modules.discovery import discover_all_types
+
+# Register every installed module, source and format type, so the settings can use any of them.
+discover_all_types()
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 SETTINGS_PATH = Path(__file__).resolve().parent / "settings.yaml"
