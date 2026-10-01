@@ -73,6 +73,9 @@ if (typeof globalThis.document !== "undefined") {
     } as unknown as Animation;
   });
 
+  // `wa-dialog` waits for any running animations before opening; with no animations, none run.
+  fallback(Element.prototype, "getAnimations", (): Animation[] => []);
+
   // The top layer - the popover API and `<dialog>` - which is how the drawer opens.
   fallback(HTMLElement.prototype, "showPopover", () => {});
   fallback(HTMLElement.prototype, "hidePopover", () => {});

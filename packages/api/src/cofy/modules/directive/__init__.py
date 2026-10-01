@@ -1,5 +1,7 @@
+from .format import DirectiveSeriesFormat, DirectiveSeriesFormatSettings
 from .formats.directive import DirectiveFormat, DirectiveFormatSettings
 from .module import DirectiveModule, DirectiveModuleSettings
+from .source import BoundarySource, BoundarySourceSettings, DirectiveSeriesSource, DirectiveSeriesSourceSettings
 from .sources.directive_source import DirectiveSource, DirectiveSourceSettings
 from .sources.dynamic_boundary_directive_source import (
     DynamicBoundaryDirectiveSource,
@@ -7,12 +9,18 @@ from .sources.dynamic_boundary_directive_source import (
 )
 
 __all__ = [
-    "DirectiveModule",
-    "DirectiveModuleSettings",
-    "DirectiveSource",
-    "DirectiveSourceSettings",
+    "BoundarySource",
+    "BoundarySourceSettings",
     "DirectiveFormat",
     "DirectiveFormatSettings",
+    "DirectiveModule",
+    "DirectiveModuleSettings",
+    "DirectiveSeriesFormat",
+    "DirectiveSeriesFormatSettings",
+    "DirectiveSeriesSource",
+    "DirectiveSeriesSourceSettings",
+    "DirectiveSource",
+    "DirectiveSourceSettings",
     "DynamicBoundaryDirectiveSource",
     "DynamicBoundaryDirectiveSourceSettings",
 ]

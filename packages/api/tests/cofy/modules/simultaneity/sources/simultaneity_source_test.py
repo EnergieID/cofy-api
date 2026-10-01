@@ -3,14 +3,14 @@ import math
 
 import pytest
 
-from cofy.modules.simultaneity import SimultaneitySource
+from cofy.modules.simultaneity import NetVolumeSource, SimultaneitySource
 from cofy.modules.timeseries import TimeseriesSource
 
-from ...timeseries.dummy_source import DummyTimeseriesSource
+from ..dummy_source import DummyNetVolumeSource
 from ..fixed_source import QUARTER, START, FixedSource
 
 
-async def fetch_values(*sources: TimeseriesSource) -> list[float]:
+async def fetch_values(*sources: NetVolumeSource) -> list[float]:
     result = await SimultaneitySource(list(sources)).fetch_timeseries(START, START + dt.timedelta(hours=1), QUARTER)
     return [row["value"] for row in result.to_arr()]
 
@@ -92,10 +92,10 @@ def test_create_from_settings():
     source = TimeseriesSource.create(
         {
             "type": "simultaneity",
-            "sources": [{"type": "dummy_timeseries_source"}, {"type": "dummy_timeseries_source"}],
+            "sources": [{"type": "dummy_net_volume_source"}, {"type": "dummy_net_volume_source"}],
         }
     )
 
     assert isinstance(source, SimultaneitySource)
-    assert all(isinstance(child, DummyTimeseriesSource) for child in source.sources)
+    assert all(isinstance(child, DummyNetVolumeSource) for child in source.sources)
     assert len(source.sources) == 2

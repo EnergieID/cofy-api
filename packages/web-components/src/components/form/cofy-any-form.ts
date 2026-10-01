@@ -1,13 +1,15 @@
 import { consume } from "@lit/context";
 import { css, nothing } from "lit";
 import type { TemplateResult } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { html, unsafeStatic } from "lit/static-html.js";
 
+import "./cofy-action-menu.js";
 import "./cofy-yaml-form.js";
 import "../layout/cofy-link-button.js";
 
 import { fieldRegistryContext } from "../../context.js";
+import type { MenuAction } from "./cofy-action-menu.js";
 import type { AS_YAML_OPTION, FieldRegistry } from "./field-registry.js";
 import { defaultFieldRegistry } from "./field-registry.js";
 import { CofyFormField } from "./form-field.js";
@@ -46,6 +48,12 @@ export class CofyAnyForm extends CofyFormField {
   @consume({ context: fieldRegistryContext, subscribe: true })
   public fieldRegistry: FieldRegistry = defaultFieldRegistry;
 
+  /**
+   * More actions on this field, from whatever mounted it - with any, its actions (the YAML toggle
+   * included) sit in one menu instead of a link.
+   */
+  @property({ attribute: false }) public menuActions: readonly MenuAction[] = [];
+
   @state() private yamlToggle = false;
 
   private shouldShowYaml(asYaml: AS_YAML_OPTION): boolean {
@@ -65,14 +73,18 @@ export class CofyAnyForm extends CofyFormField {
     const tag = this.shouldShowYaml(asYaml) ? YAML_TAG : match?.tag ?? YAML_TAG
     const tagName = unsafeStatic(tag);
 
-    const yamlToggle = html`<cofy-link-button
-      slot="actions"
-      @click=${(): void => {
-        this.yamlToggle = !this.yamlToggle;
-      }}
-    >
-      ${this.shouldShowYaml(asYaml) ? this.t("form.viewAsForm") : this.t("form.viewAsYaml")}
-    </cofy-link-button>`;
+    const toggleLabel = this.shouldShowYaml(asYaml) ? this.t("form.viewAsForm") : this.t("form.viewAsYaml");
+    const toggle = (): void => {
+      this.yamlToggle = !this.yamlToggle;
+    };
+    const yamlActions: MenuAction[] = asYaml === "never" ? [] : [{ id: "toggle-yaml", label: toggleLabel, run: toggle }];
+
+    const actions =
+      this.menuActions.length > 0
+        ? html`<cofy-action-menu slot="actions" .actions=${[...yamlActions, ...this.menuActions]}></cofy-action-menu>`
+        : asYaml !== "never"
+          ? html`<cofy-link-button slot="actions" @click=${toggle}>${toggleLabel}</cofy-link-button>`
+          : nothing;
 
     return html`<${tagName}
       .schema=${node}
@@ -83,10 +95,10 @@ export class CofyAnyForm extends CofyFormField {
       .issues=${this.issues}
       .hide=${this.hide}
       ?bare=${this.bare}
-      .label=${fieldLabel(shallow, this.pointer)}
-      .description=${fieldDescription(shallow)}
+      .label=${this.label || fieldLabel(shallow, this.pointer)}
+      .description=${this.description || fieldDescription(shallow)}
     >
-      ${asYaml != "never" ? yamlToggle : nothing }
+      ${actions}
     </${tagName}>`;
   }
 }

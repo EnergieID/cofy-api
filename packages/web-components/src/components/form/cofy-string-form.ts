@@ -15,7 +15,7 @@ export class CofyStringForm extends CofyFormField {
     return html`
       <cofy-field-shell data-pointer=${this.pointer} .issues=${this.ownIssues}>
         <wa-input
-          label=${this.label}
+          label=${this.bare ? "" : this.label}
           hint=${ifDefined(this.description || undefined)}
           .value=${typeof this.value === "string" ? this.value : ""}
           ?required=${this.required}

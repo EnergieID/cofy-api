@@ -34,6 +34,9 @@ export type ModuleFormMode = "form" | "yaml";
  * (past the point of still choosing one): the type is already part of that YAML, so a picker
  * beside it would only say the same thing twice.
  *
+ * Resources have the same shape - a `type` choosing the schema of the rest - so they are edited
+ * with this form too, with `typeLabel` naming what the type is of.
+ *
  * `mode` is host-controlled, not owned here, so a host can put its toggle wherever it likes
  * (its own heading's actions slot, say) rather than this component dictating the chrome around
  * it. Stateless with respect to drafts, like the YAML editor it wraps: `catalog`/`value`/
@@ -56,6 +59,8 @@ export class CofyModuleForm extends CofyElement {
   @property({ attribute: false }) public issues: readonly ValidationIssue[] = [];
   @property({ type: Boolean }) public locked = false;
   @property({ type: String }) public mode: ModuleFormMode = "form";
+  /** The label of the type picker, "Module type" if not given. */
+  @property({ type: String }) public typeLabel = "";
 
   @state() private text = "";
   @state() private syntaxErrors: string[] = [];
@@ -116,7 +121,7 @@ export class CofyModuleForm extends CofyElement {
     return html`
       <cofy-field-shell .issues=${this.issues.filter((issue) => issue.pointer === "/type")}>
         <wa-select
-          label=${this.t("form.moduleType")}
+          label=${this.typeLabel || this.t("form.moduleType")}
           placeholder=${this.t("form.chooseType")}
           .value=${type}
           lang=${this.i18n?.resolvedLanguage ?? "en"}

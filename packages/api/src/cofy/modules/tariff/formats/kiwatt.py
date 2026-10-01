@@ -3,7 +3,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesFormat, TimeseriesFormatSettings
+from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesFormatSettings
+
+from ..format import PriceFormat
 
 
 def to_utc_timestring(dt: datetime | str) -> str:
@@ -32,7 +34,7 @@ class KiwattFormatSettings(TimeseriesFormatSettings):
     source: str = Field(default="Cofy-API-Demo")
 
 
-class KiwattFormat(TimeseriesFormat, settings=KiwattFormatSettings):
+class KiwattFormat(PriceFormat, settings=KiwattFormatSettings):
     """Timeseries format for Kiwatt."""
 
     name = "kiwatt"

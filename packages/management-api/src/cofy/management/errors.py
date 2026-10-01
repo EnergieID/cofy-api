@@ -35,6 +35,12 @@ class ResourceAlreadyExistsError(ManagementError):
     code = "resource-already-exists"
 
 
+class ResourceInUseError(ManagementError):
+    status = 409
+    title = "Conflict"
+    code = "resource-in-use"
+
+
 class ValidationFailedError(ManagementError):
     status = 422
     title = "Unprocessable Content"

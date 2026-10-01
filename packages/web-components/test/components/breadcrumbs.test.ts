@@ -25,13 +25,13 @@ describe("cofy-breadcrumbs", () => {
 
   it("links every crumb but the last", async () => {
     const element = await mount([
-      { label: "Demo Energy Community", href: "#/c/demo" },
+      { label: "Demo Energy Community", href: "#/communities/demo" },
       { label: "default" },
     ]);
 
     const items = Array.from(element.shadowRoot!.querySelectorAll("wa-breadcrumb-item"));
 
-    expect(items.map((item) => item.getAttribute("href"))).toEqual(["#/c/demo", null]);
+    expect(items.map((item) => item.getAttribute("href"))).toEqual(["#/communities/demo", null]);
   });
 
   it("does not give the current page a click-through href", async () => {
@@ -50,7 +50,7 @@ describe("cofy-breadcrumbs", () => {
   });
 
   it("marks the current page for assistive technology, since the component does not do it itself", async () => {
-    const element = await mount([{ label: "Demo Energy Community", href: "#/c/demo" }, { label: "default" }]);
+    const element = await mount([{ label: "Demo Energy Community", href: "#/communities/demo" }, { label: "default" }]);
 
     const items = Array.from(element.shadowRoot!.querySelectorAll("wa-breadcrumb-item"));
 

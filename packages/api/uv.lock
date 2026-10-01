@@ -260,10 +260,18 @@ source = { editable = "." }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "pydantic" },
+    { name = "pydantic-core" },
     { name = "starlette" },
 ]
 
 [package.optional-dependencies]
+acc = [
+    { name = "google-auth" },
+    { name = "isodate" },
+    { name = "narwhals" },
+    { name = "polars" },
+    { name = "requests" },
+]
 all = [
     { name = "energy-cost" },
     { name = "entsoe-py" },
@@ -288,26 +296,38 @@ directive = [
     { name = "isodate" },
     { name = "narwhals" },
 ]
-members = [
+energy-cost = [
     { name = "energy-cost" },
+    { name = "isodate" },
+    { name = "narwhals" },
+    { name = "pandas" },
 ]
-production = [
-    { name = "google-auth" },
+energyid = [
     { name = "isodate" },
     { name = "narwhals" },
     { name = "polars" },
     { name = "requests" },
+]
+entsoe = [
+    { name = "entsoe-py" },
+    { name = "isodate" },
+    { name = "narwhals" },
+    { name = "pandas" },
+]
+members = [
+    { name = "energy-cost" },
+]
+production = [
+    { name = "isodate" },
+    { name = "narwhals" },
 ]
 simultaneity = [
     { name = "isodate" },
     { name = "narwhals" },
 ]
 tariff = [
-    { name = "energy-cost" },
-    { name = "entsoe-py" },
     { name = "isodate" },
     { name = "narwhals" },
-    { name = "pandas" },
 ]
 timeseries = [
     { name = "isodate" },
@@ -328,31 +348,39 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cofy-api", extras = ["production"], marker = "extra == 'energyid'" },
+    { name = "cofy-api", extras = ["simultaneity"], marker = "extra == 'acc'" },
+    { name = "cofy-api", extras = ["tariff"], marker = "extra == 'energy-cost'" },
+    { name = "cofy-api", extras = ["tariff"], marker = "extra == 'entsoe'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'billing'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'directive'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'production'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'simultaneity'" },
     { name = "cofy-api", extras = ["timeseries"], marker = "extra == 'tariff'" },
-    { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production", "directive", "simultaneity", "billing", "debug"], marker = "extra == 'all'" },
+    { name = "cofy-api", extras = ["timeseries", "tariff", "members", "production", "directive", "simultaneity", "billing", "entsoe", "energy-cost", "energyid", "acc", "debug"], marker = "extra == 'all'" },
     { name = "energy-cost", marker = "extra == 'billing'", specifier = ">=0.7.0" },
+    { name = "energy-cost", marker = "extra == 'energy-cost'", specifier = "==0.7.0" },
     { name = "energy-cost", marker = "extra == 'members'", specifier = "==0.7.0" },
-    { name = "energy-cost", marker = "extra == 'tariff'", specifier = "==0.7.0" },
-    { name = "entsoe-py", marker = "extra == 'tariff'", specifier = ">=0.7.10" },
+    { name = "entsoe-py", marker = "extra == 'entsoe'", specifier = ">=0.7.10" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.128.0" },
-    { name = "google-auth", marker = "extra == 'production'", specifier = ">=2.40.0" },
+    { name = "google-auth", marker = "extra == 'acc'", specifier = ">=2.40.0" },
     { name = "isodate", marker = "extra == 'timeseries'", specifier = ">=0.7.2" },
     { name = "narwhals", marker = "extra == 'directive'", specifier = ">=2.15.0" },
     { name = "narwhals", marker = "extra == 'simultaneity'", specifier = ">=2.15.0" },
     { name = "narwhals", marker = "extra == 'timeseries'", specifier = ">=2.15.0" },
     { name = "pandas", marker = "extra == 'billing'", specifier = ">=3.0.0" },
-    { name = "pandas", marker = "extra == 'tariff'", specifier = ">=3.0.0" },
-    { name = "polars", marker = "extra == 'production'", specifier = ">=1.38.1" },
+    { name = "pandas", marker = "extra == 'energy-cost'", specifier = ">=3.0.0" },
+    { name = "pandas", marker = "extra == 'entsoe'", specifier = ">=3.0.0" },
+    { name = "polars", marker = "extra == 'acc'", specifier = ">=1.38.1" },
+    { name = "polars", marker = "extra == 'energyid'", specifier = ">=1.38.1" },
     { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "requests", marker = "extra == 'production'", specifier = ">=2.32.0" },
+    { name = "pydantic-core", specifier = ">=2.0.0" },
+    { name = "requests", marker = "extra == 'acc'", specifier = ">=2.32.0" },
+    { name = "requests", marker = "extra == 'energyid'", specifier = ">=2.32.0" },
     { name = "starlette", specifier = ">=0.41.0" },
     { name = "yappi", marker = "extra == 'debug'", specifier = ">=1.7.6" },
 ]
-provides-extras = ["timeseries", "tariff", "billing", "production", "members", "directive", "simultaneity", "debug", "all"]
+provides-extras = ["timeseries", "tariff", "billing", "production", "members", "directive", "simultaneity", "entsoe", "energy-cost", "energyid", "acc", "debug", "all"]
 
 [package.metadata.requires-dev]
 dev = [

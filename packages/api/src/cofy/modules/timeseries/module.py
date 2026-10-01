@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Generic, Literal, TypeVar
 
 from fastapi import Depends, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -9,7 +9,7 @@ from pydantic import create_model
 from cofy.api import Module, ModuleSettings
 
 from .alignment import ceil_datetime, floor_datetime
-from .format import TimeseriesFormat, TimeseriesFormatSettings
+from .format import GenericTimeseriesFormatSettings, TimeseriesFormat
 from .formats.csv import CSVFormat
 from .formats.json import JSONFormat
 from .model import ISODuration
@@ -18,26 +18,28 @@ from .source import TimeseriesSource, TimeseriesSourceSettings
 if TYPE_CHECKING:
     # Published at runtime by finalize(); the base class is the static stand-in.
     AnyTimeseriesSourceSettings = TimeseriesSourceSettings
-    AnyTimeseriesFormatSettings = TimeseriesFormatSettings
+    AnyGenericTimeseriesFormatSettings = GenericTimeseriesFormatSettings
+
+S = TypeVar("S", bound=TimeseriesSource)
 
 
 class TimeseriesModuleSettings(ModuleSettings):
     type: Literal["timeseries"] = "timeseries"
     # Unresolved until cofy.api.finalize() publishes the discriminated unions - see there.
     source: "AnyTimeseriesSourceSettings"
-    formats: "list[AnyTimeseriesFormatSettings] | None" = None
+    formats: "list[AnyGenericTimeseriesFormatSettings] | None" = None
 
 
-class TimeseriesModule(Module, settings=TimeseriesModuleSettings):
+class TimeseriesModule(Module, Generic[S], settings=TimeseriesModuleSettings):
     type: str = "timeseries"
     type_description: str = "Module providing timeseries data."
-    source: TimeseriesSource
+    source: S
     formats: list[TimeseriesFormat]
 
     def __init__(
         self,
         *,
-        source: TimeseriesSource,
+        source: S,
         formats: list[TimeseriesFormat] | None = None,
         extra_args: dict | None = None,
         supported_resolutions: list[str] | None = None,

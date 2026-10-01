@@ -25,7 +25,7 @@ const document = `type: tariff
 name: spot
 source:
   type: entsoe_day_ahead
-  api_key: "**********"
+  api_key: { type: "secret", name: "entsoe_key" }
 formats:
   - type: kiwatt
     source: Cofy-API-Demo

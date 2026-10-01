@@ -1,5 +1,5 @@
 import operator
-from collections.abc import Callable, Sequence
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from functools import reduce
 from typing import Generic, Literal, TypeVar
@@ -8,8 +8,8 @@ import narwhals as nw
 from pydantic import Field
 
 from cofy.api import BaseSettingsModel, FromSettingsMixin
-from cofy.modules.timeseries import TimeseriesSource
 
+from ..source import NetVolumeSource
 from .members import (
     AccCapacityMember,
     AccCapacityMemberSettings,
@@ -51,7 +51,7 @@ class AccCluster(FromSettingsMixin, Generic[M], settings=AccClusterSettings, abs
         """A cluster of ACC's concurrency matching, which matches the consumption and production of its members."""
         self.members = members
 
-    def sources(self) -> list[TimeseriesSource]:
+    def sources(self) -> list[NetVolumeSource]:
         """The sources of all connections in the cluster and its nested clusters."""
         sources = []
         for member in self.members:
@@ -61,16 +61,19 @@ class AccCluster(FromSettingsMixin, Generic[M], settings=AccClusterSettings, abs
                 sources.append(member.source)
         return sources
 
-    def volumes(self, volume_of: Callable[[TimeseriesSource], nw.Expr]) -> ClusterVolumes:
-        """The cluster's volumes, given the net volume expression of each connection's source."""
+    def volumes(self, connection_volumes: Iterator[nw.Expr]) -> ClusterVolumes:
+        """The cluster's volumes, given the net volume expression of each connection, in the order of `sources()`.
+
+        Connections are told apart by position rather than by source, since one source can take part more than once.
+        """
         consumption, production, residual, nested_matched = [], [], [], []
         for member in self.members:
             if isinstance(member.source, AccCluster):
-                nested = member.source.volumes(volume_of)
+                nested = member.source.volumes(connection_volumes)
                 volume = nested.residual
                 nested_matched.append(nested.matched_in_tree)
             else:
-                volume = volume_of(member.source)
+                volume = next(connection_volumes)
             consumption.append(member.consumption(volume))
             production.append(member.production(volume))
             residual.append(member.residual(volume))

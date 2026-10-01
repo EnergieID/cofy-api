@@ -20,7 +20,7 @@ describe("validate", () => {
       validate(tariff, {
         type: "tariff",
         name: "spot",
-        source: { type: "entsoe_day_ahead", api_key: "k", country_code: "BE" },
+        source: { type: "entsoe_day_ahead", api_key: { type: "secret", name: "k" }, country_code: "BE" },
       }),
     ).toEqual([]);
   });
@@ -49,7 +49,7 @@ describe("validate", () => {
     const issues = validate(tariff, {
       type: "tariff",
       name: "spot",
-      source: { type: "entsoe_day_ahead", api_key: "k", country_code: [1] },
+      source: { type: "entsoe_day_ahead", api_key: { type: "secret", name: "k" }, country_code: [1] },
     });
 
     expect(issues.some((i) => i.pointer === "/source/country_code")).toBe(true);
@@ -61,11 +61,19 @@ describe("validate", () => {
     expect(issues.some((i) => i.pointer === "/source")).toBe(true);
   });
 
+  it("narrows a referable field to the reference it holds", () => {
+    expect(validate(tariff, { type: "tariff", name: "spot", source: { type: "resource", name: "day_ahead" } })).toEqual([]);
+
+    const issues = validate(tariff, { type: "tariff", name: "spot", source: { type: "resource" } });
+    expect(issues.some((i) => i.message.includes("name"))).toBe(true);
+    expect(issues.map((i) => i.message).join(" ")).not.toContain("entsoe_day_ahead");
+  });
+
   it("narrows each element of a list of unions independently", () => {
     const issues = validate(tariff, {
       type: "tariff",
       name: "spot",
-      source: { type: "entsoe_day_ahead", api_key: "k" },
+      source: { type: "entsoe_day_ahead", api_key: { type: "secret", name: "k" } },
       formats: [{ type: "kiwatt", source: "s" }, { type: "csv" }],
     });
 
@@ -76,7 +84,7 @@ describe("validate", () => {
     const issues = validate(tariff, {
       type: "tariff",
       name: "spot",
-      source: { type: "entsoe_day_ahead", api_key: "k" },
+      source: { type: "entsoe_day_ahead", api_key: { type: "secret", name: "k" } },
       formats: [{ type: "csv" }, { type: "kiwatt", source: 123 }],
     });
 
@@ -109,7 +117,7 @@ describe("validate", () => {
     const issues = validate(tariff, {
       type: "tariff",
       name: "has spaces",
-      source: { type: "entsoe_day_ahead", api_key: "k" },
+      source: { type: "entsoe_day_ahead", api_key: { type: "secret", name: "k" } },
     });
 
     expect(issues.some((i) => i.pointer === "/name")).toBe(true);

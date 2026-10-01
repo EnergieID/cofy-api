@@ -1,0 +1,81 @@
+import { ContextProvider } from "@lit/context";
+import { ApiClient, SecretStore, type SecretInfo } from "@cofy/frontend-sdk";
+
+import { communitySlugContext, i18nContext, secretStoreContext } from "../../../src/context.js";
+import { testI18n } from "../../support/i18n.js";
+
+export interface Community {
+  secrets: SecretInfo[];
+  /** Secrets the server refuses to delete, as still referenced. */
+  inUse: string[];
+  /** Every write sent, as method, path and body. */
+  writes: { method: string; path: string; body: unknown }[];
+}
+
+export function community(): Community {
+  return {
+    secrets: [
+      { name: "entsoe_key", description: "ENTSO-E" },
+      { name: "acc", description: null },
+    ],
+    inUse: ["entsoe_key"],
+    writes: [],
+  };
+}
+
+function stubApi(state: Community): ApiClient {
+  const fetchStub = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const request = input instanceof Request ? input : new Request(input, init);
+    const path = new URL(request.url).pathname;
+    let body: unknown = state.secrets;
+    let status = 200;
+    const name = path.split("/").at(-1)!;
+    if (request.method === "DELETE" && state.inUse.includes(name)) {
+      const detail = `Secret '${name}' is still referenced by module tariff:spot`;
+      return new Response(JSON.stringify({ status: 409, title: "Conflict", detail, code: "resource-in-use" }), {
+        status: 409,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    if (request.method !== "GET") {
+      const sent: unknown = request.method === "DELETE" ? undefined : await request.json();
+      state.writes.push({ method: request.method, path, body: sent });
+      const written = sent as { name: string; description: string | null; value: unknown } | undefined;
+      body = written && { name: written.name, description: written.description ?? null };
+      status = request.method === "POST" ? 201 : request.method === "DELETE" ? 204 : 200;
+    }
+    return new Response(status === 204 ? null : JSON.stringify(body), {
+      status,
+      headers: { "content-type": "application/json" },
+    });
+  };
+  return new ApiClient({ fetch: fetchStub, baseUrl: "http://localhost" });
+}
+
+/** Mounts *element* inside the providers an editor gives it: the stores, the community and the translations. */
+export async function mountIn<T extends HTMLElement & { updateComplete: Promise<unknown> }>(
+  element: T,
+  state: Community,
+): Promise<T> {
+  const api = stubApi(state);
+  const host = document.createElement("div");
+  new ContextProvider(host, { context: secretStoreContext, initialValue: new SecretStore(api) });
+  new ContextProvider(host, { context: communitySlugContext, initialValue: "test" });
+  new ContextProvider(host, { context: i18nContext, initialValue: await testI18n() });
+  document.body.append(host);
+  host.append(element);
+  await settle(element);
+  return element;
+}
+
+export async function settle(element: HTMLElement & { updateComplete: Promise<unknown> }): Promise<void> {
+  await element.updateComplete;
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  await element.updateComplete;
+}
+
+/** Type into a Web Awesome control, as its own input event reports it. */
+export function type(control: Element, value: string): void {
+  (control as HTMLElement & { value: string }).value = value;
+  control.dispatchEvent(new Event("input"));
+}

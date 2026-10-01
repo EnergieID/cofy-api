@@ -10,6 +10,7 @@ from cofy.modules.simultaneity import (
     AccProducerPriorityCluster,
     AccProducerShareCluster,
     AccSimultaneitySource,
+    NetVolumeSource,
     SimultaneitySource,
 )
 from cofy.modules.simultaneity.acc import (
@@ -21,7 +22,7 @@ from cofy.modules.simultaneity.acc import (
 )
 from cofy.modules.timeseries import TimeseriesSource
 
-from ...timeseries.dummy_source import DummyTimeseriesSource
+from ..dummy_source import DummyNetVolumeSource
 from ..fixed_source import QUARTER, START, FixedSource
 
 
@@ -30,7 +31,7 @@ async def fetch_values(cluster: AccCluster) -> list[float]:
     return [row["value"] for row in result.to_arr()]
 
 
-def pool(*members: TimeseriesSource | AccCluster) -> AccPoolCluster:
+def pool(*members: NetVolumeSource | AccCluster) -> AccPoolCluster:
     return AccPoolCluster([AccPoolMember(source=member) for member in members])
 
 
@@ -53,6 +54,14 @@ async def test_nested_pools_match_like_one_pool():
     nested = pool(FixedSource([10.0]), FixedSource([-4.0]))
 
     assert await fetch_values(pool(nested, FixedSource([-10.0]))) == [pytest.approx(10 / 14 * 100)]
+
+
+@pytest.mark.asyncio
+async def test_a_source_taking_part_twice_counts_once_per_member():
+    # a shared source can be a member of a cluster more than once, each time with its own volume
+    consumer = FixedSource([10.0])
+
+    assert await fetch_values(pool(consumer, consumer, FixedSource([-40.0]))) == [50.0]
 
 
 @pytest.mark.asyncio
@@ -145,8 +154,8 @@ async def test_missing_data_counts_as_no_volume():
 
 @pytest.mark.asyncio
 async def test_supports_pandas_backed_sources():
-    # DummyTimeseriesSource emits 0, 10, 20 as a pandas frame; a pool only consuming has no production to match
-    cluster = pool(DummyTimeseriesSource(), pool(DummyTimeseriesSource()))
+    # DummyNetVolumeSource emits 0, 10, 20 as a pandas frame; a pool only consuming has no production to match
+    cluster = pool(DummyNetVolumeSource(), pool(DummyNetVolumeSource()))
 
     result = await AccSimultaneitySource(cluster).fetch_timeseries(
         START, START + dt.timedelta(hours=3), dt.timedelta(hours=1)
@@ -193,12 +202,12 @@ def test_create_from_settings():
             "cluster": {
                 "type": "pool",
                 "members": [
-                    {"source": {"type": "dummy_timeseries_source"}},
+                    {"source": {"type": "dummy_net_volume_source"}},
                     {
                         "source": {
                             "type": "producer_share",
                             "members": [
-                                {"source": {"type": "dummy_timeseries_source"}, "role": "producer", "share_ratio": 0.5}
+                                {"source": {"type": "dummy_net_volume_source"}, "role": "producer", "share_ratio": 0.5}
                             ],
                         }
                     },
@@ -213,7 +222,7 @@ def test_create_from_settings():
     assert isinstance(nested, AccProducerShareCluster)
     assert isinstance(nested.members[0], AccShareMember)
     assert (nested.members[0].role, nested.members[0].share_ratio) == ("producer", 0.5)
-    assert all(isinstance(s, DummyTimeseriesSource) for s in source.sources)
+    assert all(isinstance(s, DummyNetVolumeSource) for s in source.sources)
 
 
 @pytest.mark.parametrize(
@@ -224,14 +233,14 @@ def test_create_from_settings():
         # ACC doesn't support nesting in a producer share cluster
         {
             "type": "producer_share",
-            "members": [{"source": {"type": "pool", "members": [{"source": {"type": "dummy_timeseries_source"}}]}}],
+            "members": [{"source": {"type": "pool", "members": [{"source": {"type": "dummy_net_volume_source"}}]}}],
         },
-        {"type": "producer_share", "members": [{"source": {"type": "dummy_timeseries_source"}, "share_ratio": 1.5}]},
+        {"type": "producer_share", "members": [{"source": {"type": "dummy_net_volume_source"}, "share_ratio": 1.5}]},
         {
             "type": "capacity_priority",
-            "members": [{"source": {"type": "dummy_timeseries_source"}, "consumption_capacity_kwh": -1}],
+            "members": [{"source": {"type": "dummy_net_volume_source"}, "consumption_capacity_kwh": -1}],
         },
-        {"type": "producer_priority", "members": [{"source": {"type": "dummy_timeseries_source"}, "role": "both"}]},
+        {"type": "producer_priority", "members": [{"source": {"type": "dummy_net_volume_source"}, "role": "both"}]},
         {"type": "acc_cluster"},
     ],
 )

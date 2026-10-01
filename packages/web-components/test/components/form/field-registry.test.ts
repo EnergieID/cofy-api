@@ -34,8 +34,8 @@ describe("defaultFieldRegistry", () => {
     expect(dispatch(schema)).toEqual({ tag: "cofy-const-form", schema });
   });
 
-  it("dispatches a password/writeOnly string as a secret, ahead of the plain string it also is", () => {
-    const schema = { type: "string", format: "password", writeOnly: true };
+  it("dispatches a reference to a secret as a secret, ahead of the object it also is", () => {
+    const schema = { type: "object", properties: { type: { const: "secret" }, name: { type: "string" } }, "x-secret": true };
     expect(dispatch(schema)).toEqual({ tag: "cofy-secret-form", schema });
   });
 
@@ -121,9 +121,9 @@ describe("FieldRegistry.getSummary", () => {
     expect(defaultFieldRegistry.getSummary({ type: "string" }, {}, undefined)).toBe("");
   });
 
-  it("never summarizes a secret, even though it is also a plain string", () => {
-    const schema = { type: "string", format: "password", writeOnly: true };
-    expect(defaultFieldRegistry.getSummary(schema, {}, "hunter2")).toBeUndefined();
+  it("summarizes a secret by its name, which is all a form ever holds of it", () => {
+    const schema = { type: "object", "x-secret": true };
+    expect(defaultFieldRegistry.getSummary(schema, {}, { type: "secret", name: "entsoe_key" })).toBe("entsoe_key");
   });
 
   it("summarizes an object by its own `type` value, title-cased, read directly rather than scanned from the schema's own const declarations", () => {

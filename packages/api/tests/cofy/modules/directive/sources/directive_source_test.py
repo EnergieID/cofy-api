@@ -4,13 +4,13 @@ import pytest
 
 from cofy.modules.directive import DirectiveSource
 
-from ...timeseries.dummy_source import DummyTimeseriesSource
+from ...timeseries.dummy_source import DummyNumericSource
 
 
 @pytest.mark.asyncio
 async def test_fetch_timeseries_maps_values_to_directive_steps():
     source = DirectiveSource(
-        DummyTimeseriesSource(),
+        DummyNumericSource(),
         boundaries=(0, 10, 20, 40),
     )
 
@@ -27,7 +27,7 @@ async def test_fetch_timeseries_maps_values_to_directive_steps():
 @pytest.mark.asyncio
 async def test_fetch_timeseries_maps_values_to_reversed_directive_steps():
     source = DirectiveSource(
-        DummyTimeseriesSource(),
+        DummyNumericSource(),
         boundaries=(0, 10, 20, 30),
         reverse=True,
     )
@@ -42,7 +42,7 @@ async def test_fetch_timeseries_maps_values_to_reversed_directive_steps():
 
 
 def test_supported_resolutions_and_extra_args_are_forwarded():
-    wrapped = DummyTimeseriesSource()
+    wrapped = DummyNumericSource()
     source = DirectiveSource(wrapped, boundaries=(5, 15, 25, 35))
 
     assert source.supported_resolutions == wrapped.supported_resolutions
@@ -50,10 +50,10 @@ def test_supported_resolutions_and_extra_args_are_forwarded():
 
 
 def test_max_age_is_forwarded():
-    class MaxAgeSource(DummyTimeseriesSource):
+    class MaxAgeSource(DummyNumericSource):
         @property
         def max_age(self) -> dt.timedelta:
             return dt.timedelta(hours=1)
 
     assert DirectiveSource(MaxAgeSource(), boundaries=(5, 15, 25, 35)).max_age == dt.timedelta(hours=1)
-    assert DirectiveSource(DummyTimeseriesSource(), boundaries=(5, 15, 25, 35)).max_age is None
+    assert DirectiveSource(DummyNumericSource(), boundaries=(5, 15, 25, 35)).max_age is None

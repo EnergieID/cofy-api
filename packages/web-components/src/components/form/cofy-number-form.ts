@@ -16,7 +16,7 @@ export class CofyNumberForm extends CofyFormField {
       <cofy-field-shell data-pointer=${this.pointer} .issues=${this.ownIssues}>
         <wa-input
           type="number"
-          label=${this.label}
+          label=${this.bare ? "" : this.label}
           hint=${ifDefined(this.description || undefined)}
           .value=${typeof this.value === "number" ? String(this.value) : ""}
           ?required=${this.required}

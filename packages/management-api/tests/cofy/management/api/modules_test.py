@@ -11,7 +11,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-from cofy.api import MASK
 from cofy.api.module import ModuleSettings
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -28,6 +27,10 @@ def tmp_data(tmp_path: Path):
     """Return a temp directory pre-populated with a single community 'test'."""
     community = {
         "type": "cofy_api",
+        "secrets": [
+            {"name": "entsoe_key", "value": "secret-key"},
+            {"name": "other_key", "value": "other-secret"},
+        ],
         "modules": [
             {
                 "type": "billing",
@@ -38,7 +41,7 @@ def tmp_data(tmp_path: Path):
                 "name": "spot",
                 "source": {
                     "type": "entsoe_day_ahead",
-                    "api_key": "secret-key",
+                    "api_key": {"type": "secret", "name": "entsoe_key"},
                     "country_code": "BE",
                 },
             },
@@ -78,11 +81,11 @@ def test_all_returns_existing_modules(client: TestClient):
 
 
 def test_all_includes_subtype_fields(client: TestClient):
-    """Source-specific fields must appear in the response, with secrets masked."""
+    """Source-specific fields must appear in the response, with secrets by name."""
     r = client.get("/management/communities/test/modules")
     assert r.status_code == 200
     tariff = next(m for m in r.json() if m["type"] == "tariff")
-    assert tariff["source"]["api_key"] == MASK
+    assert tariff["source"]["api_key"] == {"type": "secret", "name": "entsoe_key"}
     assert tariff["source"]["country_code"] == "BE"
 
 
@@ -106,7 +109,7 @@ def test_get_preserves_source_fields(client: TestClient):
     assert r.status_code == 200
     source = r.json()["source"]
     assert source["type"] == "entsoe_day_ahead"
-    assert source["api_key"] == MASK
+    assert source["api_key"] == {"type": "secret", "name": "entsoe_key"}
 
 
 def test_get_never_leaks_the_stored_secret(client: TestClient, tmp_data: Path):
@@ -178,7 +181,11 @@ def test_create_persists_source_settings(client: TestClient, tmp_data: Path):
     payload = {
         "type": "tariff",
         "name": "new_spot",
-        "source": {"type": "entsoe_day_ahead", "api_key": "new-key", "country_code": "NL"},
+        "source": {
+            "type": "entsoe_day_ahead",
+            "api_key": {"type": "secret", "name": "other_key"},
+            "country_code": "NL",
+        },
     }
     r = client.post("/management/communities/test/modules", json=payload)
     assert r.status_code == 201
@@ -186,7 +193,7 @@ def test_create_persists_source_settings(client: TestClient, tmp_data: Path):
     saved = _read_modules(tmp_data)
     new_module = next((m for m in saved if m["name"] == "new_spot"), None)
     assert new_module is not None
-    assert new_module["source"]["api_key"] == "new-key"
+    assert new_module["source"]["api_key"] == {"type": "secret", "name": "other_key"}
     assert new_module["source"]["country_code"] == "NL"
 
 
@@ -197,16 +204,20 @@ def test_put_replaces_module(client: TestClient, tmp_data: Path):
     payload = {
         "type": "tariff",
         "name": "spot",
-        "source": {"type": "entsoe_day_ahead", "api_key": "replaced-key", "country_code": "DE"},
+        "source": {
+            "type": "entsoe_day_ahead",
+            "api_key": {"type": "secret", "name": "other_key"},
+            "country_code": "DE",
+        },
     }
     r = client.put("/management/communities/test/modules/tariff/spot", json=payload)
     assert r.status_code == 200
-    assert r.json()["source"]["api_key"] == MASK  # response is masked, even for a new secret
+    assert r.json()["source"]["api_key"] == {"type": "secret", "name": "other_key"}
 
     # Verify file reflects the change
     saved = _read_modules(tmp_data)
     spot = next(m for m in saved if m["name"] == "spot")
-    assert spot["source"]["api_key"] == "replaced-key"
+    assert spot["source"]["api_key"] == {"type": "secret", "name": "other_key"}
     assert spot["source"]["country_code"] == "DE"
 
 
@@ -232,7 +243,7 @@ def test_put_rejects_body_name_mismatch(client: TestClient, tmp_data: Path):
     payload = {
         "type": "tariff",
         "name": "renamed",
-        "source": {"type": "entsoe_day_ahead", "api_key": "k"},
+        "source": {"type": "entsoe_day_ahead", "api_key": {"type": "secret", "name": "entsoe_key"}},
     }
     r = client.put("/management/communities/test/modules/tariff/spot", json=payload)
     assert r.status_code == 422
@@ -286,48 +297,54 @@ def test_replace_rejects_collision_with_a_different_existing_module(tmp_data: Pa
     assert sum(1 for m in saved if m["type"] == "billing" and m["name"] == "default") == 1  # no duplicate
 
 
-# ── masked secrets on a full-replace PUT ──────────────────────────────────
+# ── secrets ───────────────────────────────────────────────────────────────
 
 
-def test_put_with_masked_secret_keeps_the_stored_value(client: TestClient, tmp_data: Path):
-    """The GET -> edit -> PUT round trip must not blank out an untouched credential."""
-    stored = client.get("/management/communities/test/modules/tariff/spot").json()
-    assert stored["source"]["api_key"] == MASK
-
-    stored["display_name"] = "Spot prices"  # edit something unrelated, send the mask back
-    r = client.put("/management/communities/test/modules/tariff/spot", json=stored)
-    assert r.status_code == 200
-
-    spot = next(m for m in _read_modules(tmp_data) if m["name"] == "spot")
-    assert spot["source"]["api_key"] == "secret-key"  # original survived
-    assert spot["display_name"] == "Spot prices"
-
-
-def test_put_with_a_real_secret_overwrites_the_stored_value(client: TestClient, tmp_data: Path):
-    """Sending an actual value - rather than the mask - still sets a new secret."""
-    stored = client.get("/management/communities/test/modules/tariff/spot").json()
-    stored["source"]["api_key"] = "rotated-key"
-
-    r = client.put("/management/communities/test/modules/tariff/spot", json=stored)
-    assert r.status_code == 200
-
-    spot = next(m for m in _read_modules(tmp_data) if m["name"] == "spot")
-    assert spot["source"]["api_key"] == "rotated-key"
-
-
-def test_put_switching_source_type_does_not_restore_across_branches(client: TestClient, tmp_data: Path):
-    """Changing the polymorphic branch leaves the incoming payload as sent."""
+def test_put_naming_an_unknown_secret_is_rejected_and_stores_nothing(client: TestClient, tmp_data: Path):
+    before = (tmp_data / "test.yaml").read_text()
     payload = {
         "type": "tariff",
         "name": "spot",
-        "source": {"type": "energyid_production", "api_key": "eid-key", "record_id": "r1"},
+        "source": {"type": "entsoe_day_ahead", "api_key": {"type": "secret", "name": "missing"}},
+    }
+
+    r = client.put("/management/communities/test/modules/tariff/spot", json=payload)
+
+    assert r.status_code == 422
+    assert "unknown secret 'missing'" in r.json()["detail"]
+    assert (tmp_data / "test.yaml").read_text() == before
+
+
+def test_a_module_never_holds_a_secret_value(client: TestClient, tmp_data: Path):
+    """Editing a module sends it back as read, so it can't carry - or blank out - a credential."""
+    stored = client.get("/management/communities/test/modules/tariff/spot").json()
+    stored["display_name"] = "Spot prices"
+
+    r = client.put("/management/communities/test/modules/tariff/spot", json=stored)
+
+    assert r.status_code == 200
+    assert "secret-key" in (tmp_data / "test.yaml").read_text()  # the secret itself is untouched
+    assert next(m for m in _read_modules(tmp_data) if m["name"] == "spot")["source"]["api_key"] == {
+        "type": "secret",
+        "name": "entsoe_key",
+    }
+
+
+def test_put_switching_source_type_stores_the_payload_as_sent(client: TestClient, tmp_data: Path):
+    payload = {
+        "type": "tariff",
+        "name": "spot",
+        "source": {
+            "type": "energy_cost",
+            "tariff": [{"start": "2024-01-01T00:00:00+01:00", "consumption": {"constant_cost": 1.0}}],
+        },
     }
     r = client.put("/management/communities/test/modules/tariff/spot", json=payload)
     assert r.status_code == 200
 
     spot = next(m for m in _read_modules(tmp_data) if m["name"] == "spot")
-    assert spot["source"]["type"] == "energyid_production"
-    assert spot["source"]["api_key"] == "eid-key"
+    assert spot["source"]["type"] == "energy_cost"
+    assert "api_key" not in spot["source"]
 
 
 # ── module types that may not be stored ───────────────────────────────────
@@ -362,7 +379,11 @@ def test_create_rejects_a_type_the_community_is_not_allowed(client: TestClient, 
 
     r = client.post(
         "/management/communities/test/modules",
-        json={"type": "tariff", "name": "new", "source": {"type": "entsoe_day_ahead", "api_key": "k"}},
+        json={
+            "type": "tariff",
+            "name": "new",
+            "source": {"type": "entsoe_day_ahead", "api_key": {"type": "secret", "name": "entsoe_key"}},
+        },
     )
 
     assert r.status_code == 422
@@ -378,7 +399,11 @@ def test_put_rejects_a_type_the_community_is_not_allowed(client: TestClient, mon
 
     r = client.put(
         "/management/communities/test/modules/tariff/spot",
-        json={"type": "tariff", "name": "spot", "source": {"type": "entsoe_day_ahead", "api_key": "k"}},
+        json={
+            "type": "tariff",
+            "name": "spot",
+            "source": {"type": "entsoe_day_ahead", "api_key": {"type": "secret", "name": "entsoe_key"}},
+        },
     )
 
     assert r.status_code == 422

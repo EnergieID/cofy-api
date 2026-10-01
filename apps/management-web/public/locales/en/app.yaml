@@ -4,8 +4,17 @@ title: Cofy management
 product: Cofy
 subtitle: management
 
+community:
+  tabs:
+    modules: Modules
+    resources: Resources
+    secrets: Secrets
+
 newModule:
   crumb: New module
   heading: Add module
+
+newResource:
+  crumb: New resource
 
 notFound: No page for {{path}}.

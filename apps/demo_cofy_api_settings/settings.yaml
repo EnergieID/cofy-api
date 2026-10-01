@@ -7,24 +7,43 @@ auth:
     ${COFY_API_TOKEN}:
       name: Demo User
 
+# Credentials, referenced by name from every field that needs one. This app fills them in from its own
+# environment, see `${...}`.
+secrets:
+  - name: entsoe_key
+    value: ${ENTSOE_API_KEY}
+
+  - name: energyid_key
+    value: ${ENERGY_ID_API_KEY}
+
+  - name: acc_credentials
+    value: '${ACC_CREDENTIALS}'
+
+# Values configured once and referenced by name with `{type: resource, name: ...}` wherever one of their kind fits.
+# Any source caches what it fetches when given a `cache`, with max_age defaulting to the source's own.
+resources:
+  # A shared source is built once, so the modules referencing it share its cache.
+  - type: source
+    name: entsoe_be
+    description: Belgian day-ahead prices.
+    value:
+      type: entsoe_day_ahead
+      api_key: { type: secret, name: entsoe_key }
+      # caches in chunks of a day, for 1 hour: ENTSO-E's own max_age
+      cache: {}
+
 modules:
   - type: tariff
     name: entsoe
-    source:
-      # caches in chunks of a day; max_age defaults to the wrapped source's (1 hour for ENTSO-E)
-      type: cached
-      source:
-        type: entsoe_day_ahead
-        api_key: ${ENTSOE_API_KEY}
+    source: { type: resource, name: entsoe_be }
 
   - type: tariff
     name: kiwatt
     source:
-      type: cached
-      source:
-        type: entsoe_day_ahead
-        country_code: NL
-        api_key: ${ENTSOE_API_KEY}
+      type: entsoe_day_ahead
+      country_code: NL
+      api_key: { type: secret, name: entsoe_key }
+      cache: {}
     formats:
       - type: kiwatt
 
@@ -64,7 +83,7 @@ modules:
     name: wind
     source:
       type: energyid_production
-      api_key: ${ENERGY_ID_API_KEY}
+      api_key: { type: secret, name: energyid_key }
       record_id: ${ENERGY_ID_RECORD_ID}
 
   - type: directive
@@ -72,11 +91,7 @@ modules:
     description: A directive module based on the entsoe day-ahead prices, with custom boundaries.
     source:
       type: directive
-      source:
-        type: cached
-        source:
-          type: entsoe_day_ahead
-          api_key: ${ENTSOE_API_KEY}
+      source: { type: resource, name: entsoe_be }
       boundaries: [0, 10, 25, 50]
       reverse: true
     formats:
@@ -98,13 +113,11 @@ modules:
         cluster:
           type: pool
           members:
-            # further members reuse the credentials with `credentials: *acc_credentials`
             - source:
-                type: cached
-                max_age: PT15M
-                source:
-                  type: acc_forecast
-                  ean: '${ACC_EAN_1}'
-                  credentials: &acc_credentials '${ACC_CREDENTIALS}'
+                type: acc_forecast
+                ean: '${ACC_EAN_1}'
+                credentials: { type: secret, name: acc_credentials }
+                cache:
+                  max_age: PT15M
     formats:
       - type: directive

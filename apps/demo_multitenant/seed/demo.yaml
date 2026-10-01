@@ -8,7 +8,7 @@ description: Modular cloud API for energy data
 modules:
 - name: entsoe
   source:
-    api_key: '***'
+    api_key: { type: secret, name: entsoe_key }
     type: entsoe_day_ahead
   type: tariff
 - formats:
@@ -16,7 +16,7 @@ modules:
     type: kiwatt
   name: kiwatt
   source:
-    api_key: '***'
+    api_key: { type: secret, name: entsoe_key }
     country_code: NL
     type: entsoe_day_ahead
   type: tariff
@@ -40,3 +40,7 @@ modules:
   type: billing
 title: demo
 type: cofy_api
+secrets:
+- description: ENTSO-E transparency platform API key.
+  name: entsoe_key
+  value: '***'

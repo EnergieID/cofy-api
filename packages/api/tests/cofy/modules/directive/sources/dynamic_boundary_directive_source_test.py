@@ -3,19 +3,20 @@ import datetime as dt
 import pandas as pd
 import pytest
 
-from cofy.modules.directive import DynamicBoundaryDirectiveSource
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
+from cofy.modules.directive import BoundarySource, DynamicBoundaryDirectiveSource
+from cofy.modules.timeseries import ISODuration, NumericSource, Timeseries
 
-from ...timeseries.dummy_source import DummyTimeseriesSource
+from ...timeseries.dummy_source import DummyNumericSource
 
 
-class DummyBoundarySource(TimeseriesSource):
+class DummyBoundarySource(BoundarySource):
     """Returns a frame with timestamp and four boundary columns b0–b3."""
 
     def __init__(self, boundaries: list[tuple[float, float, float, float]]):
+        super().__init__()
         self._boundaries = boundaries
 
-    async def fetch_timeseries(
+    async def _fetch_timeseries(
         self,
         start: dt.datetime,
         end: dt.datetime,
@@ -33,7 +34,7 @@ class DummyBoundarySource(TimeseriesSource):
 
 @pytest.mark.asyncio
 async def test_fetch_timeseries_applies_dynamic_boundaries():
-    # DummyTimeseriesSource emits values 0, 10, 20, 30, 40, 50, 60 for 7 hours
+    # DummyNumericSource emits values 0, 10, 20, 30, 40, 50, 60 for 7 hours
     boundary_source = DummyBoundarySource(
         boundaries=[
             (5, 15, 25, 35),  # t0: value=0  -> "--"
@@ -45,7 +46,7 @@ async def test_fetch_timeseries_applies_dynamic_boundaries():
             (5, 15, 25, 35),  # t6: value=60 -> "++"
         ]
     )
-    source = DynamicBoundaryDirectiveSource(DummyTimeseriesSource(), boundary_source)
+    source = DynamicBoundaryDirectiveSource(DummyNumericSource(), boundary_source)
 
     result = await source.fetch_timeseries(
         dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
@@ -60,7 +61,7 @@ async def test_fetch_timeseries_applies_dynamic_boundaries():
 @pytest.mark.asyncio
 async def test_fetch_timeseries_uses_per_timestamp_boundaries():
     # Boundaries shift so the same signal value maps to a different step at each timestamp
-    # DummyTimeseriesSource emits value=0, 10, 20 for 3 hours
+    # DummyNumericSource emits value=0, 10, 20 for 3 hours
     boundary_source = DummyBoundarySource(
         boundaries=[
             (-10, 5, 15, 25),  # t0: value=0  -> "-"  (0 > -10 but not > 5)
@@ -68,7 +69,7 @@ async def test_fetch_timeseries_uses_per_timestamp_boundaries():
             (25, 35, 45, 55),  # t2: value=20 -> "--" (20 < 25)
         ]
     )
-    source = DynamicBoundaryDirectiveSource(DummyTimeseriesSource(), boundary_source)
+    source = DynamicBoundaryDirectiveSource(DummyNumericSource(), boundary_source)
 
     result = await source.fetch_timeseries(
         dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
@@ -82,9 +83,9 @@ async def test_fetch_timeseries_uses_per_timestamp_boundaries():
 @pytest.mark.asyncio
 async def test_fetch_timeseries_reversed():
     # With reverse=True, higher values map to more negative steps
-    # DummyTimeseriesSource: values 0, 10, 20, 30, 40
+    # DummyNumericSource: values 0, 10, 20, 30, 40
     boundary_source = DummyBoundarySource(boundaries=[(5, 15, 25, 35)] * 5)
-    source = DynamicBoundaryDirectiveSource(DummyTimeseriesSource(), boundary_source, reverse=True)
+    source = DynamicBoundaryDirectiveSource(DummyNumericSource(), boundary_source, reverse=True)
 
     result = await source.fetch_timeseries(
         dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
@@ -103,7 +104,7 @@ async def test_raises_value_error_when_boundaries_are_not_ascending():
             (5, 25, 15, 35),  # b1 > b2: invalid
         ]
     )
-    source = DynamicBoundaryDirectiveSource(DummyTimeseriesSource(), boundary_source)
+    source = DynamicBoundaryDirectiveSource(DummyNumericSource(), boundary_source)
 
     with pytest.raises(ValueError, match="ascending order"):
         await source.fetch_timeseries(
@@ -116,8 +117,8 @@ async def test_raises_value_error_when_boundaries_are_not_ascending():
 @pytest.mark.asyncio
 async def test_missing_timestamp_on_boundary_side_is_excluded():
     # If a timestamp is missing in boundary_source it should not appear in the result
-    class SparseBoundarySource(TimeseriesSource):
-        async def fetch_timeseries(self, start, end, resolution=dt.timedelta(hours=1), **kwargs):
+    class SparseBoundarySource(BoundarySource):
+        async def _fetch_timeseries(self, start, end, resolution=dt.timedelta(hours=1), **kwargs):
             # Only returns rows for t0 and t2, skipping t1
             data = [
                 {"timestamp": start, "b0": 5.0, "b1": 15.0, "b2": 25.0, "b3": 35.0},
@@ -125,7 +126,7 @@ async def test_missing_timestamp_on_boundary_side_is_excluded():
             ]
             return Timeseries(frame=pd.DataFrame(data), metadata={})
 
-    source = DynamicBoundaryDirectiveSource(DummyTimeseriesSource(), SparseBoundarySource())
+    source = DynamicBoundaryDirectiveSource(DummyNumericSource(), SparseBoundarySource())
 
     result = await source.fetch_timeseries(
         dt.datetime(2026, 1, 1, 0, 0, tzinfo=dt.UTC),
@@ -138,12 +139,15 @@ async def test_missing_timestamp_on_boundary_side_is_excluded():
     assert dt.datetime(2026, 1, 1, 1, 0, tzinfo=dt.UTC) not in timestamps
 
 
-class ConfigurableSource(TimeseriesSource):
+class ConfigurableSource(NumericSource, BoundarySource):
+    """Plays either role, since only its resolutions and extra args matter here."""
+
     def __init__(self, resolutions: list[str] | None = None, extra_args: dict | None = None):
+        super().__init__()
         self._resolutions = resolutions or []
         self._extra_args = extra_args or {}
 
-    async def fetch_timeseries(self, start, end, resolution, **kwargs):
+    async def _fetch_timeseries(self, start, end, resolution, **kwargs):
         raise NotImplementedError
 
     @property
@@ -212,8 +216,11 @@ def test_extra_args_boundary_only():
     assert source.extra_args == {"b": float}
 
 
-class MaxAgeSource(DummyTimeseriesSource):
+class MaxAgeSource(DummyNumericSource, BoundarySource):
+    """Plays either role, since only its max age matters here."""
+
     def __init__(self, max_age: dt.timedelta):
+        super().__init__()
         self._max_age = max_age
 
     @property
@@ -227,7 +234,7 @@ def test_max_age_is_the_smallest_of_both_sources():
 
 
 def test_max_age_is_unknown_when_either_source_is_unknown():
-    source = DynamicBoundaryDirectiveSource(MaxAgeSource(dt.timedelta(hours=1)), DummyTimeseriesSource())
+    source = DynamicBoundaryDirectiveSource(MaxAgeSource(dt.timedelta(hours=1)), ConfigurableSource())
     assert source.max_age is None
 
 
@@ -236,15 +243,15 @@ async def test_expires_is_the_earliest_of_both_sources():
     early = dt.datetime(2026, 1, 1, 12, tzinfo=dt.UTC)
     late = dt.datetime(2026, 1, 1, 13, tzinfo=dt.UTC)
 
-    class ExpiringSignal(DummyTimeseriesSource):
-        async def fetch_timeseries(self, start, end, resolution=dt.timedelta(hours=1), **kwargs):
-            timeseries = await super().fetch_timeseries(start, end, resolution, **kwargs)
+    class ExpiringSignal(DummyNumericSource):
+        async def _fetch_timeseries(self, start, end, resolution=dt.timedelta(hours=1), **kwargs):
+            timeseries = await super()._fetch_timeseries(start, end, resolution, **kwargs)
             timeseries.metadata["expires"] = late
             return timeseries
 
     class ExpiringBoundaries(DummyBoundarySource):
-        async def fetch_timeseries(self, start, end, resolution=dt.timedelta(hours=1), **kwargs):
-            timeseries = await super().fetch_timeseries(start, end, resolution, **kwargs)
+        async def _fetch_timeseries(self, start, end, resolution=dt.timedelta(hours=1), **kwargs):
+            timeseries = await super()._fetch_timeseries(start, end, resolution, **kwargs)
             timeseries.metadata["expires"] = early
             return timeseries
 

@@ -14,11 +14,13 @@ import { CofyEnumForm } from "./cofy-enum-form.js";
 import { CofyListForm } from "./cofy-list-form.js";
 import { CofyNumberForm } from "./cofy-number-form.js";
 import { CofyObjectForm } from "./cofy-object-form.js";
+import { CofyReferableForm } from "./cofy-referable-form.js";
 import { CofySecretForm } from "./cofy-secret-form.js";
 import { CofyStringForm } from "./cofy-string-form.js";
 import { CofyUnionForm } from "./cofy-union-form.js";
 
 import { isRecord } from "./schema/ref.js";
+import { isRefValue, referableOf } from "./schema/referable.js";
 import { resolveNode, unionBranches } from "./schema/resolve.js";
 import { arraySummary, dictSummary, primitiveText, tagSummary } from "./schema/summary.js";
 
@@ -64,6 +66,15 @@ export interface FieldMapper {
 export const defaultFieldMappers: readonly FieldMapper[] = [
   /* Special cases */
   {
+    // Ahead of the union mapper: a referable field is a union of its value and a reference, but
+    // is edited as its value, with a reference as an alternative to it.
+    tag: "cofy-referable-form",
+    component: CofyReferableForm,
+    matches: (node: JsonSchema): boolean => referableOf(node) !== undefined,
+    summarize: (value: unknown, node: JsonSchema): string | undefined =>
+      isRefValue(value) ? primitiveText(value.name) : tagSummary(value, node),
+  },
+  {
     tag: "cofy-list-form",
     component: CofyListForm,
     matches: (node: JsonSchema): boolean => node["type"] === "array" && node["title"] === "Tariff",
@@ -93,10 +104,9 @@ export const defaultFieldMappers: readonly FieldMapper[] = [
   {
     tag: "cofy-secret-form",
     component: CofySecretForm,
-    // Never summarized - a credential has no business showing up in a collapsed header or a
-    // list item, even redacted.
-    matches: (node: JsonSchema): boolean =>
-      node["type"] === "string" && node["format"] === "password" && node["writeOnly"] === true,
+    // Ahead of the object mapper: a reference to a secret is an object too, but only its name is chosen.
+    matches: (node: JsonSchema): boolean => node["x-secret"] === true,
+    summarize: (value: unknown): string | undefined => (isRecord(value) ? primitiveText(value["name"]) : undefined),
   },
   {
     tag: "cofy-string-form",

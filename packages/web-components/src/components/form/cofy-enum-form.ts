@@ -20,7 +20,7 @@ export class CofyEnumForm extends CofyFormField {
     return html`
       <cofy-field-shell data-pointer=${this.pointer} .issues=${this.ownIssues}>
         <wa-select
-          label=${this.label}
+          label=${this.bare ? "" : this.label}
           hint=${ifDefined(this.description || undefined)}
           .value=${primitiveText(this.value)}
           lang=${this.i18n?.resolvedLanguage ?? "en"}
