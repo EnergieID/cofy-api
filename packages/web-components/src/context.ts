@@ -5,6 +5,7 @@ import type {
   CommunityStore,
   ModuleStore,
   ResourceStore,
+  SecretStore,
 } from "@cofy/frontend-sdk";
 
 import type { FieldRegistry } from "./components/form/field-registry.js";
@@ -22,6 +23,7 @@ export const communityStoreContext = createContext<CommunityStore>(Symbol("cofy-
 export const moduleStoreContext = createContext<ModuleStore>(Symbol("cofy-module-store"));
 export const allowedModulesStoreContext = createContext<AllowedModulesStore>(Symbol("cofy-allowed-modules-store"));
 export const resourceStoreContext = createContext<ResourceStore>(Symbol("cofy-resource-store"));
+export const secretStoreContext = createContext<SecretStore>(Symbol("cofy-secret-store"));
 export const allowedResourcesStoreContext = createContext<AllowedResourcesStore>(
   Symbol("cofy-allowed-resources-store"),
 );

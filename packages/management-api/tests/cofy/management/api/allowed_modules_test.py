@@ -100,16 +100,14 @@ def test_type_property_pins_the_discriminator_value(catalog: list[dict]):
     assert schema["properties"]["type"]["const"] == "tariff"
 
 
-def test_credentials_are_marked_write_only_passwords_or_references_to_a_secret(catalog: list[dict]):
-    """So a generated form renders a password input without needing a UI hint, or a picker of secrets."""
+def test_credentials_are_marked_as_references_to_secrets(catalog: list[dict]):
+    """So a generated form renders a picker of the community's secrets."""
     defs = _by_type(catalog, "tariff")["schema"]["$defs"]
     api_key = defs["EntsoeDayAheadTariffSourceSettings"]["properties"]["api_key"]
-    value, ref = api_key["oneOf"]
+    secret = defs[api_key["$ref"].split("/")[-1]]
 
-    assert value["format"] == "password"
-    assert value["writeOnly"] is True
-    assert ref["$ref"] == "#/$defs/RefSettings"
-    assert api_key["x-referable"] == {"kind": "secret"}
+    assert secret["x-secret"] is True
+    assert secret["properties"]["type"]["const"] == "secret"
 
 
 def _all_refs(node: object) -> list[str]:

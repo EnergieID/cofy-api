@@ -52,7 +52,12 @@ const schema: JsonSchema = {
       type: "object",
       properties: {
         type: { const: "a", default: "a", type: "string" },
-        api_key: { type: "string", format: "password", writeOnly: true, title: "Api Key" },
+        api_key: {
+          type: "object",
+          properties: { type: { const: "secret" }, name: { type: "string" } },
+          "x-secret": true,
+          title: "Api Key",
+        },
       },
       required: ["type", "api_key"],
     },
@@ -87,7 +92,7 @@ const schema: JsonSchema = {
 const value = {
   type: "demo",
   name: "spot",
-  source: { type: "a", api_key: "secret" },
+  source: { type: "a", api_key: { type: "secret", name: "entsoe_key" } },
   formula: { kind: "index" },
   tags: ["one", "two"],
 };
@@ -206,11 +211,15 @@ describe("the generic form family, mounted end to end", () => {
     expect(Array.from(options).map((o) => o.getAttribute("value"))).toEqual(["low", "high"]);
   });
 
-  it("renders a password/writeOnly field as a masked input", async () => {
+  it("renders a secret as a picker of secrets by name, never an input for its value", async () => {
     const element = await mountObjectForm();
 
-    const input = fieldAt(element, "/source/api_key")!.querySelector<HTMLElement & { type: string }>("wa-input")!;
-    expect(input.type).toBe("password");
+    const field = fieldAt(element, "/source/api_key")!;
+    const secretForm = (field.getRootNode() as ShadowRoot).host as HTMLElement & { value: unknown };
+    expect(secretForm.tagName.toLowerCase()).toBe("cofy-secret-form");
+    expect(secretForm.value).toEqual({ type: "secret", name: "entsoe_key" });
+    expect(field.querySelector("wa-select")).not.toBeNull();
+    expect(field.querySelector("wa-input")).toBeNull();
   });
 
   it("renders a scalar array as one accordion item per element, plus a trailing Add item", async () => {

@@ -5,7 +5,7 @@ import { stubbedApi } from "../support/api.js";
 
 const catalog = [
   { type: "source", description: "A timeseries source.", schema: { type: "object" } },
-  { type: "secret", description: "A credential.", schema: { type: "object" } },
+  { type: "tariff", description: "An energy cost tariff.", schema: { type: "object" } },
 ];
 
 describe("AllowedResourcesStore", () => {
@@ -26,7 +26,7 @@ describe("AllowedResourcesStore", () => {
     const store = new AllowedResourcesStore(api);
     await store.ensure("test");
 
-    expect(store.find("test", "secret")?.description).toBe("A credential.");
+    expect(store.find("test", "tariff")?.description).toBe("An energy cost tariff.");
     expect(store.find("test", "nope")).toBeUndefined();
   });
 });

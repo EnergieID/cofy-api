@@ -3,8 +3,8 @@ from .docs_router import DocsRouter
 from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin, finalize
 from .module import Module, ModuleSettings
 from .references import Referable, RefSettings
-from .resource import Resource, ResourceSettings, SecretResource, SecretResourceSettings
-from .secret import MASK, Secret, SecretValue, restore_masked_secrets
+from .resource import Resource, ResourceSettings
+from .secret import Secret, SecretRef, SecretSettings, SecretValue
 from .token_auth import Auth, AuthSettings, TokenAuth, TokenAuthSettings, TokenInfo
 from .version import __version__
 
@@ -21,11 +21,9 @@ __all__ = [
     "Resource",
     "ResourceSettings",
     "Secret",
-    "SecretResource",
-    "SecretResourceSettings",
+    "SecretRef",
+    "SecretSettings",
     "SecretValue",
-    "MASK",
-    "restore_masked_secrets",
     "TokenInfo",
     "TokenAuth",
     "TokenAuthSettings",

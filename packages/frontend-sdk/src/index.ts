@@ -11,8 +11,10 @@ export {
   type ModuleSettings,
   type Referable,
   type ResourceRef,
+  type SecretRef,
   type ResourceSettings,
-  type ResourceUsages,
+  type SecretBody,
+  type SecretInfo,
 } from "./types.js";
 export { narrowToInstance, validate, type JsonSchema, type ValidationIssue } from "./validation.js";
 export { CommunityStore } from "./stores/community-store.js";
@@ -20,6 +22,7 @@ export { ModuleStore } from "./stores/module-store.js";
 export { AllowedModulesStore } from "./stores/allowed-modules-store.js";
 export { ResourceStore } from "./stores/resource-store.js";
 export { AllowedResourcesStore } from "./stores/allowed-resources-store.js";
+export { SecretStore } from "./stores/secret-store.js";
 export { EditableValue } from "./drafts/editable-value.js";
 export { ModuleDraft } from "./drafts/module-draft.js";
 export { ResourceDraft } from "./drafts/resource-draft.js";

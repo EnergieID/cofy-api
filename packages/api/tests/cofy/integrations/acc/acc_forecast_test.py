@@ -7,6 +7,7 @@ import pytest
 from cofy.integrations.acc import AccForecastSource
 from cofy.integrations.acc.acc_forecast import ACC_TIMEOUT
 from cofy.modules.timeseries import TimeseriesSource
+from tests.cofy.secrets import with_secrets
 
 MODULE = "cofy.integrations.acc.acc_forecast"
 BASE_URL = "https://acc.example"
@@ -111,9 +112,15 @@ def test_supported_resolutions(id_token):
 
 
 def test_create_from_settings(id_token):
-    source = TimeseriesSource.create(
-        {"type": "acc_forecast", "ean": "541234567890123456", "credentials": CREDENTIALS, "base_url": BASE_URL}
-    )
+    with with_secrets(acc_credentials=CREDENTIALS):
+        source = TimeseriesSource.create(
+            {
+                "type": "acc_forecast",
+                "ean": "541234567890123456",
+                "credentials": {"type": "secret", "name": "acc_credentials"},
+                "base_url": BASE_URL,
+            }
+        )
 
     assert isinstance(source, AccForecastSource)
     assert source.ean == "541234567890123456"

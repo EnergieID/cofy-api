@@ -114,32 +114,47 @@ From Python, pass `cache=CacheSettings(...)` to the source's constructor. A sour
 takes `cache` and passes it on to `super().__init__`; the public `fetch_timeseries` serves from the cache when there is
 one, and a source can override it to cache differently.
 
+## Secrets
+
+Credentials live in a community's `secrets`, and every field needing one references a secret with
+`{type: secret, name: ...}` instead of holding it. A secret's value is never sent back by the management API.
+
+```yaml
+secrets:
+  - name: entsoe_key
+    value: my-entsoe-api-key
+
+modules:
+  - type: tariff
+    name: prices
+    source: { type: entsoe_day_ahead, api_key: { type: secret, name: entsoe_key } }
+```
+
+A settings field of your own holding a credential is typed `Secret`; its object is built with the secret's value. Built
+from Python, objects take the value itself, as before.
+
 ## Resources
 
-A value used in several places - a credential, a tariff, a source - can be configured once as a named resource and
-referenced by name wherever one of its kind fits. A referenced source is built once, so every module referencing it
-shares its cache.
+A value used in several places - a source, a tariff - can be configured once as a named resource and referenced by name
+wherever one of its kind fits. A referenced source is built once, so every module referencing it shares its cache.
 
 ```yaml
 resources:
-  - type: secret
-    name: entsoe_key
-    value: ${ENTSOE_API_KEY}
   - type: source
     name: day_ahead
     value:
       type: entsoe_day_ahead
-      api_key: { type: ref, name: entsoe_key }
+      api_key: { type: secret, name: entsoe_key }
       cache: {}
 
 modules:
   - type: tariff
     name: prices
-    source: { type: ref, name: day_ahead }
+    source: { type: resource, name: day_ahead }
 ```
 
-A reference to a source resource fits wherever the source it holds would. Secret fields (`Secret`) and energy-cost
-tariffs accept references too, and a field of your own opts in with `Annotated[..., Referable("<kind>")]`.
+A reference to a source resource fits wherever the source it holds would. Energy-cost tariffs accept references too, and
+a field of your own opts in with `Annotated[..., Referable("<kind>")]`.
 
 ## Authentication
 

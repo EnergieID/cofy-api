@@ -5,7 +5,6 @@ from typing import Any, Literal
 from pydantic import Field
 
 from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
-from .secret import SecretValue
 
 
 class ResourceSettings(BaseSettingsModel):
@@ -16,6 +15,10 @@ class ResourceSettings(BaseSettingsModel):
     )
     description: str | None = Field(None, description="A short description of the resource.")
 
+    def resolve(self) -> Any:
+        """What a reference to this resource stands for: its value, built."""
+        return self.convert().value
+
 
 class Resource(FromSettingsMixin, settings=ResourceSettings, abstract=True):
     """A named value that can be referenced from anywhere in a configuration."""
@@ -24,12 +27,3 @@ class Resource(FromSettingsMixin, settings=ResourceSettings, abstract=True):
         self.name = name
         self.value = value
         self.description = description
-
-
-class SecretResourceSettings(ResourceSettings):
-    type: Literal["secret"] = "secret"
-    value: SecretValue
-
-
-class SecretResource(Resource, settings=SecretResourceSettings):
-    """A credential."""

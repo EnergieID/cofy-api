@@ -12,14 +12,14 @@ import { testI18n } from "../../support/i18n.js";
 
 const refSettings: JsonSchema = {
   type: "object",
-  properties: { type: { const: "ref" }, name: { type: "string" } },
+  properties: { type: { const: "resource" }, name: { type: "string" } },
   required: ["name"],
 };
 
-/** A secret field: the credential itself, or a reference to a secret resource. */
-const secret: JsonSchema = {
+/** A single input, which can also be a reference to a resource holding a note. */
+const note: JsonSchema = {
   oneOf: [{ type: "string", format: "password", writeOnly: true }, { $ref: "#/$defs/RefSettings" }],
-  "x-referable": { kind: "secret" },
+  "x-referable": { kind: "note" },
   $defs: { RefSettings: refSettings },
 };
 
@@ -34,7 +34,7 @@ const source: JsonSchema = {
 };
 
 const resources: ResourceSettings[] = [
-  { type: "secret", name: "entsoe_key", value: "**********" },
+  { type: "note", name: "greeting", value: "hello" },
   { type: "source", name: "day_ahead", description: "Belgian prices", value: { type: "entsoe_day_ahead" } },
   { type: "source", name: "wind", value: { type: "energyid_production" } },
 ];
@@ -120,14 +120,14 @@ describe("cofy-referable-form", () => {
   });
 
   it("is what a referable field dispatches to, ahead of the union form", () => {
-    expect(defaultFieldRegistry.getFirstMatch(secret, secret)?.tag).toBe("cofy-referable-form");
+    expect(defaultFieldRegistry.getFirstMatch(note, note)?.tag).toBe("cofy-referable-form");
   });
 
   it("edits a single input as itself, under its label with the actions beside it", async () => {
-    const element = await mount(secret, "real");
+    const element = await mount(note, "real");
     const form = valueForm(element);
 
-    expect(form.schema).toEqual((secret["oneOf"] as JsonSchema[])[0]);
+    expect(form.schema).toEqual((note["oneOf"] as JsonSchema[])[0]);
     expect(form.bare).toBe(true);
     expect(element.shadowRoot!.querySelector("cofy-field-shell")!.label).toBe("Api Key");
     expect(valueActions(element).map((action) => action.id)).toEqual(["use-resource", "save-as-resource"]);
@@ -142,21 +142,15 @@ describe("cofy-referable-form", () => {
     expect(form.menuActions.map((action) => action.id)).toEqual(["use-resource", "save-as-resource"]);
   });
 
-  it("does not offer to save a masked secret, whose value it never had", async () => {
-    const element = await mount(secret, "**********");
-
-    expect(valueActions(element).map((action) => action.id)).toEqual(["use-resource"]);
-  });
-
   it("only offers a resource once one fits", async () => {
-    const tariff: JsonSchema = { ...secret, "x-referable": { kind: "tariff" } };
+    const tariff: JsonSchema = { ...note, "x-referable": { kind: "tariff" } };
     const element = await mount(tariff, "real");
 
     expect(valueActions(element).map((action) => action.id)).toEqual(["save-as-resource"]);
   });
 
   it("leaves a field that can neither use nor save a resource as it is", async () => {
-    const tariff: JsonSchema = { ...secret, "x-referable": { kind: "tariff" } };
+    const tariff: JsonSchema = { ...note, "x-referable": { kind: "tariff" } };
     // no fitting resource to use, and nothing entered yet to save as one
     const element = await mount(tariff, undefined);
 
@@ -165,14 +159,14 @@ describe("cofy-referable-form", () => {
   });
 
   it("picks the resource under the field's own label, not one of its own", async () => {
-    const element = await mount(source, { type: "ref", name: "day_ahead" });
+    const element = await mount(source, { type: "resource", name: "day_ahead" });
 
     expect(element.shadowRoot!.querySelector("cofy-field-shell")!.label).toBe("Api Key");
     expect(element.shadowRoot!.querySelector("wa-select")!.hasAttribute("label")).toBe(false);
   });
 
   it("switches to a reference, and back to the value it replaced", async () => {
-    const element = await mount(secret, "real");
+    const element = await mount(note, "real");
     const values = changes(element);
 
     run(valueActions(element), "use-resource");
@@ -183,12 +177,12 @@ describe("cofy-referable-form", () => {
     run(refMenu(element), "specify-value");
     await settle(element);
 
-    expect(values).toEqual([{ type: "ref", name: "" }, "real"]);
+    expect(values).toEqual([{ type: "resource", name: "" }, "real"]);
     expect(valueForm(element)).not.toBeNull();
   });
 
   it("offers only the resources of its kind that hold what the field accepts", async () => {
-    const element = await mount(source, { type: "ref", name: "day_ahead" });
+    const element = await mount(source, { type: "resource", name: "day_ahead" });
 
     const options = Array.from(element.shadowRoot!.querySelectorAll("wa-option"));
     expect(options.map((option) => option.getAttribute("value"))).toEqual(["day_ahead"]);
@@ -196,14 +190,14 @@ describe("cofy-referable-form", () => {
   });
 
   it("references the resource picked", async () => {
-    const element = await mount(source, { type: "ref", name: "" });
+    const element = await mount(source, { type: "resource", name: "" });
     const values = changes(element);
 
     const picker = element.shadowRoot!.querySelector<HTMLElement & { value: string }>("wa-select")!;
     picker.value = "day_ahead";
     picker.dispatchEvent(new Event("change", { bubbles: true }));
 
-    expect(values).toEqual([{ type: "ref", name: "day_ahead" }]);
+    expect(values).toEqual([{ type: "resource", name: "day_ahead" }]);
   });
 
   it("saves the value as a resource, and references it once saved", async () => {
@@ -232,7 +226,7 @@ describe("cofy-referable-form", () => {
         body: { type: "source", name: "be_prices", description: "Belgian prices", value },
       },
     ]);
-    expect(values).toEqual([{ type: "ref", name: "be_prices" }]);
+    expect(values).toEqual([{ type: "resource", name: "be_prices" }]);
     // now referencing the resource, so showing the picker - and no dialog - instead
     expect(element.shadowRoot!.querySelector("cofy-save-resource-dialog")).toBeNull();
     expect(element.shadowRoot!.querySelector<HTMLElement & { value: string }>("wa-select")!.value).toBe("be_prices");

@@ -4,7 +4,7 @@ import { ResourceDraft } from "../../src/drafts/resource-draft.js";
 import { ResourceStore } from "../../src/stores/resource-store.js";
 import { stubbedApi } from "../support/api.js";
 
-const stored = { type: "secret", name: "entsoe_key", value: "**********" };
+const stored = { type: "source", name: "day_ahead", value: { type: "entsoe_day_ahead", api_key: { type: "secret", name: "entsoe_key" } } };
 
 describe("ResourceDraft", () => {
   it("becomes dirty on a change and clean again on reset", () => {
@@ -33,7 +33,7 @@ describe("ResourceDraft", () => {
 
     const saved = await draft.save(new ResourceStore(api), "test");
 
-    expect(calls[0]).toMatchObject({ method: "PUT", path: "/management/communities/test/resources/entsoe_key" });
+    expect(calls[0]).toMatchObject({ method: "PUT", path: "/management/communities/test/resources/day_ahead" });
     expect(saved).toEqual({ ...stored, description: "ENTSO-E" });
     expect(draft.saving).toBe(false);
   });

@@ -135,21 +135,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/management/communities/{slug}/resources/{name}/usages": {
+    "/management/communities/{slug}/secrets": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * Usages
-         * @description What references this resource, and so keeps it from being deleted.
-         */
-        get: operations["usages_management_communities__slug__resources__name__usages_get"];
+        /** All */
+        get: operations["all_management_communities__slug__secrets_get"];
         put?: never;
-        post?: never;
+        /** Create */
+        post: operations["create_management_communities__slug__secrets_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/management/communities/{slug}/secrets/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["get_management_communities__slug__secrets__name__get"];
+        /** Put */
+        put: operations["put_management_communities__slug__secrets__name__put"];
+        post?: never;
+        /** Delete */
+        delete: operations["delete_management_communities__slug__secrets__name__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -252,8 +269,7 @@ export interface components {
             cache?: components["schemas"]["CacheSettings-Input"] | null;
             /** Ean */
             ean: string;
-            /** Credentials */
-            credentials: string | components["schemas"]["RefSettings"];
+            credentials: components["schemas"]["SecretRef"];
             /**
              * Base Url
              * @default https://connection-usage-service-prd-730943142752.europe-west1.run.app
@@ -271,8 +287,7 @@ export interface components {
             cache?: components["schemas"]["CacheSettings-Output"] | null;
             /** Ean */
             ean: string;
-            /** Credentials */
-            credentials: string | components["schemas"]["RefSettings"];
+            credentials: components["schemas"]["SecretRef"];
             /**
              * Base Url
              * @default https://connection-usage-service-prd-730943142752.europe-west1.run.app
@@ -894,8 +909,7 @@ export interface components {
             type: "energyid_production";
             /** @description Cache what this source fetches, if set. */
             cache?: components["schemas"]["CacheSettings-Input"] | null;
-            /** Api Key */
-            api_key: string | components["schemas"]["RefSettings"];
+            api_key: components["schemas"]["SecretRef"];
             /** Record Id */
             record_id: string;
         };
@@ -908,8 +922,7 @@ export interface components {
             type: "energyid_production";
             /** @description Cache what this source fetches, if set. */
             cache?: components["schemas"]["CacheSettings-Output"] | null;
-            /** Api Key */
-            api_key: string | components["schemas"]["RefSettings"];
+            api_key: components["schemas"]["SecretRef"];
             /** Record Id */
             record_id: string;
         };
@@ -922,8 +935,7 @@ export interface components {
             type: "entsoe_day_ahead";
             /** @description Cache what this source fetches, if set. */
             cache?: components["schemas"]["CacheSettings-Input"] | null;
-            /** Api Key */
-            api_key: string | components["schemas"]["RefSettings"];
+            api_key: components["schemas"]["SecretRef"];
             /** Country Code */
             country_code?: string | null;
         };
@@ -936,8 +948,7 @@ export interface components {
             type: "entsoe_day_ahead";
             /** @description Cache what this source fetches, if set. */
             cache?: components["schemas"]["CacheSettings-Output"] | null;
-            /** Api Key */
-            api_key: string | components["schemas"]["RefSettings"];
+            api_key: components["schemas"]["SecretRef"];
             /** Country Code */
             country_code?: string | null;
         };
@@ -1176,13 +1187,6 @@ export interface components {
             /** Minimum */
             minimum?: (components["schemas"]["IndexFormula"] | components["schemas"]["PeriodicFormula"] | components["schemas"]["ScheduledFormulas-Output"] | components["schemas"]["TieredFormula-Output"] | components["schemas"]["MinimumFormula-Output"] | components["schemas"]["MaximumFormula-Output"] | components["schemas"]["MeterTypeFormula-Output"])[];
         };
-        /** ModuleId */
-        ModuleId: {
-            /** Type */
-            type: string;
-            /** Name */
-            name: string;
-        };
         /** PeriodicFormula */
         PeriodicFormula: {
             /**
@@ -1268,31 +1272,15 @@ export interface components {
         RefSettings: {
             /**
              * Type
-             * @default ref
+             * @default resource
              * @constant
              */
-            type?: "ref";
+            type?: "resource";
             /**
              * Name
-             * @description The name of the referenced resource.
+             * @description The name of the referenced item.
              */
             name: string;
-        };
-        /**
-         * ResourceUsages
-         * @description What references a resource.
-         */
-        ResourceUsages: {
-            /**
-             * Modules
-             * @description The modules referencing the resource.
-             */
-            modules: components["schemas"]["ModuleId"][];
-            /**
-             * Resources
-             * @description The names of the resources referencing the resource.
-             */
-            resources: string[];
         };
         /** ScheduledFormula */
         "ScheduledFormula-Input": {
@@ -1350,28 +1338,49 @@ export interface components {
             /** Schedule */
             schedule?: components["schemas"]["ScheduledFormula-Output"][];
         };
-        /** SecretResourceSettings */
-        SecretResourceSettings: {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "secret";
+        /**
+         * SecretBody
+         * @description A secret as written: its value is replaced on every write.
+         */
+        SecretBody: {
             /**
              * Name
-             * @description The machine name of the resource, by which it is referenced. No spaces, no special characters.
+             * @description The machine name of the secret, by which it is referenced.
              */
             name: string;
             /**
              * Description
-             * @description A short description of the resource.
+             * @description A short description of the secret.
              */
             description?: string | null;
             /**
              * Value
-             * Format: password
+             * @description The secret itself.
              */
             value: string;
+        };
+        /**
+         * SecretInfo
+         * @description A secret as reported: everything but its value.
+         */
+        SecretInfo: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+        };
+        SecretRef: {
+            /**
+             * Type
+             * @default secret
+             * @constant
+             */
+            type?: "secret";
+            /**
+             * Name
+             * @description The name of the referenced secret.
+             */
+            name: string;
         };
         /** SimultaneityModuleSettings */
         "SimultaneityModuleSettings-Input": {
@@ -2162,7 +2171,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": (components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"])[];
+                    "application/json": (components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"])[];
                 };
             };
             /** @description Validation Error */
@@ -2187,7 +2196,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Input"] | components["schemas"]["TariffResourceSettings-Input"];
+                "application/json": components["schemas"]["SourceResourceSettings-Input"] | components["schemas"]["TariffResourceSettings-Input"];
             };
         };
         responses: {
@@ -2197,7 +2206,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"];
+                    "application/json": components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"];
                 };
             };
             /** @description Validation Error */
@@ -2229,7 +2238,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"];
+                    "application/json": components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"];
                 };
             };
             /** @description Validation Error */
@@ -2255,7 +2264,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Input"] | components["schemas"]["TariffResourceSettings-Input"];
+                "application/json": components["schemas"]["SourceResourceSettings-Input"] | components["schemas"]["TariffResourceSettings-Input"];
             };
         };
         responses: {
@@ -2265,7 +2274,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SecretResourceSettings"] | components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"];
+                    "application/json": components["schemas"]["SourceResourceSettings-Output"] | components["schemas"]["TariffResourceSettings-Output"];
                 };
             };
             /** @description Validation Error */
@@ -2309,7 +2318,74 @@ export interface operations {
             };
         };
     };
-    usages_management_communities__slug__resources__name__usages_get: {
+    all_management_communities__slug__secrets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretInfo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_management_communities__slug__secrets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SecretBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_management_communities__slug__secrets__name__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2327,8 +2403,74 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ResourceUsages"];
+                    "application/json": components["schemas"]["SecretInfo"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_management_communities__slug__secrets__name__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SecretBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_management_communities__slug__secrets__name__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

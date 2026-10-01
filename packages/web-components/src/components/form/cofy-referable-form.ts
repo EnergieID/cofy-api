@@ -22,9 +22,6 @@ import { seedFromSchema } from "./schema/defaults.js";
 import { isRefValue, referableBranches, referableOf } from "./schema/referable.js";
 import { resolveNode } from "./schema/resolve.js";
 
-/** What a secret's value reads as once stored - the value itself is never sent back. */
-const MASK = "**********";
-
 /**
  * A field whose value can also be a reference to a resource (an `x-referable` schema): edited as
  * its value, with using a resource instead - or saving the value as one - among its actions.
@@ -40,6 +37,14 @@ export class CofyReferableForm extends CofyFormField {
     css`
       :host {
         display: block;
+      }
+      .picker {
+        display: flex;
+        align-items: center;
+        gap: var(--wa-space-s);
+      }
+      .picker wa-select {
+        flex: 1;
       }
     `,
   ];
@@ -80,7 +85,7 @@ export class CofyReferableForm extends CofyFormField {
     if ((this.resourceStore?.fitting(this.slug, referable).length ?? 0) > 0) {
       actions.push({ id: "use-resource", label: this.t("form.useResource"), run: (): void => this.useResource() });
     }
-    if (this.canSave(referable)) {
+    if (this.canSave()) {
       actions.push({
         id: "save-as-resource",
         label: this.t("form.saveAsResource"),
@@ -131,7 +136,6 @@ export class CofyReferableForm extends CofyFormField {
     const options = this.resourceStore?.fitting(this.slug, referable) ?? [];
     // No label of its own: it always sits under the field's, which names what it picks.
     const picker = html`<wa-select
-      class="wa-flex-grow"
       aria-label=${this.label || this.t("form.resource")}
       placeholder=${this.t("form.chooseResource")}
       .value=${ref.name}
@@ -159,7 +163,7 @@ export class CofyReferableForm extends CofyFormField {
         .issues=${this.refIssues()}
       >
         ${this.bare
-          ? html`<div class="wa-cluster wa-align-items-center">${picker}${menu}</div>`
+          ? html`<div class="picker">${picker}${menu}</div>`
           : html`${menu}${picker}`}
         ${options.length === 0
           ? html`<span class="wa-caption-s">${this.t("form.noResources", { kind: referable.kind })}</span>`
@@ -173,10 +177,9 @@ export class CofyReferableForm extends CofyFormField {
     return this.required ? `${this.label}*` : this.label;
   }
 
-  /** A secret already stored comes back masked, so there is no value to save as a resource. */
-  private canSave(referable: Referable): boolean {
-    if (this.resourceStore === undefined || this.value === undefined || this.value === null) return false;
-    return !(referable.kind === "secret" && this.value === MASK);
+  /** Whether there is a value to save as a resource. */
+  private canSave(): boolean {
+    return this.resourceStore !== undefined && this.value !== undefined && this.value !== null;
   }
 
   /** The reference's own issues, and those of its name - it has no form of its own to show them in. */
@@ -191,7 +194,7 @@ export class CofyReferableForm extends CofyFormField {
 
   private useResource(): void {
     this.replaced = this.value;
-    this.emit({ type: "ref", name: "" });
+    this.emit({ type: "resource", name: "" });
   }
 
   private specifyValue(schema: JsonSchema): void {
@@ -203,12 +206,12 @@ export class CofyReferableForm extends CofyFormField {
   private onSaved(name: string): void {
     this.saving = false;
     this.replaced = this.value;
-    this.emit({ type: "ref", name });
+    this.emit({ type: "resource", name });
   }
 
   private onChoose(event: Event): void {
     const name = (event.target as HTMLElement & { value?: string }).value ?? "";
-    this.emit({ type: "ref", name });
+    this.emit({ type: "resource", name });
   }
 
   private emit(value: unknown): void {

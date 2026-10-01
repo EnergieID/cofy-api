@@ -32,10 +32,22 @@ resourceList:
   deleting: Verwijderen…
   empty: Er zijn geen bronnen geconfigureerd voor deze gemeenschap.
   deleteConfirm: "{{name}} verwijderen? De waarde kan niet worden hersteld."
-  inUse: "{{name}} wordt nog gebruikt door {{users}}. Verwijder die verwijzingen eerst."
   columns:
     resource: Bron
     kind: Soort
+    description: Beschrijving
+    actions: Acties
+
+secretList:
+  title: Geheimen
+  description: Inloggegevens, één keer ingegeven en bij naam gebruikt. De waarde van een geheim wordt nooit meer getoond.
+  add: Geheim toevoegen
+  delete: Verwijderen
+  deleting: Verwijderen…
+  empty: Er zijn geen geheimen geconfigureerd voor deze gemeenschap.
+  deleteConfirm: "{{name}} verwijderen? De waarde kan niet worden hersteld."
+  columns:
+    secret: Geheim
     description: Beschrijving
     actions: Acties
 

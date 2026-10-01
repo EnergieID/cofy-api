@@ -11,6 +11,7 @@ from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
 from .module import Module, ModuleSettings
 from .references import check_references, resolving
 from .resource import ResourceSettings
+from .secret import SecretSettings
 from .token_auth import Auth, AuthSettings
 from .version import get_installed_version
 
@@ -39,17 +40,18 @@ class CofyAPISettings(BaseSettingsModel):
     modules: "list[AnyModuleSettings]" = []
     auth: "AnyAuthSettings | None" = None
     resources: "list[AnyResourceSettings]" = []
+    secrets: list[SecretSettings] = []
 
-    # Resources are only built when referenced, see convert().
-    _not_converted: ClassVar[frozenset[str]] = frozenset({"type", "resources"})
+    # Resources are only built when referenced, and secrets only revealed, see convert().
+    _not_converted: ClassVar[frozenset[str]] = frozenset({"type", "resources", "secrets"})
 
     @model_validator(mode="after")
     def _check_references(self):
-        check_references(self.resources, self.modules, self.auth)
+        check_references(self.resources, self.secrets, self.modules, self.auth)
         return self
 
     def convert(self) -> Any:
-        with resolving(self.resources):
+        with resolving(self.resources, self.secrets):
             return super().convert()
 
 

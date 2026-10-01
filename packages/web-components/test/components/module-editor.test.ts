@@ -9,7 +9,7 @@ const stored: ModuleSettings = {
   name: "spot",
   display_name: null,
   description: null,
-  source: { type: "entsoe_day_ahead", api_key: "**********", country_code: "BE" },
+  source: { type: "entsoe_day_ahead", api_key: { type: "secret", name: "entsoe_key" }, country_code: "BE" },
 };
 
 const catalog = [{ type: "tariff", description: "Tariff", schema: { type: "object" } }];

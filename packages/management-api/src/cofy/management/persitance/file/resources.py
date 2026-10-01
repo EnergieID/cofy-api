@@ -1,5 +1,4 @@
 from cofy.api import ResourceSettings
-from cofy.api.secret import restore_masked_secrets
 
 from ...errors import ResourceAlreadyExistsError, ResourceNotFoundError
 from ..resources import ResourcesPersistence
@@ -30,10 +29,6 @@ class FileResourcesPersistence(FilePersistence, ResourcesPersistence):
             index = next((i for i, existing in enumerate(config.resources) if existing.name == name), None)
             if index is None:
                 raise ResourceNotFoundError(f"Resource {name!r} not found")
-
-            # The client built this payload from a masked read, so any secret it did not
-            # deliberately change still carries the placeholder.
-            restore_masked_secrets(resource, config.resources[index])
 
             config.resources[index] = resource
             return resource

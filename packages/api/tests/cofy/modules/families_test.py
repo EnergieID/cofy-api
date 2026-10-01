@@ -9,12 +9,13 @@ from cofy.modules.directive import BoundarySourceSettings, DirectiveSource
 from cofy.modules.discovery import discover_installed_types
 from cofy.modules.tariff import PriceSource
 from cofy.modules.timeseries import NumericSource, TimeseriesSourceSettings
+from tests.cofy.secrets import with_secrets
 
 discover_installed_types()
 
-ENTSOE = {"type": "entsoe_day_ahead", "api_key": "key"}
-ENERGYID = {"type": "energyid_production", "api_key": "key", "record_id": "record"}
-ACC = {"type": "acc_forecast", "ean": "541", "credentials": "{}"}
+ENTSOE = {"type": "entsoe_day_ahead", "api_key": {"type": "secret", "name": "key"}}
+ENERGYID = {"type": "energyid_production", "api_key": {"type": "secret", "name": "key"}, "record_id": "record"}
+ACC = {"type": "acc_forecast", "ean": "541", "credentials": {"type": "secret", "name": "acc_credentials"}}
 
 
 def cached(source: dict) -> dict:
@@ -107,7 +108,8 @@ def test_a_module_only_offers_the_sources_of_its_family():
 
 
 def test_a_cached_source_is_still_a_member_of_its_family():
-    source = NumericSource.create(cached(ENTSOE))
+    with with_secrets(key="real"):
+        source = NumericSource.create(cached(ENTSOE))
 
     assert isinstance(source, PriceSource)
     assert source.cache is not None
@@ -124,6 +126,7 @@ def test_the_root_family_holds_every_source():
 
 
 def test_a_directive_source_is_built_from_a_numeric_source():
-    source = DirectiveSource.create(directive(cached(ENTSOE)))
+    with with_secrets(key="real"):
+        source = DirectiveSource.create(directive(cached(ENTSOE)))
 
     assert isinstance(source.source, NumericSource)

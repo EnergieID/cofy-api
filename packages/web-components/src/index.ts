@@ -7,6 +7,7 @@ export {
   i18nContext,
   moduleStoreContext,
   resourceStoreContext,
+  secretStoreContext,
   themeStateContext,
 } from "./context.js";
 export { CofyElement } from "./cofy-element.js";
@@ -45,6 +46,8 @@ export { CofyProblemDetails } from "./components/cofy-problem-details.js";
 export { CofyReferableForm } from "./components/form/cofy-referable-form.js";
 export { CofyActionMenu, type MenuAction } from "./components/form/cofy-action-menu.js";
 export { CofySaveResourceDialog } from "./components/resource/cofy-save-resource-dialog.js";
+export { CofySecretDialog } from "./components/secret/cofy-secret-dialog.js";
+export { CofySecretList } from "./components/secret/cofy-secret-list.js";
 export { CofyResourceCreate } from "./components/resource/cofy-resource-create.js";
 export { CofyResourceEditor } from "./components/resource/cofy-resource-editor.js";
 export { CofyResourceList } from "./components/resource/cofy-resource-list.js";

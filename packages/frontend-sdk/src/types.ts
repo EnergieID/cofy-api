@@ -36,8 +36,11 @@ export function moduleKey(id: ModuleId): string {
 /** One resource kind a community may configure, with the JSON Schema for its settings. */
 export type AllowedResource = components["schemas"]["AllowedResource"];
 
-/** What references a resource, and so keeps it from being deleted. */
-export type ResourceUsages = components["schemas"]["ResourceUsages"];
+/** A secret as reported: everything but its value, which is never sent back. */
+export type SecretInfo = components["schemas"]["SecretInfo"];
+
+/** A secret as written: its value replaces the stored one. */
+export type SecretBody = components["schemas"]["SecretBody"];
 
 /**
  * A resource's settings as stored: a named value that modules and other resources reference.
@@ -55,7 +58,13 @@ export interface ResourceSettings {
 
 /** A reference to a resource, in place of a value. */
 export interface ResourceRef {
-  type: "ref";
+  type: "resource";
+  name: string;
+}
+
+/** What a credential field holds: a reference to one of the community's secrets. */
+export interface SecretRef {
+  type: "secret";
   name: string;
 }
 

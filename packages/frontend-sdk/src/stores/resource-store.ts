@@ -2,7 +2,7 @@ import { State, StateMap, stateProperty } from "@dodona/lit-state";
 
 import type { ApiClient } from "../api-client.js";
 import { asProblem, withProblem, type ProblemError } from "../errors.js";
-import type { Referable, ResourceSettings, ResourceUsages } from "../types.js";
+import type { Referable, ResourceSettings } from "../types.js";
 
 /**
  * The resources configured per community.
@@ -13,7 +13,6 @@ import type { Referable, ResourceSettings, ResourceUsages } from "../types.js";
 export class ResourceStore extends State {
   private static readonly COLLECTION = "/management/communities/{slug}/resources" as const;
   private static readonly ITEM = "/management/communities/{slug}/resources/{name}" as const;
-  private static readonly USAGES = "/management/communities/{slug}/resources/{name}/usages" as const;
 
   public readonly resources = new StateMap<string, ResourceSettings[]>();
 
@@ -56,7 +55,7 @@ export class ResourceStore extends State {
     while (current !== undefined && !seen.has(current.name)) {
       seen.add(current.name);
       const value = current.value as { type?: unknown; name?: unknown } | undefined;
-      if (value?.type !== "ref") return typeof value?.type === "string" && types.includes(value.type);
+      if (value?.type !== "resource") return typeof value?.type === "string" && types.includes(value.type);
       current = resources.find((candidate) => candidate.name === value.name);
     }
     return false;
@@ -121,11 +120,6 @@ export class ResourceStore extends State {
         cached.filter((existing) => existing.name !== name),
       );
     }
-  }
-
-  /** What references the resource, fetched fresh since any module write can change it. */
-  public async usages(slug: string, name: string): Promise<ResourceUsages> {
-    return withProblem(() => this.api.GET(ResourceStore.USAGES, { params: { path: { slug, name } } }));
   }
 
   /** Drop *slug*'s cache, so the next `ensure` refetches. */

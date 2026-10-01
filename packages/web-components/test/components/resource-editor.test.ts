@@ -4,9 +4,9 @@ import { AllowedResourcesStore, ApiClient, ResourceStore, type ResourceSettings 
 import { CofyResourceEditor } from "../../src/components/resource/cofy-resource-editor.js";
 import { testI18n } from "../support/i18n.js";
 
-const stored: ResourceSettings = { type: "secret", name: "entsoe_key", description: null, value: "**********" };
+const stored: ResourceSettings = { type: "source", name: "day_ahead", description: null, value: { type: "entsoe_day_ahead" } };
 
-const catalog = [{ type: "secret", description: "A credential.", schema: { type: "object" } }];
+const catalog = [{ type: "source", description: "A timeseries source.", schema: { type: "object" } }];
 
 function stubApi(puts: unknown[]): ApiClient {
   const fetchStub = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -29,7 +29,7 @@ async function mount(puts: unknown[] = []): Promise<CofyResourceEditor> {
   element.resourceStore = new ResourceStore(api);
   element.allowedResources = new AllowedResourcesStore(api);
   element.slug = "test";
-  element.name = "entsoe_key";
+  element.name = "day_ahead";
   document.body.append(element);
   await element.updateComplete;
   await new Promise((resolve) => setTimeout(resolve, 20));
@@ -73,7 +73,7 @@ describe("cofy-resource-editor", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
 
     expect(puts).toEqual([
-      { path: "/management/communities/test/resources/entsoe_key", body: { ...stored, description: "ENTSO-E" } },
+      { path: "/management/communities/test/resources/day_ahead", body: { ...stored, description: "ENTSO-E" } },
     ]);
   });
 

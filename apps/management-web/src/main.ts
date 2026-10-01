@@ -13,6 +13,7 @@ import {
   CommunityStore,
   ModuleStore,
   ResourceStore,
+  SecretStore,
 } from "@cofy/frontend-sdk";
 import { StateController } from "@dodona/lit-state";
 import {
@@ -25,6 +26,7 @@ import {
   moduleStoreContext,
   nativeStyles,
   resourceStoreContext,
+  secretStoreContext,
   themeStateContext,
   utilityStyles,
   yamlBackend,
@@ -129,6 +131,9 @@ export class CofyApp extends LitElement {
 
   @provide({ context: allowedResourcesStoreContext })
   public allowedResources = new AllowedResourcesStore(this.api);
+
+  @provide({ context: secretStoreContext })
+  public secrets = new SecretStore(this.api);
 
   @provide({ context: routeStateContext })
   public routeState = new RouteState(routes);

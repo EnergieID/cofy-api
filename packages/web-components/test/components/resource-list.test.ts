@@ -1,37 +1,36 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ContextProvider } from "@lit/context";
 import { ApiClient, ResourceStore, type ResourceSettings } from "@cofy/frontend-sdk";
 
 import { CofyResourceList } from "../../src/components/resource/cofy-resource-list.js";
+import { i18nContext } from "../../src/context.js";
 import { testI18n } from "../support/i18n.js";
 
 interface Community {
   resources: ResourceSettings[];
-  /** Resource name -> the module ids referencing it. */
-  usedBy: Record<string, string[]>;
+  /** Resources the server refuses to delete, as still referenced. */
+  inUse: string[];
 }
 
 const resources: ResourceSettings[] = [
-  { type: "secret", name: "entsoe_key", description: "ENTSO-E" },
+  { type: "tariff", name: "dynamic", description: "Dynamic tariff" },
   { type: "source", name: "day_ahead" },
 ];
 
-function json(body: unknown): Response {
-  return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 }
 
 function stubApi(state: Community): ApiClient {
   const fetchStub = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const request = input instanceof Request ? input : new Request(input, init);
-    const segments = new URL(request.url).pathname.split("/");
-    if (segments.at(-1) === "usages") {
-      const modules = (state.usedBy[segments.at(-2)!] ?? []).map((id) => {
-        const [type, name] = id.split(":");
-        return { type, name };
-      });
-      return Promise.resolve(json({ modules, resources: [] }));
-    }
+    const name = new URL(request.url).pathname.split("/").at(-1)!;
     if (request.method === "DELETE") {
-      state.resources = state.resources.filter((resource) => resource.name !== segments.at(-1));
+      if (state.inUse.includes(name)) {
+        const detail = `Resource '${name}' is still referenced by module tariff:spot`;
+        return Promise.resolve(json({ status: 409, title: "Conflict", detail, code: "resource-in-use" }, 409));
+      }
+      state.resources = state.resources.filter((resource) => resource.name !== name);
       return Promise.resolve(new Response(null, { status: 204 }));
     }
     return Promise.resolve(json(state.resources));
@@ -40,11 +39,14 @@ function stubApi(state: Community): ApiClient {
 }
 
 async function mount(state: Community): Promise<CofyResourceList> {
+  // Provided rather than set, so the elements the list renders read the same translations.
+  const host = document.createElement("div");
+  new ContextProvider(host, { context: i18nContext, initialValue: await testI18n() });
+  document.body.append(host);
   const element = new CofyResourceList();
-  element.i18n = await testI18n();
   element.store = new ResourceStore(stubApi(state));
   element.slug = "test";
-  document.body.append(element);
+  host.append(element);
   await element.updateComplete;
   await new Promise((resolve) => setTimeout(resolve, 10));
   await element.updateComplete;
@@ -70,14 +72,14 @@ describe("cofy-resource-list", () => {
   });
 
   it("renders a row per resource with its kind and description", async () => {
-    const element = await mount({ resources: [...resources], usedBy: {} });
+    const element = await mount({ resources: [...resources], inUse: [] });
 
-    expect(rowNames(element)).toEqual(["entsoe_key", "day_ahead"]);
-    expect(element.shadowRoot!.querySelector('tr[data-key="entsoe_key"]')!.textContent).toContain("ENTSO-E");
+    expect(rowNames(element)).toEqual(["dynamic", "day_ahead"]);
+    expect(element.shadowRoot!.querySelector('tr[data-key="dynamic"]')!.textContent).toContain("Dynamic tariff");
   });
 
   it("opens a resource when its row is clicked", async () => {
-    const element = await mount({ resources: [...resources], usedBy: {} });
+    const element = await mount({ resources: [...resources], inUse: [] });
     const events: unknown[] = [];
     element.addEventListener("resource-edit", (event) => events.push((event as CustomEvent).detail));
 
@@ -86,28 +88,26 @@ describe("cofy-resource-list", () => {
     expect(events).toEqual([{ slug: "test", name: "day_ahead" }]);
   });
 
-  it("tells what still references a resource instead of deleting it", async () => {
-    const state = { resources: [...resources], usedBy: { day_ahead: ["tariff:spot"] } };
-    const element = await mount(state);
-    const alert = vi.spyOn(window, "alert").mockImplementation(() => undefined);
-    const confirm = vi.spyOn(window, "confirm");
-
-    await pressDelete(element, "day_ahead");
-
-    expect(alert.mock.calls[0]![0]).toContain("tariff:spot");
-    expect(confirm).not.toHaveBeenCalled();
-    expect(state.resources.map((resource) => resource.name)).toEqual(["entsoe_key", "day_ahead"]);
-  });
-
-  it("deletes an unreferenced resource after asking", async () => {
-    const state = { resources: [...resources], usedBy: {} };
+  it("deletes a resource after asking", async () => {
+    const state = { resources: [...resources], inUse: [] };
     const element = await mount(state);
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    await pressDelete(element, "entsoe_key");
+    await pressDelete(element, "dynamic");
 
     expect(confirm).toHaveBeenCalledTimes(1);
     expect(state.resources.map((resource) => resource.name)).toEqual(["day_ahead"]);
     expect(rowNames(element)).toEqual(["day_ahead"]);
+  });
+
+  it("shows why the server refused to delete a resource still in use, keeping the list", async () => {
+    const state = { resources: [...resources], inUse: ["day_ahead"] };
+    const element = await mount(state);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    await pressDelete(element, "day_ahead");
+
+    expect(element.shadowRoot!.querySelector("cofy-problem-details")!.problem!.message).toContain("tariff:spot");
+    expect(rowNames(element)).toEqual(["dynamic", "day_ahead"]);
   });
 });

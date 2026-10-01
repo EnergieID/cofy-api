@@ -104,10 +104,9 @@ export const defaultFieldMappers: readonly FieldMapper[] = [
   {
     tag: "cofy-secret-form",
     component: CofySecretForm,
-    // Never summarized - a credential has no business showing up in a collapsed header or a
-    // list item, even redacted.
-    matches: (node: JsonSchema): boolean =>
-      node["type"] === "string" && node["format"] === "password" && node["writeOnly"] === true,
+    // Ahead of the object mapper: a reference to a secret is an object too, but only its name is chosen.
+    matches: (node: JsonSchema): boolean => node["x-secret"] === true,
+    summarize: (value: unknown): string | undefined => (isRecord(value) ? primitiveText(value["name"]) : undefined),
   },
   {
     tag: "cofy-string-form",

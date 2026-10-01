@@ -10,7 +10,7 @@ import "@cofy/web-components";
 
 import { CofyPage } from "./cofy-page.js";
 
-/** The modules and resources configured in one community. */
+/** The modules, resources and secrets configured in one community. */
 @customElement("cofy-modules-page")
 export class CofyModulesPage extends CofyPage {
   public static override styles = css`
@@ -48,6 +48,7 @@ export class CofyModulesPage extends CofyPage {
           @resource-edit=${(event: CustomEvent<{ slug: string; name: string }>): void =>
             this.routes.navigate("resource", { slug: event.detail.slug, name: event.detail.name })}
         ></cofy-resource-list>
+        <cofy-secret-list .slug=${this.slug}></cofy-secret-list>
       </div>
     `;
   }

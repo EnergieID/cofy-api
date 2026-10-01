@@ -22,5 +22,5 @@ export function referableBranches(node: JsonSchema): { value: JsonSchema; ref: J
 
 /** Whether *value* is a reference to a resource rather than a value itself. */
 export function isRefValue(value: unknown): value is ResourceRef {
-  return isRecord(value) && value["type"] === "ref";
+  return isRecord(value) && value["type"] === "resource";
 }

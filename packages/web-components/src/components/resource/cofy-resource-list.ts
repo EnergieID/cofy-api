@@ -2,7 +2,7 @@ import { consume } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import type { ProblemError, ResourceSettings, ResourceStore, ResourceUsages } from "@cofy/frontend-sdk";
+import type { ProblemError, ResourceSettings, ResourceStore } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
@@ -58,9 +58,8 @@ export class CofyResourceList extends CofyElement {
     if (this.store === undefined) return nothing;
 
     const resources = this.store.list(this.slug);
-    const error = this.deleteError ?? this.store.error;
 
-    if (error != null) return html`<cofy-problem-details .problem=${error}></cofy-problem-details>`;
+    if (this.store.error != null) return html`<cofy-problem-details .problem=${this.store.error}></cofy-problem-details>`;
     if (resources === undefined) {
       return html`<div class="wa-stack">
         ${Array.from({ length: 4 }, () => html`<wa-skeleton></wa-skeleton>`)}
@@ -76,6 +75,10 @@ export class CofyResourceList extends CofyElement {
             ${this.t("resourceList.add")}
           </wa-button>
         </cofy-heading>
+
+        ${this.deleteError === null
+          ? nothing
+          : html`<cofy-problem-details .problem=${this.deleteError}></cofy-problem-details>`}
 
         <table>
           <thead>
@@ -148,16 +151,11 @@ export class CofyResourceList extends CofyElement {
     this.dispatchEvent(new CustomEvent("resource-create", { detail: { slug: this.slug }, bubbles: true, composed: true }));
   }
 
-  /** Delete one resource, after telling what still references it, or asking. */
+  /** Delete one resource, after asking. One still referenced is refused, and the server says by what. */
   private async deleteResource(resource: ResourceSettings): Promise<void> {
     this.deleting = true;
     this.deleteError = null;
     try {
-      const users = this.users(await this.store.usages(this.slug, resource.name));
-      if (users.length > 0) {
-        window.alert(this.t("resourceList.inUse", { name: resource.name, users: users.join(", ") }));
-        return;
-      }
       if (!window.confirm(this.t("resourceList.deleteConfirm", { name: resource.name }))) return;
       await this.store.remove(this.slug, resource.name);
     } catch (error) {
@@ -165,10 +163,6 @@ export class CofyResourceList extends CofyElement {
     } finally {
       this.deleting = false;
     }
-  }
-
-  private users(usages: ResourceUsages): string[] {
-    return [...usages.modules.map((module) => `${module.type}:${module.name}`), ...usages.resources];
   }
 }
 

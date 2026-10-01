@@ -20,12 +20,7 @@ class ResourcesPersistence(ABC):
 
     @abstractmethod
     def replace(self, slug: str, name: str, resource: ResourceSettings) -> ResourceSettings:
-        """Replace one resource for a community.
-
-        This is a *full* replace of a payload built from a read whose secrets were masked, so
-        implementations must call `cofy.api.restore_masked_secrets` against the resource being
-        replaced, inside whatever lock guards the write.
-        """
+        """Replace one resource for a community."""
 
     @abstractmethod
     def delete(self, slug: str, name: str) -> None:

@@ -1,4 +1,4 @@
-"""References to named resources, and how they are checked and resolved."""
+"""References to the named resources and secrets of a configuration, and how they are checked and resolved."""
 
 from __future__ import annotations
 
@@ -14,24 +14,27 @@ from pydantic_core import core_schema
 from .from_settings_mixin import BaseSettingsModel
 
 
-class RefSettings(BaseSettingsModel):
+class NamedRef(BaseSettingsModel):
+    """A reference to an item of one of a configuration's named collections, which its `type` names."""
+
+    type: str
+    name: str = Field(description="The name of the referenced item.")
+
+    def convert(self) -> Any:
+        return current_resolver(f"Reference to {self.type} {self.name!r}").resolve(self)
+
+
+class RefSettings(NamedRef):
     """A reference to a named resource."""
 
-    type: Literal["ref"] = "ref"
-    name: str = Field(description="The name of the referenced resource.")
+    type: Literal["resource"] = "resource"
 
     # Stamped by the field it was validated for, which knows what it accepts.
     _field: Referable | None = PrivateAttr(default=None)
 
-    def convert(self) -> Any:
-        resolver = _resolver.get()
-        if resolver is None:
-            raise RuntimeError(f"Reference to {self.name!r} can only be resolved while its configuration is built")
-        return resolver.get(self.name)
-
 
 def _is_ref(value: Any) -> bool:
-    return isinstance(value, RefSettings) or (isinstance(value, dict) and value.get("type") == "ref")
+    return isinstance(value, RefSettings) or (isinstance(value, dict) and value.get("type") == "resource")
 
 
 @dataclass(frozen=True)
@@ -69,33 +72,48 @@ class Referable:
         return json_schema
 
 
-class ResourceResolver:
-    """Builds each resource once, the first time it is referenced, so every reference shares it."""
+class Resolver:
+    """Resolves each named item once, the first time it is referenced, so every reference shares it.
 
-    def __init__(self, resources: Sequence[Any]):
-        self._resources = {resource.name: resource for resource in resources}
-        self._built: dict[str, Any] = {}
-        self._building: list[str] = []
+    An item resolves itself, through its `resolve()`: a resource builds its value, a secret reveals it.
+    """
 
-    def get(self, name: str) -> Any:
-        if name not in self._built:
-            if name in self._building:
-                raise ValueError(f"Resource {name!r} references itself")
-            self._building.append(name)
+    def __init__(self, resources: Sequence[Any], secrets: Sequence[Any] = ()):
+        self._items = {
+            "resource": {resource.name: resource for resource in resources},
+            "secret": {secret.name: secret for secret in secrets},
+        }
+        self._resolved: dict[tuple[str, str], Any] = {}
+        self._resolving: list[tuple[str, str]] = []
+
+    def resolve(self, ref: NamedRef) -> Any:
+        key = (ref.type, ref.name)
+        if key not in self._resolved:
+            if key in self._resolving:
+                raise ValueError(f"{ref.type.capitalize()} {ref.name!r} references itself")
+            self._resolving.append(key)
             try:
-                self._built[name] = self._resources[name].convert().value
+                self._resolved[key] = self._items[ref.type][ref.name].resolve()
             finally:
-                self._building.pop()
-        return self._built[name]
+                self._resolving.pop()
+        return self._resolved[key]
 
 
-_resolver: ContextVar[ResourceResolver | None] = ContextVar("resource_resolver", default=None)
+_resolver: ContextVar[Resolver | None] = ContextVar("resolver", default=None)
+
+
+def current_resolver(what: str) -> Resolver:
+    """The resolver of the configuration being built, for resolving `what`."""
+    resolver = _resolver.get()
+    if resolver is None:
+        raise RuntimeError(f"{what} can only be resolved while its configuration is built")
+    return resolver
 
 
 @contextmanager
-def resolving(resources: Sequence[Any]) -> Iterator[None]:
-    """Resolve references to `resources` while the block builds a configuration."""
-    token = _resolver.set(ResourceResolver(resources))
+def resolving(resources: Sequence[Any], secrets: Sequence[Any] = ()) -> Iterator[None]:
+    """Resolve references to `resources` and `secrets` while the block builds a configuration."""
+    token = _resolver.set(Resolver(resources, secrets))
     try:
         yield
     finally:
@@ -116,29 +134,35 @@ def iter_models(value: Any) -> Iterator[BaseModel]:
             yield from iter_models(item)
 
 
-def references_in(value: Any) -> list[RefSettings]:
-    """Every reference in `value`, at any depth."""
-    return [model for model in iter_models(value) if isinstance(model, RefSettings)]
+def references_in(value: Any, collection: str = "resource") -> list[NamedRef]:
+    """Every reference to an item of `collection` in `value`, at any depth."""
+    return [model for model in iter_models(value) if isinstance(model, NamedRef) and model.type == collection]
 
 
-def check_references(resources: Sequence[Any], *configured: Any) -> None:
-    """Check that `resources` have unique names, and every reference in them and in `configured` fits a resource."""
-    by_name: dict[str, Any] = {}
-    for resource in resources:
-        if resource.name in by_name:
-            raise ValueError(f"Resource name {resource.name!r} is used more than once")
-        by_name[resource.name] = resource
+def check_references(resources: Sequence[Any], secrets: Sequence[Any], *configured: Any) -> None:
+    """Check that resources and secrets have unique names, and every reference fits one of them."""
+    collections = {"resource": resources, "secret": secrets}
+    for collection, items in collections.items():
+        names: set[str] = set()
+        for item in items:
+            if item.name in names:
+                raise ValueError(f"{collection.capitalize()} name {item.name!r} is used more than once")
+            names.add(item.name)
 
-    refs = references_in([*configured, *resources])
-    for ref in refs:
-        if ref.name not in by_name:
-            raise ValueError(f"Reference to unknown resource {ref.name!r}")
+    everything = [*configured, *resources]
+    for collection, items in collections.items():
+        names = {item.name for item in items}
+        for ref in references_in(everything, collection):
+            if ref.name not in names:
+                raise ValueError(f"Reference to unknown {collection} {ref.name!r}")
 
     uses = {resource.name: {ref.name for ref in references_in(resource.value)} for resource in resources}
     for name in uses:
         _check_acyclic(name, uses, [])
 
-    for ref in refs:
+    by_name = {resource.name: resource for resource in resources}
+    for ref in references_in(everything):
+        assert isinstance(ref, RefSettings)
         _check_fits(ref, by_name)
 
 

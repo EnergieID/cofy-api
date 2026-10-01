@@ -8,10 +8,12 @@ from .api.allowed_resources import AllowedResourcesRouter
 from .api.communities import CommunitiesRouter
 from .api.modules import ModulesRouter
 from .api.resources import ResourcesRouter
+from .api.secrets import SecretsRouter
 from .errors import add_exception_handlers
 from .persitance.file.communities import FileCommunitiesPersistence
 from .persitance.file.modules import FileModulesPersistence
 from .persitance.file.resources import FileResourcesPersistence
+from .persitance.file.secrets import FileSecretsPersistence
 
 STATIC_DIR_ENV_VAR = "COFY_MANAGEMENT_STATIC_DIR"
 
@@ -22,6 +24,7 @@ app.include_router(CommunitiesRouter(FileCommunitiesPersistence()).router)
 app.include_router(ModulesRouter(FileModulesPersistence()).router)
 app.include_router(AllowedModulesRouter().router)
 app.include_router(ResourcesRouter(FileResourcesPersistence(), FileModulesPersistence()).router)
+app.include_router(SecretsRouter(FileSecretsPersistence(), FileModulesPersistence(), FileResourcesPersistence()).router)
 app.include_router(AllowedResourcesRouter().router)
 
 # Serving the console's built assets is optional and off by default, so the API stays usable
