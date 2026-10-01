@@ -30,7 +30,7 @@ export class CofyNewResourcePage extends CofyPage {
   protected override crumbs(): Crumb[] {
     const community = this.communities?.communities.find((entry) => entry.slug === this.slug);
     return [
-      { label: community?.title ?? this.slug, href: this.routes.hashFor("modules", { slug: this.slug }) },
+      { label: community?.title ?? this.slug, href: this.routes.hashFor("resources", { slug: this.slug }) },
       { label: this.t("newResource.crumb") },
     ];
   }
@@ -42,7 +42,7 @@ export class CofyNewResourcePage extends CofyPage {
           .slug=${this.slug}
           @resource-created=${(event: CustomEvent<{ slug: string; name: string }>): void =>
             this.routes.navigate("resource", { slug: event.detail.slug, name: event.detail.name })}
-          @create-cancelled=${(): void => this.routes.navigate("modules", { slug: this.slug })}
+          @create-cancelled=${(): void => this.routes.navigate("resources", { slug: this.slug })}
         ></cofy-resource-create>
       </section>
     `;

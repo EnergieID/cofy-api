@@ -110,7 +110,8 @@ export class CofyApp extends LitElement {
         inline-size: 100%;
       }
       .content {
-        padding: var(--wa-space-l);
+        padding-left: var(--wa-space-l);
+        padding-right: var(--wa-space-l);
       }
     `,
   ];

@@ -28,7 +28,7 @@ export class CofyResourcePage extends CofyPage {
   protected override crumbs(): Crumb[] {
     const community = this.communities?.communities.find((entry) => entry.slug === this.slug);
     return [
-      { label: community?.title ?? this.slug, href: this.routes.hashFor("modules", { slug: this.slug }) },
+      { label: community?.title ?? this.slug, href: this.routes.hashFor("resources", { slug: this.slug }) },
       { label: this.name },
     ];
   }

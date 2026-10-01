@@ -3,7 +3,7 @@ import { html } from "lit";
 import type { RouteDefinition } from "./router.js";
 import "./pages/communities-page.js";
 import "./pages/module-page.js";
-import "./pages/modules-page.js";
+import "./pages/community-page.js";
 import "./pages/new-module-page.js";
 import "./pages/new-resource-page.js";
 import "./pages/resource-page.js";
@@ -25,7 +25,15 @@ export const routes = {
   },
   modules: {
     path: "/communities/:slug",
-    render: ({ slug }) => html`<cofy-modules-page .slug=${slug}></cofy-modules-page>`,
+    render: ({ slug }) => html`<cofy-community-page .slug=${slug} tab="modules"></cofy-community-page>`,
+  },
+  resources: {
+    path: "/communities/:slug/resources",
+    render: ({ slug }) => html`<cofy-community-page .slug=${slug} tab="resources"></cofy-community-page>`,
+  },
+  secrets: {
+    path: "/communities/:slug/secrets",
+    render: ({ slug }) => html`<cofy-community-page .slug=${slug} tab="secrets"></cofy-community-page>`,
   },
   newModule: {
     path: "/communities/:slug/modules/new",
