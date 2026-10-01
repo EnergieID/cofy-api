@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 
 from .docs_router import DocsRouter
 from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
@@ -32,6 +32,9 @@ DEFAULT_ARGS: dict[str, Any] = {
 
 
 class CofyAPISettings(BaseSettingsModel):
+    # A configuration holds its secrets' values, which a validation error would otherwise quote.
+    model_config = ConfigDict(hide_input_in_errors=True)
+
     type: Literal["cofy_api"] = "cofy_api"
     title: str = DEFAULT_ARGS["title"]
     description: str = DEFAULT_ARGS["description"]

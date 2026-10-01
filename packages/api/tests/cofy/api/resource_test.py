@@ -1,7 +1,9 @@
+from typing import Literal
+
 import pytest
 from pydantic import ValidationError
 
-from cofy.api import CofyAPI, RefSettings, finalize
+from cofy.api import BaseSettingsModel, CofyAPI, FromSettingsMixin, RefSettings, finalize
 from cofy.api.cofy_api import CofyAPISettings
 from cofy.api.module import ModuleSettings
 from cofy.modules.discovery import discover_installed_types
@@ -189,3 +191,22 @@ def test_a_resource_referencing_another_one_fits_where_the_one_it_ends_at_fits()
         CofyAPISettings.model_validate(
             config([module("tariff", "spot", ref("alias"))], [alias | {"value": ref("wind")}, wind])
         )
+
+
+def test_a_referable_field_stays_one_after_a_type_registers_late():
+    """Registering more types rebuilds every field; a referable one must come out referable once, not twice."""
+    finalize()
+
+    class LateRegisteredSettings(BaseSettingsModel):
+        type: Literal["late_registered"] = "late_registered"
+
+    class LateRegistered(FromSettingsMixin, settings=LateRegisteredSettings):
+        pass
+
+    finalize()
+    source = ModuleSettings.registry()["tariff"].model_json_schema()["properties"]["source"]
+    value, ref = source["oneOf"]
+
+    assert source["x-referable"]["kind"] == "source"
+    assert set(value["discriminator"]["mapping"]) == {"energy_cost", "entsoe_day_ahead"}
+    assert ref == {"$ref": "#/$defs/RefSettings"}

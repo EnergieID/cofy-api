@@ -139,3 +139,14 @@ def test_a_configuration_with_secrets_round_trips():
     assert dumped["modules"][0]["source"]["api_key"] == secret("entsoe_key")
     assert dumped["secrets"] == [{"name": "entsoe_key", "value": "real"}]
     assert CofyAPISettings.model_validate(dumped) == settings
+
+
+def test_a_configuration_that_fails_validation_quotes_none_of_its_secrets():
+    finalize()
+    with pytest.raises(ValidationError) as error:
+        CofyAPISettings.model_validate(
+            config([entsoe_module("missing")], [{"name": "entsoe_key", "value": "SUPERSECRETVALUE123"}])
+        )
+
+    assert "unknown secret 'missing'" in str(error.value)
+    assert "SUPERSECRETVALUE123" not in str(error.value)

@@ -97,6 +97,18 @@ def test_put_that_breaks_a_reference_is_rejected_and_stores_nothing(client: Test
     assert (tmp_data / "test.yaml").read_text() == before
 
 
+def test_a_put_refused_by_the_whole_configuration_quotes_none_of_its_secrets(client: TestClient, tmp_data: Path):
+    """Fine on its own, but the tariff module referencing `day_ahead` takes prices, not production."""
+    production = {"type": "energyid_production", "api_key": {"type": "secret", "name": "entsoe_key"}, "record_id": "r"}
+
+    r = client.put(f"{RESOURCES}/day_ahead", json={"type": "source", "name": "day_ahead", "value": production})
+
+    assert r.status_code == 422
+    assert "holds a energyid_production source" in r.json()["detail"]
+    for value in ("secret-key", "spare-secret"):
+        assert value not in r.text
+
+
 def test_delete_an_unused_resource(client: TestClient, tmp_data: Path):
     assert client.delete(f"{RESOURCES}/unused").status_code == 204
     assert "unused" not in [resource["name"] for resource in stored(tmp_data)["resources"]]
