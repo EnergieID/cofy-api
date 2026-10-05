@@ -7,6 +7,7 @@ import { moduleKey, type ModuleSettings, type ModuleStore, type ProblemError } f
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 import "@awesome.me/webawesome/dist/components/tag/tag.js";
+import "@awesome.me/webawesome/dist/components/scroller/scroller.js";
 
 import { CofyElement } from "../../cofy-element.js";
 import { moduleStoreContext } from "../../context.js";
@@ -79,22 +80,24 @@ export class CofyModuleList extends CofyElement {
           </wa-button>
         </cofy-heading>
 
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">${this.t("moduleList.columns.module")}</th>
-              <th scope="col">${this.t("moduleList.columns.type")}</th>
-              <th scope="col" class="actions"></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${modules.length === 0
-              ? html`<tr class="empty">
-                  <td class="secondary" colspan="3">${this.t("moduleList.empty")}</td>
-                </tr>`
-              : modules.map((module): TemplateResult => this.row(module))}
-          </tbody>
-        </table>
+        <wa-scroller>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">${this.t("moduleList.columns.module")}</th>
+                <th scope="col">${this.t("moduleList.columns.type")}</th>
+                <th scope="col" class="actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${modules.length === 0
+                ? html`<tr class="empty">
+                    <td class="secondary" colspan="3">${this.t("moduleList.empty")}</td>
+                  </tr>`
+                : modules.map((module): TemplateResult => this.row(module))}
+            </tbody>
+          </table>
+        </wa-scroller>
       </div>
     `;
   }

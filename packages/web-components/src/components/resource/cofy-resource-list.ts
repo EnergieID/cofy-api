@@ -7,6 +7,7 @@ import type { ProblemError, ResourceSettings, ResourceStore } from "@cofy/fronte
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 import "@awesome.me/webawesome/dist/components/tag/tag.js";
+import "@awesome.me/webawesome/dist/components/scroller/scroller.js";
 
 import { CofyElement } from "../../cofy-element.js";
 import { resourceStoreContext } from "../../context.js";
@@ -80,23 +81,25 @@ export class CofyResourceList extends CofyElement {
           ? nothing
           : html`<cofy-problem-details .problem=${this.deleteError}></cofy-problem-details>`}
 
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">${this.t("resourceList.columns.resource")}</th>
-              <th scope="col">${this.t("resourceList.columns.kind")}</th>
-              <th scope="col">${this.t("resourceList.columns.description")}</th>
-              <th scope="col" class="actions"><span class="wa-visually-hidden">${this.t("resourceList.columns.actions")}</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${resources.length === 0
-              ? html`<tr class="empty">
-                  <td class="secondary" colspan="4">${this.t("resourceList.empty")}</td>
-                </tr>`
-              : resources.map((resource): TemplateResult => this.row(resource))}
-          </tbody>
-        </table>
+        <wa-scroller>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">${this.t("resourceList.columns.resource")}</th>
+                <th scope="col">${this.t("resourceList.columns.kind")}</th>
+                <th scope="col">${this.t("resourceList.columns.description")}</th>
+                <th scope="col" class="actions"><span class="wa-visually-hidden">${this.t("resourceList.columns.actions")}</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${resources.length === 0
+                ? html`<tr class="empty">
+                    <td class="secondary" colspan="4">${this.t("resourceList.empty")}</td>
+                  </tr>`
+                : resources.map((resource): TemplateResult => this.row(resource))}
+            </tbody>
+          </table>
+        </wa-scroller>
       </div>
     `;
   }

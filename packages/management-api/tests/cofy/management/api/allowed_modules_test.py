@@ -14,11 +14,14 @@ from fastapi.testclient import TestClient
 from cofy.management.api.allowed_modules import AllowedModulesRouter
 from cofy.management.errors import add_exception_handlers
 
+from ..access_fixture import log_in_as_system_admin
+
 
 @pytest.fixture()
 def client() -> TestClient:
     app = FastAPI()
     add_exception_handlers(app)
+    log_in_as_system_admin(app)
     app.include_router(AllowedModulesRouter().router)
     return TestClient(app, raise_server_exceptions=False)
 

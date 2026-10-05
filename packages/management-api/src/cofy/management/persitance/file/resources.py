@@ -2,10 +2,10 @@ from cofy.api import ResourceSettings
 
 from ...errors import ResourceAlreadyExistsError, ResourceNotFoundError
 from ..resources import ResourcesPersistence
-from .base import FilePersistence
+from .base import CommunityFileStore
 
 
-class FileResourcesPersistence(FilePersistence, ResourcesPersistence):
+class FileResourcesPersistence(CommunityFileStore, ResourcesPersistence):
     def all(self, slug: str) -> list[ResourceSettings]:
         with self._open_community_config(slug, "read") as config:
             return config.resources

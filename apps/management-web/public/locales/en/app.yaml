@@ -9,6 +9,7 @@ community:
     modules: Modules
     resources: Resources
     secrets: Secrets
+    grants: Access
 
 newModule:
   crumb: New module

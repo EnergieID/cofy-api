@@ -6,6 +6,7 @@ import type { ProblemError, SecretInfo, SecretStore } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
+import "@awesome.me/webawesome/dist/components/scroller/scroller.js";
 
 import { CofyElement } from "../../cofy-element.js";
 import { communitySlugContext, secretStoreContext } from "../../context.js";
@@ -87,22 +88,24 @@ export class CofySecretList extends CofyElement {
           ? nothing
           : html`<cofy-problem-details .problem=${this.deleteError}></cofy-problem-details>`}
 
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">${this.t("secretList.columns.secret")}</th>
-              <th scope="col">${this.t("secretList.columns.description")}</th>
-              <th scope="col" class="actions"><span class="wa-visually-hidden">${this.t("secretList.columns.actions")}</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${secrets.length === 0
-              ? html`<tr class="empty">
-                  <td class="secondary" colspan="3">${this.t("secretList.empty")}</td>
-                </tr>`
-              : secrets.map((secret): TemplateResult => this.row(secret))}
-          </tbody>
-        </table>
+        <wa-scroller>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">${this.t("secretList.columns.secret")}</th>
+                <th scope="col">${this.t("secretList.columns.description")}</th>
+                <th scope="col" class="actions"><span class="wa-visually-hidden">${this.t("secretList.columns.actions")}</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${secrets.length === 0
+                ? html`<tr class="empty">
+                    <td class="secondary" colspan="3">${this.t("secretList.empty")}</td>
+                  </tr>`
+                : secrets.map((secret): TemplateResult => this.row(secret))}
+            </tbody>
+          </table>
+        </wa-scroller>
       </div>
 
       <cofy-secret-dialog

@@ -25,7 +25,7 @@ export class CofyNewResourcePage extends CofyPage {
   @consume({ context: communityStoreContext, subscribe: true })
   public communities!: CommunityStore;
 
-  @property({ type: String }) public slug = "";
+  @property({ type: String }) public override slug = "";
 
   protected override crumbs(): Crumb[] {
     const community = this.communities?.communities.find((entry) => entry.slug === this.slug);
@@ -35,7 +35,7 @@ export class CofyNewResourcePage extends CofyPage {
     ];
   }
 
-  public override render(): TemplateResult {
+  protected override content(): TemplateResult {
     return html`
       <section>
         <cofy-resource-create

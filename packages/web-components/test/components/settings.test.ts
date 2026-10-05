@@ -1,7 +1,11 @@
+import { ContextProvider } from "@lit/context";
 import { beforeEach, describe, expect, it } from "vitest";
+import { ApiClient, SessionStore, type Me } from "@cofy/frontend-sdk";
 
 import { CofyLocalePicker } from "../../src/components/settings/cofy-locale-picker.js";
+import { CofySettingsPanel } from "../../src/components/settings/cofy-settings-panel.js";
 import { CofyThemePicker } from "../../src/components/settings/cofy-theme-picker.js";
+import { i18nContext, sessionStoreContext } from "../../src/context.js";
 import { ThemeState } from "../../src/theme/theme-state.js";
 import { testI18n } from "../support/i18n.js";
 
@@ -71,6 +75,9 @@ describe("cofy-locale-picker", () => {
     await mount(element);
 
     expect(element.shadowRoot!.querySelector("wa-select")).toBeNull();
+    // Hidden itself, so a layout's gap doesn't leave room for an element showing nothing.
+    expect(element.hidden).toBe(true);
+    expect(getComputedStyle(element).display).toBe("none");
   });
 
   it("names each language in that language, which is how a reader finds theirs", async () => {
@@ -79,6 +86,7 @@ describe("cofy-locale-picker", () => {
     element.languages = ["en", "nl"];
     await mount(element);
 
+    expect(element.hidden).toBe(false);
     const items = Array.from(element.shadowRoot!.querySelectorAll("wa-option"));
 
     expect(items.map((item) => item.getAttribute("value"))).toEqual(["en", "nl"]);
@@ -96,5 +104,47 @@ describe("cofy-locale-picker", () => {
     select.dispatchEvent(new Event("change", { bubbles: true }));
 
     await expect(changed).resolves.toBe("nl");
+  });
+});
+
+describe("cofy-settings-panel", () => {
+  beforeEach(() => {
+    document.body.replaceChildren();
+  });
+
+  async function panel(me: Me | null): Promise<CofySettingsPanel> {
+    const session = new SessionStore(new ApiClient({ baseUrl: "http://localhost" }), window.location);
+    session.me = me;
+    const host = document.createElement("div");
+    new ContextProvider(host, { context: sessionStoreContext, initialValue: session });
+    new ContextProvider(host, { context: i18nContext, initialValue: await testI18n() });
+    document.body.append(host);
+    const element = new CofySettingsPanel();
+    host.append(element);
+    await element.updateComplete;
+    return element;
+  }
+
+  function texts(element: CofySettingsPanel): string {
+    return element.shadowRoot!.querySelector("wa-drawer")!.textContent.replace(/\s+/g, " ");
+  }
+
+  it("shows who is logged in and a way to log out, above the appearance and language", async () => {
+    const element = await panel({ email: "ann@example.com", name: "Ann", system_admin: false, permissions: [] });
+
+    expect(texts(element)).toContain("Ann");
+    expect(texts(element)).toContain("ann@example.com");
+    expect(texts(element)).toContain("Log out");
+    const order = Array.from(element.shadowRoot!.querySelector("wa-drawer > .wa-stack")!.children).map((child) =>
+      child.tagName.toLowerCase(),
+    );
+    expect(order).toEqual(["div", "wa-button", "wa-divider", "cofy-theme-picker", "cofy-locale-picker"]);
+  });
+
+  it("shows only the language and appearance without anyone logged in", async () => {
+    const element = await panel(null);
+
+    expect(texts(element)).not.toContain("Log out");
+    expect(element.shadowRoot!.querySelectorAll("wa-divider")).toHaveLength(0);
   });
 });

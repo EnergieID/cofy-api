@@ -12,7 +12,8 @@ import { nativeStyles } from "../theme/native-styles.js";
  * Renders a rejected request.
  *
  * Field-level failures keep the server's own `loc` path, which names the part of the request
- * that was wrong.
+ * that was wrong. Being refused access is not a failure of the request, so it is a warning rather
+ * than an error.
  */
 @customElement("cofy-problem-details")
 export class CofyProblemDetails extends CofyElement {
@@ -46,7 +47,7 @@ export class CofyProblemDetails extends CofyElement {
     const fields = problem.errors;
 
     return html`
-      <wa-callout variant="danger">
+      <wa-callout variant=${problem.isForbidden ? "warning" : "danger"}>
         <strong class="title">${this.heading(problem)}</strong>
         <p class="detail">${this.body(problem)}</p>
         ${fields.length === 0

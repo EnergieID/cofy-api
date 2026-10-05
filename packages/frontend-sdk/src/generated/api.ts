@@ -4,6 +4,83 @@
  */
 
 export interface paths {
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Login
+         * @description Send the browser to the identity provider, to come back to *return_to* once logged in.
+         */
+        get: operations["login_auth_login_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Auth Callback
+         * @description Where the identity provider sends the browser back to after a login.
+         */
+        get: operations["auth_callback_auth_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout
+         * @description End the session here, and at the identity provider if it lets clients do that.
+         */
+        post: operations["logout_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["me_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/management/communities": {
         parameters: {
             query?: never;
@@ -187,6 +264,46 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/management/communities/{slug}/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All */
+        get: operations["all_management_communities__slug__grants_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_management_communities__slug__grants_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/management/communities/{slug}/grants/{email}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["get_management_communities__slug__grants__email__get"];
+        /**
+         * Put
+         * @description Change the role granted; a different person is a grant of its own.
+         */
+        put: operations["put_management_communities__slug__grants__email__put"];
+        post?: never;
+        /** Delete */
+        delete: operations["delete_management_communities__slug__grants__email__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -479,6 +596,12 @@ export interface components {
             cluster: components["schemas"]["AccPoolClusterSettings-Output"] | components["schemas"]["AccProducerPriorityClusterSettings-Output"] | components["schemas"]["AccCapacityPriorityClusterSettings-Output"] | components["schemas"]["AccProducerShareClusterSettings-Output"];
         };
         /**
+         * Action
+         * @description What may be done to a subject: seeing it, or changing it (creating, updating and deleting alike).
+         * @enum {string}
+         */
+        Action: "read" | "write";
+        /**
          * AllowedModule
          * @description One module type a community may configure.
          */
@@ -707,6 +830,19 @@ export interface components {
              * @description How many modules are configured, for listings.
              */
             module_count: number;
+        };
+        /**
+         * CommunityPermissions
+         * @description What the person logged in may do in one community, or outside any one community.
+         */
+        CommunityPermissions: {
+            /**
+             * Slug
+             * @description The community, or `null` for what lies outside any one community.
+             */
+            slug: string | null;
+            /** Permissions */
+            permissions: components["schemas"]["Permission"][];
         };
         /**
          * CostGroup
@@ -952,6 +1088,34 @@ export interface components {
             /** Country Code */
             country_code?: string | null;
         };
+        /**
+         * GrantBody
+         * @description A grant as written; who it is bound to is only ever set by that person logging in.
+         */
+        GrantBody: {
+            /**
+             * Email
+             * Format: email
+             * @description The email address of the person the role is granted to.
+             */
+            email: string;
+            /** @description The role granted. */
+            role: components["schemas"]["Role"];
+        };
+        /**
+         * GrantInfo
+         * @description A grant as reported.
+         */
+        GrantInfo: {
+            /** Email */
+            email: string;
+            role: components["schemas"]["Role"];
+            /**
+             * Bound
+             * @description Whether the person has logged in since, tying the grant to their account.
+             */
+            bound: boolean;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1055,6 +1219,23 @@ export interface components {
             period: string;
             /** Maximum */
             maximum?: (components["schemas"]["IndexFormula"] | components["schemas"]["PeriodicFormula"] | components["schemas"]["ScheduledFormulas-Output"] | components["schemas"]["TieredFormula-Output"] | components["schemas"]["MinimumFormula-Output"] | components["schemas"]["MaximumFormula-Output"] | components["schemas"]["MeterTypeFormula-Output"])[];
+        };
+        /**
+         * Me
+         * @description The person logged in.
+         */
+        Me: {
+            /** Email */
+            email: string | null;
+            /** Name */
+            name: string | null;
+            /** System Admin */
+            system_admin: boolean;
+            /**
+             * Permissions
+             * @description What they may do, outside any one community and in each community they may do anything in.
+             */
+            permissions: components["schemas"]["CommunityPermissions"][];
         };
         /** MemberSourceSettings */
         MemberSourceSettings: {
@@ -1209,6 +1390,14 @@ export interface components {
             /** Constant Cost */
             constant_cost: number;
         };
+        /**
+         * Permission
+         * @description An action on a subject of a community.
+         */
+        Permission: {
+            action: components["schemas"]["Action"];
+            subject: components["schemas"]["Subject"];
+        };
         /** ProductionModuleSettings */
         "ProductionModuleSettings-Input": {
             /**
@@ -1282,6 +1471,12 @@ export interface components {
              */
             name: string;
         };
+        /**
+         * Role
+         * @description A named set of permissions, granted to a person on a community.
+         * @enum {string}
+         */
+        Role: "community_admin";
         /** ScheduledFormula */
         "ScheduledFormula-Input": {
             /**
@@ -1502,6 +1697,12 @@ export interface components {
             /** Value */
             value: (components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"] | components["schemas"]["AccSimultaneitySourceSettings-Output"] | components["schemas"]["SimultaneitySourceSettings-Output"] | components["schemas"]["AccForecastSettings-Output"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Output"]) | components["schemas"]["RefSettings"];
         };
+        /**
+         * Subject
+         * @description A part of a community that permissions are given on.
+         * @enum {string}
+         */
+        Subject: "community" | "modules" | "resources" | "secrets" | "grants" | "allowed_modules" | "allowed_resources";
         /** Tariff */
         "Tariff-Input": components["schemas"]["TariffVersion-Input"][];
         /** Tariff */
@@ -1804,6 +2005,97 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    login_auth_login_get: {
+        parameters: {
+            query?: {
+                return_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auth_callback_auth_callback_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    logout_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    me_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
     all_management_communities_get: {
         parameters: {
             query?: never;
@@ -2503,6 +2795,171 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AllowedResource"][];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    all_management_communities__slug__grants_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GrantInfo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_management_communities__slug__grants_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GrantInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_management_communities__slug__grants__email__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                email: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GrantInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_management_communities__slug__grants__email__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                email: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GrantInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_management_communities__slug__grants__email__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                email: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

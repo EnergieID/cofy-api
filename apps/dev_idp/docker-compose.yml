@@ -1,0 +1,83 @@
+# A local OpenID Connect provider, so the management console can be logged into during
+# development without a real one. It is oidc-server-mock, which is built on Duende
+# IdentityServer - the same product as EnergyID's identity server - so it behaves alike.
+#
+# Every user's password is `pwd`. Who may do what is not decided here, but in
+# `apps/demo_multitenant/seed/access/users.yaml`.
+services:
+  idp:
+    image: ghcr.io/soluto/oidc-server-mock:0.12.1
+    container_name: cofy-dev-idp
+    ports:
+      - "8081:8080"
+    # The image checks itself over HTTPS on 443, which it only serves when given a certificate.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:8080/health || exit 1"]
+      interval: 5s
+      timeout: 2s
+      start_period: 10s
+      retries: 5
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      SERVER_OPTIONS_INLINE: |
+        {
+          "Authentication": {
+            "CookieSameSiteMode": "Lax",
+            "CheckSessionCookieSameSiteMode": "Lax"
+          }
+        }
+      LOGIN_OPTIONS_INLINE: |
+        { "AllowRememberLogin": true }
+      LOGOUT_OPTIONS_INLINE: |
+        { "AutomaticRedirectAfterSignOut": true }
+      CLIENTS_CONFIGURATION_INLINE: |
+        [
+          {
+            "ClientId": "cofy-management",
+            "ClientSecrets": ["cofy-management-secret"],
+            "Description": "The Cofy management console",
+            "AllowedGrantTypes": ["authorization_code"],
+            "RequirePkce": true,
+            "RequireConsent": false,
+            "RedirectUris": [
+              "http://localhost:5173/auth/callback",
+              "http://localhost:8000/auth/callback",
+              "http://localhost:8080/auth/callback"
+            ],
+            "PostLogoutRedirectUris": ["http://localhost:5173/", "http://localhost:8000/", "http://localhost:8080/"],
+            "AllowedScopes": ["openid", "profile", "email"]
+          }
+        ]
+      USERS_CONFIGURATION_INLINE: |
+        [
+          {
+            "SubjectId": "admin",
+            "Username": "admin",
+            "Password": "pwd",
+            "Claims": [
+              { "Type": "name", "Value": "System Admin", "ValueType": "string" },
+              { "Type": "email", "Value": "admin@example.com", "ValueType": "string" },
+              { "Type": "email_verified", "Value": "true", "ValueType": "boolean" }
+            ]
+          },
+          {
+            "SubjectId": "demo-admin",
+            "Username": "demo-admin",
+            "Password": "pwd",
+            "Claims": [
+              { "Type": "name", "Value": "Demo Admin", "ValueType": "string" },
+              { "Type": "email", "Value": "demo-admin@example.com", "ValueType": "string" },
+              { "Type": "email_verified", "Value": "true", "ValueType": "boolean" }
+            ]
+          },
+          {
+            "SubjectId": "nobody",
+            "Username": "nobody",
+            "Password": "pwd",
+            "Claims": [
+              { "Type": "name", "Value": "No Access", "ValueType": "string" },
+              { "Type": "email", "Value": "nobody@example.com", "ValueType": "string" },
+              { "Type": "email_verified", "Value": "true", "ValueType": "boolean" }
+            ]
+          }
+        ]

@@ -61,8 +61,7 @@ ENV APP_VERSION=${VERSION}
 # packages/management-api/src/cofy/management/main.py.
 ENV COFY_MANAGEMENT_STATIC_DIR=/app/console
 
-# Mount a volume here so community configs (and the modules they reference) survive a
-# redeploy instead of resetting to the seed data every time.
+# Mount a volume here so yaml configs survive a redeploy instead of resetting to the seed data every time.
 ENV COFY_MANAGEMENT_DATA_DIR=/data
 VOLUME /data
 

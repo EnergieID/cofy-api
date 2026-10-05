@@ -17,6 +17,8 @@ from cofy.management.persitance.file.modules import FileModulesPersistence
 from cofy.management.persitance.file.resources import FileResourcesPersistence
 from cofy.management.persitance.file.secrets import FileSecretsPersistence
 
+from ..access_fixture import log_in_as_system_admin
+
 COMMUNITY = "/management/communities/test"
 
 
@@ -56,6 +58,7 @@ def write_community(path: Path) -> None:
 def client_for(path: Path) -> TestClient:
     app = FastAPI()
     add_exception_handlers(app)
+    log_in_as_system_admin(app)
     modules, resources, secrets = (
         FileModulesPersistence(path),
         FileResourcesPersistence(path),

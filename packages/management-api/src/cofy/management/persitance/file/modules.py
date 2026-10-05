@@ -2,10 +2,10 @@ from cofy.api.module import ModuleSettings
 
 from ...errors import ResourceAlreadyExistsError, ResourceNotFoundError
 from ..modules import ModulesPersistence
-from .base import FilePersistence
+from .base import CommunityFileStore
 
 
-class FileModulesPersistence(FilePersistence, ModulesPersistence):
+class FileModulesPersistence(CommunityFileStore, ModulesPersistence):
     def all(self, slug: str) -> list[ModuleSettings]:
         with self._open_community_config(slug, "read") as config:
             return config.modules

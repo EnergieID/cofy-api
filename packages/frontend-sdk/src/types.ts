@@ -4,6 +4,30 @@ export type CommunityInfo = components["schemas"]["CommunityInfo"];
 export type CommunityBody = components["schemas"]["CommunityBody"];
 export type CommunityCreate = components["schemas"]["CommunityCreate"];
 
+/** What may be done to a subject: seeing it, or changing it. */
+export type Action = components["schemas"]["Action"];
+
+/** A part of a community that permissions are given on. */
+export type Subject = components["schemas"]["Subject"];
+
+/** An action on a subject of a community. */
+export type Permission = components["schemas"]["Permission"];
+
+/** What the person logged in may do in one community, or outside any one community when `slug` is `null`. */
+export type CommunityPermissions = components["schemas"]["CommunityPermissions"];
+
+/** A role granted on a community, which carries a set of permissions. */
+export type Role = components["schemas"]["Role"];
+
+/** The person logged in. */
+export type Me = components["schemas"]["Me"];
+
+/** A role on a community, granted to a person by email. */
+export type GrantInfo = components["schemas"]["GrantInfo"];
+
+/** A grant as written. */
+export type GrantBody = components["schemas"]["GrantBody"];
+
 /** One module type a community may configure, with the JSON Schema for its settings. */
 export type AllowedModule = components["schemas"]["AllowedModule"];
 

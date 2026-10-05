@@ -1,0 +1,9 @@
+# Everyone who may do something in the demo, for running it locally against the dev identity
+# provider (`task dev-idp`). Each is listed by email; their identity is written in beside it at
+# their first login, and matched on from then on.
+users:
+  - email: admin@example.com
+    system_admin: true
+  - email: demo-admin@example.com
+    grants:
+      demo: community_admin

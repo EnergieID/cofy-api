@@ -14,11 +14,11 @@ import "@awesome.me/webawesome/dist/components/tab-panel/tab-panel.js";
 import { CofyPage } from "./cofy-page.js";
 
 /** The tabs of a community, each naming the route it is shown on. */
-export const COMMUNITY_TABS = ["modules", "resources", "secrets"] as const;
+export const COMMUNITY_TABS = ["modules", "resources", "secrets", "grants"] as const;
 export type CommunityTab = (typeof COMMUNITY_TABS)[number];
 
 /**
- * A community: its modules, resources and secrets, each on a tab of its own.
+ * A community: its modules, resources, secrets and who has access, each on a tab of its own.
  *
  * The tab shown is part of the route, so it survives a reload, the back button returns to it,
  * and a page under a tab - a resource's editor - can link back to it.
@@ -34,14 +34,14 @@ export class CofyCommunityPage extends CofyPage {
   @consume({ context: communityStoreContext, subscribe: true })
   public communities!: CommunityStore;
 
-  @property({ type: String }) public slug = "";
+  @property({ type: String }) public override slug = "";
   @property({ type: String }) public tab: CommunityTab = "modules";
 
   protected override crumbs(): Crumb[] {
     return [{ label: this.communityName() }];
   }
 
-  public override render(): TemplateResult {
+  protected override content(): TemplateResult {
     // The tables carry their own titles and toolbars, so a tab adds no chrome of its own.
     return html`
       <wa-tab-group .active=${this.tab} @wa-tab-show=${(event: CustomEvent<{ name: string }>): void => this.show(event)}>
@@ -69,6 +69,9 @@ export class CofyCommunityPage extends CofyPage {
         </wa-tab-panel>
         <wa-tab-panel name="secrets">
           <cofy-secret-list .slug=${this.slug}></cofy-secret-list>
+        </wa-tab-panel>
+        <wa-tab-panel name="grants">
+          <cofy-grant-list .slug=${this.slug}></cofy-grant-list>
         </wa-tab-panel>
       </wa-tab-group>
     `;

@@ -8,10 +8,15 @@ set -e
 mkdir -p "$COFY_MANAGEMENT_DATA_DIR"
 
 if [ -z "$(ls -A "$COFY_MANAGEMENT_DATA_DIR" 2>/dev/null)" ]; then
-  echo "No communities in $COFY_MANAGEMENT_DATA_DIR yet - seeding from the committed defaults"
+  echo "Nothing in $COFY_MANAGEMENT_DATA_DIR yet - seeding it from the committed defaults"
   cp -r /app/seed/. "$COFY_MANAGEMENT_DATA_DIR"/
 fi
 
+# Behind a TLS-terminating proxy, the forwarded headers are what make the login callback URL
+# the API builds an https:// one on the public host. Only the proxy can reach this port.
 exec /app/packages/management-api/.venv/bin/uvicorn cofy.management.main:app \
   --host 0.0.0.0 \
-  --port "${PORT:-8080}"
+  --port "${PORT:-8080}" \
+  --proxy-headers \
+  --forwarded-allow-ips '*'
+

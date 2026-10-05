@@ -6,6 +6,7 @@ services:
     image: ghcr.io/energieid/cofy-api/management:latest
     container_name: cofy-management
     restart: unless-stopped
+    env_file: .env
     volumes:
       - /data:/data
     expose:

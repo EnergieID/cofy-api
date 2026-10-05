@@ -1,4 +1,4 @@
-"""Tests for FilePersistence._open_community_config's locking behaviour.
+"""Tests for FileStore's locking behaviour, through CommunityFileStore._open_community_config.
 
 These are deliberately lower-level than the HTTP-integration tests in
 tests/cofy/management/api/modules_test.py: they prove the locking mechanism itself
@@ -303,5 +303,5 @@ def test_data_directory_can_be_configured(monkeypatch: pytest.MonkeyPatch, tmp_p
     the packaged path lives inside the installed distribution."""
     monkeypatch.setenv(DATA_DIR_ENV_VAR, str(tmp_path))
 
-    assert default_base_path() == tmp_path
-    assert FileModulesPersistence().base_path == tmp_path
+    assert default_base_path() == tmp_path / "communities"
+    assert FileModulesPersistence().base_path == tmp_path / "communities"

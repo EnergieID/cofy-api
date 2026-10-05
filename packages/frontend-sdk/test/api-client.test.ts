@@ -99,4 +99,24 @@ describe("ApiClient", () => {
 
     expect(calls[0]!.path).toBe("/base/management/communities");
   });
+
+  it("reports a request turned away for want of a login before throwing", async () => {
+    const { fetch } = stubFetch(() => ({ status: 401, body: { status: 401, code: "not-authenticated" } }));
+    let unauthenticated = 0;
+    const api = new ApiClient({ fetch, baseUrl: ORIGIN, onUnauthenticated: (): number => (unauthenticated += 1) });
+
+    await expect(api.GET(COLLECTION, {})).rejects.toBeInstanceOf(ProblemError);
+    expect(unauthenticated).toBe(1);
+  });
+
+  it("does not report a forbidden request as a missing login", async () => {
+    const { fetch } = stubFetch(() => ({ status: 403, body: { status: 403, code: "forbidden" } }));
+    let unauthenticated = 0;
+    const api = new ApiClient({ fetch, baseUrl: ORIGIN, onUnauthenticated: (): number => (unauthenticated += 1) });
+
+    const failure = await api.GET(COLLECTION, {}).catch((error: unknown) => error);
+
+    expect(failure).toMatchObject({ isForbidden: true });
+    expect(unauthenticated).toBe(0);
+  });
 });

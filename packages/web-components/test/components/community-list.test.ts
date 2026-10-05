@@ -64,7 +64,7 @@ describe("cofy-community-list", () => {
 
     expect(rows(element)).toEqual([]);
     expect(element.shadowRoot!.querySelector("tr.empty")?.textContent?.trim()).toBe(
-      "No communities are configured.",
+      "There are no communities you have access to. Ask an administrator to grant you access.",
     );
   });
 

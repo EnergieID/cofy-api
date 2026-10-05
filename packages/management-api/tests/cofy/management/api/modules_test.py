@@ -19,6 +19,8 @@ from cofy.management.api.modules import ModulesRouter
 from cofy.management.errors import add_exception_handlers
 from cofy.management.persitance.file.modules import FileModulesPersistence
 
+from ..access_fixture import log_in_as_system_admin
+
 # ── fixtures ─────────────────────────────────────────────────────────────
 
 
@@ -56,6 +58,7 @@ def client(tmp_data: Path) -> TestClient:
     """Return a TestClient wired to the full router + file persistence in tmp_data."""
     app = FastAPI()
     add_exception_handlers(app)
+    log_in_as_system_admin(app)
     app.include_router(ModulesRouter(FileModulesPersistence(tmp_data)).router)
     return TestClient(app, raise_server_exceptions=False)
 
@@ -156,6 +159,7 @@ def test_resource_already_exists_handler_returns_409(tmp_data: Path):
 
     app = FastAPI()
     add_exception_handlers(app)
+    log_in_as_system_admin(app)
     app.include_router(ModulesRouter(mock_persistence).router)
     c = TestClient(app, raise_server_exceptions=False)
 
@@ -170,6 +174,7 @@ def test_community_with_invalid_yaml_returns_error(tmp_data: Path):
 
     app = FastAPI()
     add_exception_handlers(app)
+    log_in_as_system_admin(app)
     app.include_router(ModulesRouter(FileModulesPersistence(tmp_data)).router)
     bad_client = TestClient(app, raise_server_exceptions=False)
 

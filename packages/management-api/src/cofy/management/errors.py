@@ -23,6 +23,18 @@ class ManagementError(Exception):
     code: str = "internal-error"
 
 
+class NotAuthenticatedError(ManagementError):
+    status = 401
+    title = "Unauthorized"
+    code = "not-authenticated"
+
+
+class ForbiddenError(ManagementError):
+    status = 403
+    title = "Forbidden"
+    code = "forbidden"
+
+
 class ResourceNotFoundError(ManagementError):
     status = 404
     title = "Not Found"

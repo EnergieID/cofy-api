@@ -10,8 +10,8 @@ The wire models here deliberately expose less than a stored config holds:
 - `debug_dir` is a local operational detail, and accepting a filesystem path from a client is
   a capability this API has no reason to hand out.
 
-This listing is also where authorization will land: it answers "which communities may I
-see", so a client must never assemble that list for itself.
+The listing answers "which communities may I see", so a client never has to work that out for
+itself; what it may do in each is reported by `/auth/me`.
 """
 
 from __future__ import annotations
@@ -19,10 +19,15 @@ from __future__ import annotations
 from typing import Annotated
 
 from cofy.api.cofy_api import CofyAPISettings
-from fastapi import APIRouter, Body, Path
+from fastapi import Body, Depends, Path
 from pydantic import BaseModel, Field
 
+from ..auth.access import Subject
+from ..auth.user import User, current_user
 from ..persitance.communities import CommunitiesPersistence
+from ..persitance.grants import GrantsPersistence
+from ..policies.community import CommunityPolicy
+from ..policies.policy import PolicyRouter
 
 SLUG_FIELD = Field(
     description="Machine name, and the community's identity in every other route.",
@@ -72,20 +77,26 @@ class CommunityInfo(CommunityBody):
 
 
 class CommunitiesRouter:
-    def __init__(self, persitance: CommunitiesPersistence):
+    def __init__(self, persitance: CommunitiesPersistence, grants: GrantsPersistence):
         self.persistence = persitance
-        self.router = APIRouter(prefix="/management/communities", tags=["Communities"])
+        self.grants = grants
+        self.router = PolicyRouter(
+            subject=Subject.community, policy=CommunityPolicy, prefix="/management/communities", tags=["Communities"]
+        )
         self._register_routes()
 
     def _register_routes(self) -> None:
-        self.router.add_api_route("", self.all, methods=["GET"])
-        self.router.add_api_route("", self.create, methods=["POST"], status_code=201)
-        self.router.add_api_route("/{slug}", self.get, methods=["GET"])
-        self.router.add_api_route("/{slug}", self.put, methods=["PUT"])
-        self.router.add_api_route("/{slug}", self.delete, methods=["DELETE"], status_code=204)
+        self.router.add_api_route("", self.all, methods=["GET"], rule=CommunityPolicy.all)
+        self.router.add_api_route("", self.create, methods=["POST"], rule=CommunityPolicy.create, status_code=201)
+        self.router.add_api_route("/{slug}", self.get, methods=["GET"], rule=CommunityPolicy.get)
+        self.router.add_api_route("/{slug}", self.put, methods=["PUT"], rule=CommunityPolicy.put)
+        self.router.add_api_route(
+            "/{slug}", self.delete, methods=["DELETE"], rule=CommunityPolicy.delete, status_code=204
+        )
 
-    def all(self) -> list[CommunityInfo]:
-        return [CommunityInfo.of(slug, settings) for slug, settings in self.persistence.all()]
+    def all(self, user: Annotated[User, Depends(current_user)]) -> list[CommunityInfo]:
+        communities = dict(self.persistence.all())
+        return [CommunityInfo.of(slug, communities[slug]) for slug in CommunityPolicy.scope(user, list(communities))]
 
     def get(
         self,
@@ -108,4 +119,6 @@ class CommunitiesRouter:
 
     def delete(self, slug: str) -> None:
         self.persistence.delete(slug)
+        # Or a community created later under the same slug would inherit them.
+        self.grants.delete_all(slug)
         return None

@@ -15,8 +15,13 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from cofy.management.api.communities import CommunitiesRouter
+from cofy.management.auth.access import Grant, Role
+from cofy.management.auth.user import User
 from cofy.management.errors import add_exception_handlers
 from cofy.management.persitance.file.communities import FileCommunitiesPersistence
+from cofy.management.persitance.file.grants import FileGrantsPersistence
+
+from ..access_fixture import log_in, log_in_as_system_admin, user
 
 TOKEN = "super-secret-token"
 API_KEY = "secret-key"
@@ -52,8 +57,13 @@ def tmp_data(tmp_path: Path) -> Path:
 def client(tmp_data: Path) -> TestClient:
     app = FastAPI()
     add_exception_handlers(app)
-    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(tmp_data)).router)
+    log_in_as_system_admin(app)
+    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(tmp_data), grants_in(tmp_data)).router)
     return TestClient(app, raise_server_exceptions=False)
+
+
+def grants_in(data: Path) -> FileGrantsPersistence:
+    return FileGrantsPersistence(data / "access" / "users.yaml")
 
 
 def _stored(tmp_data: Path, slug: str = "test") -> dict:
@@ -79,7 +89,10 @@ def test_listing_reports_module_counts(client: TestClient):
 def test_listing_is_empty_when_no_communities_exist(tmp_path: Path):
     app = FastAPI()
     add_exception_handlers(app)
-    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(tmp_path / "missing")).router)
+    log_in_as_system_admin(app)
+    app.include_router(
+        CommunitiesRouter(FileCommunitiesPersistence(tmp_path / "missing"), grants_in(tmp_path / "missing")).router
+    )
 
     r = TestClient(app).get("/management/communities")
 
@@ -194,7 +207,8 @@ def test_create_in_a_missing_data_directory_creates_it(tmp_path: Path):
     data_dir = tmp_path / "not-yet"
     app = FastAPI()
     add_exception_handlers(app)
-    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(data_dir)).router)
+    log_in_as_system_admin(app)
+    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(data_dir), grants_in(data_dir)).router)
 
     r = TestClient(app).post("/management/communities", json={"slug": "first", "title": "First"})
 
@@ -280,3 +294,60 @@ def test_an_empty_config_file_is_reported_as_broken_rather_than_a_blank_communit
 
     assert r.status_code == 422
     assert r.headers["content-type"] == "application/problem+json"
+
+
+# ── access ────────────────────────────────────────────────────────────────
+
+
+def client_as(tmp_data: Path, logged_in: User) -> TestClient:
+    app = FastAPI()
+    add_exception_handlers(app)
+    log_in(app, logged_in)
+    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(tmp_data), grants_in(tmp_data)).router)
+    return TestClient(app, raise_server_exceptions=False)
+
+
+def community_admin_client(tmp_data: Path) -> TestClient:
+    return client_as(tmp_data, user("ann", grants={"test": Role.community_admin}))
+
+
+def test_someone_without_any_role_is_refused_the_listing(tmp_data: Path):
+    r = client_as(tmp_data, user("nobody")).get("/management/communities")
+
+    assert r.status_code == 403
+    assert r.json()["code"] == "forbidden"
+
+
+def test_a_community_admin_only_sees_their_own_communities(tmp_data: Path):
+    listed = community_admin_client(tmp_data).get("/management/communities").json()
+
+    assert [c["slug"] for c in listed] == ["test"]
+
+
+def test_a_community_admin_cannot_open_another_community(tmp_data: Path):
+    assert community_admin_client(tmp_data).get("/management/communities/other").status_code == 403
+
+
+def test_a_community_admin_can_edit_but_not_delete_their_community(tmp_data: Path):
+    client = community_admin_client(tmp_data)
+
+    assert client.put("/management/communities/test", json={"title": "Renamed"}).status_code == 200
+    assert client.delete("/management/communities/test").status_code == 403
+
+
+def test_a_community_admin_cannot_create_a_community(tmp_data: Path):
+    r = community_admin_client(tmp_data).post("/management/communities", json={"slug": "new", "title": "New"})
+
+    assert r.status_code == 403
+    assert r.json()["code"] == "forbidden"
+
+
+def test_deleting_a_community_revokes_every_role_in_it(client: TestClient, tmp_data: Path):
+    grants = grants_in(tmp_data)
+    for slug, email in (("test", "ann@example.com"), ("other", "ann@example.com"), ("test", "bob@example.com")):
+        grants.create(slug, Grant(email=email, role=Role.community_admin))
+
+    assert client.delete("/management/communities/test").status_code == 204
+
+    assert grants.all("test") == []
+    assert [str(grant.email) for grant in grants.all("other")] == ["ann@example.com"]

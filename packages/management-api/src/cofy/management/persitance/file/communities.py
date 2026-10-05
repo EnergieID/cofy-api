@@ -6,18 +6,18 @@ from cofy.api.cofy_api import CofyAPISettings
 
 from ...errors import ManagementError, ResourceAlreadyExistsError
 from ..communities import CommunitiesPersistence
-from .base import FilePersistence
+from .base import CommunityFileStore
 
 #: Community-level fields a client may set. Everything else in a stored config either belongs
-#: to another endpoint (`modules`), is managed outside the console (`auth`, whose token map
-#: cannot be masked because the tokens are dict *keys*), or is a local operational detail
+#: to another endpoint (`modules`), is managed outside the console (`auth`, whose token
+#: map cannot be masked because the tokens are dict *keys*), or is a local operational detail
 #: (`debug_dir`).
 WRITABLE_FIELDS = ("title", "description", "debug_mode")
 
 logger = logging.getLogger(__name__)
 
 
-class FileCommunitiesPersistence(FilePersistence, CommunitiesPersistence):
+class FileCommunitiesPersistence(CommunityFileStore, CommunitiesPersistence):
     def all(self) -> list[tuple[str, CofyAPISettings]]:
         communities = []
         for slug in self._community_slugs():
@@ -70,5 +70,5 @@ class FileCommunitiesPersistence(FilePersistence, CommunitiesPersistence):
         # both pass `_locked_file`'s existence check and race each other's `unlink` - the loser
         # sees a clean, idempotent not-found (raised by `_locked_file` itself) rather than a
         # raw `FileNotFoundError` from a second unlink.
-        with self._locked_file(slug, exclusive=True):
+        with self._locked_file(self._community_path(slug), exclusive=True):
             self._community_path(slug).unlink()

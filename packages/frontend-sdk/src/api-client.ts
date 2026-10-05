@@ -8,8 +8,10 @@ import type { paths } from "./generated/api.js";
 export interface ApiClientOptions {
   /** Where the management API lives. Defaults to the page's own origin. */
   baseUrl?: string;
-  /** Sent with every request; the seam auth will use. */
+  /** Sent with every request. */
   headers?: Record<string, string>;
+  /** Called when a request is turned away for want of a login, before the failure is thrown. */
+  onUnauthenticated?: () => void;
   /** Overridable so tests and non-browser hosts can supply their own transport. */
   fetch?: typeof globalThis.fetch;
 }
@@ -48,8 +50,10 @@ type Body<
  */
 export class ApiClient {
   private readonly client: Client<paths>;
+  private readonly onUnauthenticated?: () => void;
 
   public constructor(options: ApiClientOptions = {}) {
+    this.onUnauthenticated = options.onUnauthenticated;
     this.client = createClient<paths>({
       baseUrl: options.baseUrl ?? "/",
       headers: options.headers,
@@ -99,6 +103,7 @@ export class ApiClient {
   }
 
   private check(result: { error?: unknown; response: Response }): void {
+    if (result.response.status === 401) this.onUnauthenticated?.();
     if (!result.response.ok) {
       throw ProblemError.from(result.response.status, result.error);
     }
