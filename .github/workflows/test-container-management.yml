@@ -14,11 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: "build container and check the console + API respond"
+      - name: "build the container, and check it end to end with a login through the dev identity provider"
         run: |
             set -euxo pipefail
 
             docker build -t cofy-management-demo:latest -f apps/demo_multitenant/Dockerfile .
+
+            # The same identity provider as in development, waited on until its health check passes.
+            docker compose -f apps/dev_idp/docker-compose.yml up -d --wait
+
+            # The image brings no data, so the demo's seed is provided on disk, as a server's data would be.
+            DATA_DIR=$(mktemp -d)
+            cp -r apps/demo_multitenant/seed/. "$DATA_DIR"/
 
             CONTAINER_NAME=cofy-management-demo-test
             cleanup() {
@@ -28,30 +35,31 @@ jobs:
                 docker ps -a || true
                 echo "--- container logs ---"
                 docker logs "$CONTAINER_NAME" || true
+                echo "--- identity provider logs ---"
+                docker compose -f apps/dev_idp/docker-compose.yml logs --tail 50 || true
                 docker stop "$CONTAINER_NAME" >/dev/null 2>&1 || true
                 docker rm "$CONTAINER_NAME" >/dev/null 2>&1 || true
+                docker compose -f apps/dev_idp/docker-compose.yml down || true
                 exit $status
             }
             trap cleanup EXIT
 
+            # On the host network, so the API reaches the identity provider at the same address the test's
+            # "browser" does: the issuer has to be the same for both. The login settings are the dev ones.
             docker run -d \
                 --name "$CONTAINER_NAME" \
-                -p 8080:8080 \
+                --network host \
+                -v "$DATA_DIR:/data" \
+                --env-file .env.example \
+                -e COFY_MANAGEMENT_DATA_DIR=/data \
                 cofy-management-demo:latest
 
             for i in {1..15}; do
                 echo "Health check attempt $i"
-                if curl -fsS -v http://localhost:8080/management/communities; then
+                if curl -sS -o /dev/null http://localhost:8080/; then
                     break
                 fi
                 sleep 2
             done
 
-            RESPONSE=$(curl -fsS http://localhost:8080/management/communities)
-            echo "Communities response: $RESPONSE"
-
-            CONSOLE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
-            if [[ "$CONSOLE_STATUS" != "200" ]]; then
-                echo "Console did not respond with 200 (got $CONSOLE_STATUS)"
-                exit 1
-            fi
+            python3 apps/demo_multitenant/scripts/smoke_test.py http://localhost:8080
