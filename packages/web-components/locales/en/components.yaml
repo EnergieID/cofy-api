@@ -180,6 +180,9 @@ errors:
   forbidden:
     title: No access
     detail: You don't have access to this. Ask an administrator to grant you access.
+  stored-data-invalid:
+    title: Server misconfigured
+    detail: The server's data can't be read. Ask its administrator to fix it.
   resource-not-found:
     title: Not found
   resource-already-exists:

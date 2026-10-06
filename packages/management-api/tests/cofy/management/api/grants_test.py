@@ -132,3 +132,16 @@ def test_grants_are_not_reachable_without_a_login(tmp_data: Path):
 
     assert r.status_code == 401
     assert r.json()["code"] == "not-authenticated"
+
+
+def test_a_broken_users_file_is_reported_without_its_contents(client: TestClient, tmp_data: Path):
+    (tmp_data / "access" / "users.yaml").write_text(
+        yaml.safe_dump({"users": [{"email": "ann@example.com"}, {"email": "ann@example.com"}]})
+    )
+
+    r = client.get(GRANTS)
+
+    assert r.status_code == 500
+    assert r.json()["code"] == "stored-data-invalid"
+    assert "ann@example.com" not in r.text
+    assert "users.yaml" not in r.text

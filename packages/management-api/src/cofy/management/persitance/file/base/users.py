@@ -1,12 +1,16 @@
+import logging
 from collections.abc import Generator
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import Literal
 
 import yaml
 
 from ....auth.access import UserRecord, UsersFile
+from ....errors import StoredDataInvalidError
 from .store import FileStore
+
+logger = logging.getLogger(__name__)
 
 
 class UsersFileStore(FileStore[UsersFile]):
@@ -30,7 +34,14 @@ class UsersFileStore(FileStore[UsersFile]):
         if mode == "read" and not self.path.exists():
             yield UsersFile()
             return
-        with self._open_document(self.path, mode, create=mode == "write") as users:
+        with ExitStack() as stack:
+            try:
+                users = stack.enter_context(self._open_document(self.path, mode, create=mode == "write"))
+            except (ValueError, yaml.YAMLError) as exc:
+                # Every request and every login reads this file, so what's wrong with it goes to the log, for whoever
+                # keeps it, and not into a response for whoever happened to ask.
+                logger.error("The users file at %s can't be read: %s", self.path, exc)
+                raise StoredDataInvalidError("Who may do what can't be read; it has to be fixed on the server") from exc
             yield users
 
     @staticmethod

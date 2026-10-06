@@ -49,7 +49,6 @@ WORKDIR /app
 # venv resolves it through a path back to packages/api/src at the same absolute location.
 COPY --from=api-builder /app /app
 COPY --from=frontend-builder /app/apps/management-web/dist /app/console
-COPY apps/demo_multitenant/seed /app/seed
 COPY apps/demo_multitenant/docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 
@@ -61,7 +60,7 @@ ENV APP_VERSION=${VERSION}
 # packages/management-api/src/cofy/management/main.py.
 ENV COFY_MANAGEMENT_STATIC_DIR=/app/console
 
-# Mount a volume here so yaml configs survive a redeploy instead of resetting to the seed data every time.
+# The data directory is mounted in from the host, which provides it; the image brings no data of its own.
 ENV COFY_MANAGEMENT_DATA_DIR=/data
 VOLUME /data
 

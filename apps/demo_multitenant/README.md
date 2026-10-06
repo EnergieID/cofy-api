@@ -56,16 +56,16 @@ Runs the same build and run as:
 
 ```sh
 docker build -f apps/demo_multitenant/Dockerfile -t cofy-management-demo .
-docker run --network host -v cofy-management-data:/data --env-file .env.local -e COFY_MANAGEMENT_DATA_DIR=/data cofy-management-demo
+docker run --network host -v "$PWD/apps/demo_multitenant/.data:/data" --env-file .env.local -e COFY_MANAGEMENT_DATA_DIR=/data cofy-management-demo
 ```
 
 It logs in through `task dev-idp` too, which is why it runs on the host network: the container
 and the browser must reach the identity provider at the same address.
 
 Build from the repo root, since the image needs sources from several packages. `/data` is
-where community configs (and the modules they reference) live - mount a volume there so they
-survive a redeploy instead of resetting. On first boot, an empty `/data` is seeded from
-`seed/`; once anything exists there, it's left alone. The container reads `PORT` (defaults to
+where the community configs and the users live, and it is mounted in from the host - here the
+demo's own `.data`. The image brings no data of its own and never seeds or rewrites what is
+mounted there. The container reads `PORT` (defaults to
 `8080`, matching most cloud platforms, including Scaleway's container runtime) and honors a
 `VERSION` build arg for `APP_VERSION`. `/data/access/users.yaml` is the file to edit to change who
 the system admins are.
@@ -85,8 +85,8 @@ The server needs two things the repository doesn't carry:
 - a `.env` file next to `docker-compose.yml`, with the login configuration: `COFY_MANAGEMENT_OIDC_ISSUER`,
   `COFY_MANAGEMENT_OIDC_CLIENT_ID`, `COFY_MANAGEMENT_OIDC_CLIENT_SECRET` and a long random
   `COFY_MANAGEMENT_SESSION_SECRET`;
-- your own entry in `/data/access/users.yaml`, with `system_admin: true`. It is seeded with the demo's local users,
-  who can't log in through a real identity provider.
+- the data in `/data`: the community configs in `communities/`, and in `access/users.yaml` at least your own entry,
+  with `system_admin: true`.
 
 This is how EnergyID runs its own hosted instance, not a generally reachable image - the
 `ghcr.io/energieid/cofy-api/management` package is private, so `docker-compose.yml` as

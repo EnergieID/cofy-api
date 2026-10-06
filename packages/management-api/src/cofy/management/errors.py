@@ -35,6 +35,14 @@ class ForbiddenError(ManagementError):
     code = "forbidden"
 
 
+class StoredDataInvalidError(ManagementError):
+    """Data kept on the server that can't be read, whose details are logged rather than sent to whoever asked."""
+
+    status = 500
+    title = "Internal Server Error"
+    code = "stored-data-invalid"
+
+
 class ResourceNotFoundError(ManagementError):
     status = 404
     title = "Not Found"

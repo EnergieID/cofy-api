@@ -351,3 +351,33 @@ def test_deleting_a_community_revokes_every_role_in_it(client: TestClient, tmp_d
 
     assert grants.all("test") == []
     assert [str(grant.email) for grant in grants.all("other")] == ["ann@example.com"]
+
+
+def test_a_failed_delete_leaves_the_community_without_access_rather_than_access_without_it(
+    tmp_data: Path, monkeypatch: pytest.MonkeyPatch
+):
+    grants = grants_in(tmp_data)
+    grants.create("test", Grant(email="ann@example.com", role=Role.community_admin))
+
+    def failing_delete(self, slug: str) -> None:
+        raise OSError("disk full")
+
+    monkeypatch.setattr(FileCommunitiesPersistence, "delete", failing_delete)
+    app = FastAPI()
+    add_exception_handlers(app)
+    log_in_as_system_admin(app)
+    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(tmp_data), grants).router)
+
+    assert TestClient(app, raise_server_exceptions=False).delete("/management/communities/test").status_code == 500
+
+    assert (tmp_data / "test.yaml").exists()
+    assert grants.all("test") == []
+
+
+def test_deleting_a_community_that_does_not_exist_leaves_grants_alone(client: TestClient, tmp_data: Path):
+    grants = grants_in(tmp_data)
+    grants.create("missing", Grant(email="ann@example.com", role=Role.community_admin))
+
+    assert client.delete("/management/communities/missing").status_code == 404
+
+    assert [str(grant.email) for grant in grants.all("missing")] == ["ann@example.com"]

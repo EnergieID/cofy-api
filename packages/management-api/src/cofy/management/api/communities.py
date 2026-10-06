@@ -118,7 +118,9 @@ class CommunitiesRouter:
         return CommunityInfo.of(slug, self.persistence.update(slug, payload.to_settings()))
 
     def delete(self, slug: str) -> None:
-        self.persistence.delete(slug)
-        # Or a community created later under the same slug would inherit them.
+        # Revoked first, or a community created later under the same slug could inherit them; should deleting then
+        # fail, the community is left without anyone having access, rather than access without a community.
+        self.persistence.get(slug)
         self.grants.delete_all(slug)
+        self.persistence.delete(slug)
         return None

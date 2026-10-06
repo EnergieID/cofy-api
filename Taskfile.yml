@@ -117,8 +117,9 @@ tasks:
       - docker build -t cofy-management-demo -f apps/demo_multitenant/Dockerfile .
       # Host networking, so the container reaches the dev identity provider at the same
       # localhost address the browser does - the issuer has to be the same for both.
+      # The demo's own data is mounted in, as a server's is: the image brings none of its own.
       - >-
-        docker run --rm --network host -v cofy-management-data:/data --env-file .env.local
+        docker run --rm --network host -v {{.ROOT_DIR}}/apps/demo_multitenant/.data:/data --env-file .env.local
         -e COFY_MANAGEMENT_DATA_DIR=/data cofy-management-demo
 
   build:

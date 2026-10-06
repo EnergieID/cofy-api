@@ -100,3 +100,6 @@ errors:
   forbidden:
     title: Geen toegang
     detail: Je hebt hier geen toegang toe. Vraag een beheerder om je toegang te geven.
+  stored-data-invalid:
+    title: Server verkeerd ingesteld
+    detail: De gegevens op de server kunnen niet gelezen worden. Vraag de beheerder om dit op te lossen.

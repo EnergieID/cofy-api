@@ -118,6 +118,9 @@ class Grant(BaseModel):
 class UsersFile(BaseModel):
     """Everyone who may do something, as stored."""
 
+    # Read on every request, so an error in it must not quote what it holds back to whoever made one.
+    model_config = ConfigDict(hide_input_in_errors=True)
+
     users: list[UserRecord] = []
 
     @model_validator(mode="after")
