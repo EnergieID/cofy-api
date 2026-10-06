@@ -10,11 +10,14 @@ services:
     container_name: cofy-dev-idp
     ports:
       - "8081:8080"
-    # The image checks itself over HTTPS on 443, which it only serves when given a certificate.
+    # The image checks itself over HTTPS on 443, which it only serves when given a certificate. This
+    # asks for the discovery document instead of /health: the first request for it creates the signing
+    # key, which takes seconds - long enough for a login to time out - so it is only healthy once it has
+    # one, and `docker compose up --wait` waits for that.
     healthcheck:
-      test: ["CMD-SHELL", "curl -fs http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fs http://localhost:8080/.well-known/openid-configuration || exit 1"]
       interval: 5s
-      timeout: 2s
+      timeout: 15s
       start_period: 10s
       retries: 5
     environment:
