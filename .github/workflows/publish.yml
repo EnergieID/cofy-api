@@ -45,7 +45,7 @@ jobs:
         run: uv build --project "packages/${{ inputs.package }}"
 
       - name: Publish to PyPI
-        run: uv publish --trusted-publishing always --project "packages/${{ inputs.package }}"
+        run: uv publish --trusted-publishing always "packages/${{ inputs.package }}/dist/*"
 
       - name: Create GitHub Release
         env:
