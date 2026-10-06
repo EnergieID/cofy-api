@@ -119,8 +119,8 @@ class CommunitiesRouter:
 
     def delete(self, slug: str) -> None:
         # Revoked first, or a community created later under the same slug could inherit them; should deleting then
-        # fail, the community is left without anyone having access, rather than access without a community.
-        self.persistence.get(slug)
+        # fail, the community is left without anyone having access, rather than access without a community. Its
+        # config isn't read, so a community whose config is broken can still be deleted.
         self.grants.delete_all(slug)
         self.persistence.delete(slug)
         return None

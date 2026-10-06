@@ -374,10 +374,19 @@ def test_a_failed_delete_leaves_the_community_without_access_rather_than_access_
     assert grants.all("test") == []
 
 
-def test_deleting_a_community_that_does_not_exist_leaves_grants_alone(client: TestClient, tmp_data: Path):
+def test_deleting_a_community_that_does_not_exist_clears_grants_left_for_it(client: TestClient, tmp_data: Path):
     grants = grants_in(tmp_data)
     grants.create("missing", Grant(email="ann@example.com", role=Role.community_admin))
 
     assert client.delete("/management/communities/missing").status_code == 404
 
-    assert [str(grant.email) for grant in grants.all("missing")] == ["ann@example.com"]
+    # Left behind, they would be inherited by a community created under that slug later.
+    assert grants.all("missing") == []
+
+
+def test_a_community_whose_config_is_broken_can_still_be_deleted(client: TestClient, tmp_data: Path):
+    (tmp_data / "broken.yaml").write_text("modules: [ {type: no-such-module} ]\n")
+
+    assert client.delete("/management/communities/broken").status_code == 204
+
+    assert not (tmp_data / "broken.yaml").exists()
