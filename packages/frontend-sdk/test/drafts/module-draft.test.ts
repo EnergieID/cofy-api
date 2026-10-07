@@ -13,7 +13,7 @@ const schemas = JSON.parse(
 const stored = {
   type: "tariff",
   name: "spot",
-  source: { type: "entsoe_day_ahead", api_key: "**********", country_code: "BE" },
+  source: { type: "entsoe_day_ahead", api_key: { type: "secret", name: "entsoe_key" }, country_code: "BE" },
 };
 
 describe("ModuleDraft", () => {

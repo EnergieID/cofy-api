@@ -1,161 +1,152 @@
-"""Unit tests for the `Secret` field type and its masked-write merge."""
-
-from typing import Literal
+"""Secrets: named credentials, referenced by name from secret fields."""
 
 import pytest
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, ValidationError
 
-from cofy.api.secret import MASK, Secret, restore_masked_secrets
+from cofy.api import CofyAPI, finalize
+from cofy.api.cofy_api import CofyAPISettings
+from cofy.api.secret import Secret, SecretRef, SecretSettings
+from cofy.modules.discovery import discover_installed_types
+
+discover_installed_types()
 
 
 class Credentials(BaseModel):
     api_key: Secret
-    label: str = "unnamed"
 
 
-class Wrapper(BaseModel):
-    creds: Credentials
-    note: str | None = None
+def secret(name: str) -> dict:
+    return {"type": "secret", "name": name}
 
 
-# ── serialization ─────────────────────────────────────────────────────────
+def entsoe_module(api_key: str = "entsoe_key") -> dict:
+    return {"type": "tariff", "name": "prices", "source": {"type": "entsoe_day_ahead", "api_key": secret(api_key)}}
 
 
-def test_dump_masks_the_secret_by_default():
-    assert Credentials(api_key="real").model_dump()["api_key"] == MASK
+def config(modules: list[dict], secrets: list[dict]) -> dict:
+    return {"type": "cofy_api", "modules": modules, "secrets": secrets}
 
 
-def test_dump_reveals_the_secret_for_a_persistence_round_trip():
-    assert Credentials(api_key="real").model_dump(round_trip=True)["api_key"] == "real"
+# ── secret fields ─────────────────────────────────────────────────────────
 
 
-def test_masked_dump_is_json_serializable():
-    """A plain `SecretStr` dumps to an object yaml/json cannot represent; `Secret` must not."""
-    assert Credentials(api_key="real").model_dump(mode="json")["api_key"] == MASK
+def test_a_secret_field_holds_a_reference_to_a_secret():
+    credentials = Credentials.model_validate({"api_key": secret("entsoe_key")})
+
+    assert credentials.api_key == SecretRef(name="entsoe_key")
+    assert credentials.model_dump() == {"api_key": secret("entsoe_key")}
 
 
-def test_schema_marks_the_field_as_a_write_only_password():
-    field = Credentials.model_json_schema()["properties"]["api_key"]
-    assert field["type"] == "string"
-    assert field["format"] == "password"
-    assert field["writeOnly"] is True
+def test_a_secret_field_takes_no_credential_itself():
+    with pytest.raises(ValidationError):
+        Credentials.model_validate({"api_key": "the-actual-key"})
 
 
-def test_repr_does_not_leak_the_secret():
-    assert "real" not in repr(Credentials(api_key="real"))
+def test_a_secret_field_rejects_a_reference_to_what_is_no_name():
+    with pytest.raises(ValidationError):
+        Credentials.model_validate({"api_key": secret("not a name!")})
 
 
-# ── restore_masked_secrets ────────────────────────────────────────────────
+def test_a_secret_field_is_described_as_a_reference_to_a_secret():
+    schema = Credentials.model_json_schema()
+    field = schema["$defs"][schema["properties"]["api_key"]["$ref"].split("/")[-1]]
+
+    assert field["x-secret"] is True
+    assert field["properties"]["type"]["const"] == "secret"
+    # so a form labels it as the field it's in
+    assert "title" not in field and "description" not in field
 
 
-def test_masked_secret_is_replaced_by_the_stored_one():
-    incoming = Credentials(api_key=MASK, label="edited")
-    restore_masked_secrets(incoming, Credentials(api_key="stored"))
-
-    assert incoming.api_key.get_secret_value() == "stored"
-    assert incoming.label == "edited"  # the rest of the payload is untouched
+def test_a_secret_field_can_only_be_resolved_while_its_configuration_is_built():
+    with pytest.raises(RuntimeError, match="while its configuration is built"):
+        SecretRef(name="entsoe_key").convert()
 
 
-def test_a_real_incoming_secret_is_left_alone():
-    incoming = Credentials(api_key="rotated")
-    restore_masked_secrets(incoming, Credentials(api_key="stored"))
-
-    assert incoming.api_key.get_secret_value() == "rotated"
+# ── secrets ───────────────────────────────────────────────────────────────
 
 
-def test_restores_through_nested_models():
-    incoming = Wrapper(creds=Credentials(api_key=MASK), note="hi")
-    restore_masked_secrets(incoming, Wrapper(creds=Credentials(api_key="stored")))
+def test_a_secret_value_is_only_revealed_when_written_to_disk():
+    secret = SecretSettings.model_validate({"name": "entsoe_key", "value": "real"})
 
-    assert incoming.creds.api_key.get_secret_value() == "stored"
-
-
-def test_restores_through_lists_pairwise():
-    incoming = [Credentials(api_key=MASK), Credentials(api_key=MASK)]
-    stored = [Credentials(api_key="first"), Credentials(api_key="second")]
-    restore_masked_secrets(incoming, stored)
-
-    assert [c.api_key.get_secret_value() for c in incoming] == ["first", "second"]
+    assert "real" not in str(secret.model_dump())
+    assert "real" not in secret.model_dump_json()
+    assert "real" not in repr(secret)
+    assert secret.model_dump(round_trip=True)["value"] == "real"
 
 
-def test_extra_list_entries_are_left_as_sent():
-    """A longer incoming list keeps its own values rather than erroring."""
-    incoming = [Credentials(api_key=MASK), Credentials(api_key="new")]
-    restore_masked_secrets(incoming, [Credentials(api_key="first")])
-
-    assert incoming[0].api_key.get_secret_value() == "first"
-    assert incoming[1].api_key.get_secret_value() == "new"
+def test_a_secret_cannot_be_read_from_the_environment():
+    """The environment holds the deployment's own secrets, which no community's config may reach."""
+    with pytest.raises(ValidationError):
+        SecretSettings.model_validate({"name": "a", "value": {"env": "ENTSOE_API_KEY"}})
 
 
-def test_restores_through_dicts_by_key():
-    incoming = {"a": Credentials(api_key=MASK), "b": Credentials(api_key=MASK)}
-    stored = {"a": Credentials(api_key="stored-a")}
-    restore_masked_secrets(incoming, stored)
-
-    assert incoming["a"].api_key.get_secret_value() == "stored-a"
-    assert incoming["b"].api_key.get_secret_value() == MASK  # no counterpart to restore from
+# ── in a configuration ────────────────────────────────────────────────────
 
 
-def test_a_differently_shaped_stored_model_is_skipped():
-    """A stored model missing some of the incoming fields is, definitionally, a different
-    concrete class - covered by the same class-identity guard as the polymorphic-branch case."""
+def test_a_configuration_gives_each_secret_field_the_value_of_the_secret_it_names():
+    nl = entsoe_module("nl_key") | {"name": "nl"}
 
-    class Fewer(BaseModel):
-        label: str = "unnamed"
+    cofy = CofyAPI.create(
+        config(
+            [entsoe_module(), nl],
+            [{"name": "entsoe_key", "value": "be-key"}, {"name": "nl_key", "value": "nl-key"}],
+        )
+    )
 
-    incoming = Credentials(api_key=MASK)
-    restore_masked_secrets(incoming, Fewer())
-
-    assert incoming.api_key.get_secret_value() == MASK
-
-
-def test_mismatched_shapes_restore_nothing():
-    """Swapping a polymorphic branch must leave the incoming payload exactly as sent."""
-
-    class OtherCredentials(BaseModel):
-        type: Literal["other"] = "other"
-        token: Secret
-
-    incoming = OtherCredentials(token=MASK)
-    restore_masked_secrets(incoming, Credentials(api_key="stored"))
-
-    assert incoming.token.get_secret_value() == MASK
+    keys = {module.name: module.source.client.api_key for module in cofy.modules}
+    assert keys == {"prices": "be-key", "nl": "nl-key"}
 
 
-def test_same_named_field_on_a_different_concrete_class_restores_nothing():
-    """Two unrelated classes coincidentally sharing a field name must not exchange secrets."""
+def test_a_secret_used_in_a_resource_is_given_to_it_too():
+    cofy = CofyAPI.create(
+        {
+            "type": "cofy_api",
+            "secrets": [{"name": "entsoe_key", "value": "real"}],
+            "resources": [
+                {
+                    "type": "source",
+                    "name": "prices",
+                    "value": {"type": "entsoe_day_ahead", "api_key": {"type": "secret", "name": "entsoe_key"}},
+                }
+            ],
+            "modules": [{"type": "tariff", "name": "spot", "source": {"type": "resource", "name": "prices"}}],
+        }
+    )
 
-    class OtherCredentialsSameFieldName(BaseModel):
-        type: Literal["other"] = "other"
-        api_key: Secret
-
-    incoming = OtherCredentialsSameFieldName(api_key=MASK)
-    restore_masked_secrets(incoming, Credentials(api_key="stored"))
-
-    assert incoming.api_key.get_secret_value() == MASK
-
-
-def test_non_model_values_are_ignored():
-    """Scalars and mismatched container kinds are a no-op rather than an error."""
-    restore_masked_secrets("a string", 42)
-    restore_masked_secrets([Credentials(api_key=MASK)], {"not": "a list"})
-
-
-# ── integration with the settings -> object conversion ────────────────────
+    assert cofy.modules[0].source.client.api_key == "real"
 
 
-def test_settings_conversion_hands_the_runtime_a_plain_string():
-    """`FromSettingsMixin` must unwrap secrets so constructors keep their `str` signatures."""
-    from cofy.api.from_settings_mixin import _resolve
+@pytest.mark.parametrize(
+    ("modules", "secrets", "message"),
+    [
+        ([entsoe_module("missing")], [], "unknown secret 'missing'"),
+        ([], [{"name": "a", "value": "x"}, {"name": "a", "value": "y"}], "'a' is used more than once"),
+    ],
+    ids=["unknown", "duplicate_name"],
+)
+def test_secrets_that_dont_fit_are_rejected(modules, secrets, message):
+    finalize()
+    with pytest.raises(ValidationError, match=message):
+        CofyAPISettings.model_validate(config(modules, secrets))
 
-    resolved = _resolve(SecretStr("real"))
 
-    assert resolved == "real"
-    assert isinstance(resolved, str)
-    assert not isinstance(resolved, SecretStr)
+def test_a_configuration_with_secrets_round_trips():
+    finalize()
+    settings = CofyAPISettings.model_validate(config([entsoe_module()], [{"name": "entsoe_key", "value": "real"}]))
+
+    dumped = settings.model_dump(exclude_none=True, round_trip=True)
+
+    assert dumped["modules"][0]["source"]["api_key"] == secret("entsoe_key")
+    assert dumped["secrets"] == [{"name": "entsoe_key", "value": "real"}]
+    assert CofyAPISettings.model_validate(dumped) == settings
 
 
-@pytest.mark.parametrize("value", ["", MASK, "real"])
-def test_any_string_validates_into_a_secret(value: str):
-    """Config files and request bodies need no special syntax for a secret field."""
-    assert Credentials(api_key=value).api_key.get_secret_value() == value
+def test_a_configuration_that_fails_validation_quotes_none_of_its_secrets():
+    finalize()
+    with pytest.raises(ValidationError) as error:
+        CofyAPISettings.model_validate(
+            config([entsoe_module("missing")], [{"name": "entsoe_key", "value": "SUPERSECRETVALUE123"}])
+        )
+
+    assert "unknown secret 'missing'" in str(error.value)
+    assert "SUPERSECRETVALUE123" not in str(error.value)

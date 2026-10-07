@@ -1,12 +1,9 @@
 from .module import ProductionModule, ProductionModuleSettings
-from .sources.acc_forecast import AccForecastSettings, AccForecastSource
-from .sources.energyID_production import EnergyIDProduction, EnergyIDProductionSettings
+from .source import ProductionSource, ProductionSourceSettings
 
 __all__ = [
-    "AccForecastSettings",
-    "AccForecastSource",
-    "EnergyIDProduction",
-    "EnergyIDProductionSettings",
     "ProductionModule",
     "ProductionModuleSettings",
+    "ProductionSource",
+    "ProductionSourceSettings",
 ]

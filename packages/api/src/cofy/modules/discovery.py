@@ -11,20 +11,23 @@ ENTRY_POINT_GROUP = "cofy.modules"
 
 
 def discover_installed_types() -> None:
-    """Import every built-in submodule under ``cofy.modules``.
+    """Import every built-in submodule under ``cofy.modules`` and ``cofy.integrations``.
 
-    Each module package's ``__init__.py`` already re-exports its own sources and
-    formats, so importing one level of submodules is enough to register everything
-    nested underneath it. A submodule whose optional third-party dependency isn't
-    installed is skipped rather than aborting discovery of the rest.
+    Each package's ``__init__.py`` already re-exports its own sources and formats, so
+    importing one level of submodules is enough to register everything nested underneath
+    it. Each of those packages needs exactly one extra, so a submodule whose optional
+    third-party dependency isn't installed is skipped rather than aborting discovery of
+    the rest.
     """
+    import cofy.integrations
     import cofy.modules
 
-    for info in pkgutil.iter_modules(cofy.modules.__path__, prefix="cofy.modules."):
-        try:
-            importlib.import_module(info.name)
-        except ImportError:
-            logger.debug("Skipping %s: optional dependency not installed", info.name)
+    for package in (cofy.modules, cofy.integrations):
+        for info in pkgutil.iter_modules(package.__path__, prefix=f"{package.__name__}."):
+            try:
+                importlib.import_module(info.name)
+            except ImportError:
+                logger.debug("Skipping %s: optional dependency not installed", info.name)
 
 
 def discover_plugin_types() -> None:

@@ -10,9 +10,9 @@ describe("CrumbState", () => {
   it("holds what a page sets", () => {
     const state = new CrumbState();
 
-    state.set([{ label: "Foo", href: "#/c/foo" }, { label: "spot" }]);
+    state.set([{ label: "Foo", href: "#/communities/foo" }, { label: "spot" }]);
 
-    expect(state.crumbs).toEqual([{ label: "Foo", href: "#/c/foo" }, { label: "spot" }]);
+    expect(state.crumbs).toEqual([{ label: "Foo", href: "#/communities/foo" }, { label: "spot" }]);
   });
 
   it("notifies subscribers on a real change", () => {

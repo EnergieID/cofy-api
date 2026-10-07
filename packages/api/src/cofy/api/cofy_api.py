@@ -1,13 +1,17 @@
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
+from pydantic import ConfigDict, model_validator
 
 from .docs_router import DocsRouter
 from .from_settings_mixin import BaseSettingsModel, FromSettingsMixin
 from .module import Module, ModuleSettings
+from .references import check_references, resolving
+from .resource import ResourceSettings
+from .secret import SecretSettings
 from .token_auth import Auth, AuthSettings
 from .version import get_installed_version
 
@@ -15,6 +19,7 @@ if TYPE_CHECKING:
     # Published at runtime by finalize(); the base class is the static stand-in.
     AnyModuleSettings = ModuleSettings
     AnyAuthSettings = AuthSettings
+    AnyResourceSettings = ResourceSettings
 
 DEFAULT_ARGS: dict[str, Any] = {
     "title": "Cofy API",
@@ -27,6 +32,9 @@ DEFAULT_ARGS: dict[str, Any] = {
 
 
 class CofyAPISettings(BaseSettingsModel):
+    # A configuration holds its secrets' values, which a validation error would otherwise quote.
+    model_config = ConfigDict(hide_input_in_errors=True)
+
     type: Literal["cofy_api"] = "cofy_api"
     title: str = DEFAULT_ARGS["title"]
     description: str = DEFAULT_ARGS["description"]
@@ -34,6 +42,20 @@ class CofyAPISettings(BaseSettingsModel):
     debug_dir: Path | None = None
     modules: "list[AnyModuleSettings]" = []
     auth: "AnyAuthSettings | None" = None
+    resources: "list[AnyResourceSettings]" = []
+    secrets: list[SecretSettings] = []
+
+    # Resources are only built when referenced, and secrets only revealed, see convert().
+    _not_converted: ClassVar[frozenset[str]] = frozenset({"type", "resources", "secrets"})
+
+    @model_validator(mode="after")
+    def _check_references(self):
+        check_references(self.resources, self.secrets, self.modules, self.auth)
+        return self
+
+    def convert(self) -> Any:
+        with resolving(self.resources, self.secrets):
+            return super().convert()
 
 
 class CofyAPI(FastAPI, FromSettingsMixin, settings=CofyAPISettings):

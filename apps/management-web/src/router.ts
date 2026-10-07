@@ -10,7 +10,7 @@ export type RouteParams = Record<string, string>;
  * taking the captured parameters.
  */
 export interface RouteDefinition {
-  /** A pattern such as `/c/:slug/:type/:name`. Segments starting with `:` capture. */
+  /** A pattern such as `/communities/:slug/modules/:type/:name`. Segments starting with `:` capture. */
   path: string;
   render: (params: RouteParams) => TemplateResult;
 }
@@ -43,7 +43,7 @@ export function matchRoute<Name extends string>(
   return undefined;
 }
 
-/** Fill a pattern's parameters, e.g. `/c/:slug` with `{slug: "foo"}` gives `/c/foo`. */
+/** Fill a pattern's parameters, e.g. `/communities/:slug` with `{slug: "foo"}` gives `/communities/foo`. */
 export function buildPath(pattern: string, params: RouteParams = {}): string {
   const filled = split(pattern).map((segment) => {
     if (!segment.startsWith(":")) return segment;
@@ -60,7 +60,7 @@ export function buildHash(pattern: string, params: RouteParams = {}): string {
   return `#${buildPath(pattern, params)}`;
 }
 
-/** The path a hash addresses, e.g. `#/c/foo` gives `/c/foo`. */
+/** The path a hash addresses, e.g. `#/communities/foo` gives `/communities/foo`. */
 export function pathFromHash(hash: string): string {
   const path = hash.replace(/^#/, "");
   return path === "" ? "/" : path;

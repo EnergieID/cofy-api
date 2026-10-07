@@ -26,6 +26,65 @@ moduleList:
     # Names the delete column for a screen reader; the header itself is visually empty.
     actions: Actions
 
+resourceList:
+  title: Resources
+  description: Values configured once, and referenced by name from modules and other resources.
+  add: Add resource
+  delete: Delete
+  deleting: Deleting…
+  empty: No resources are configured for this community.
+  deleteConfirm: "Delete {{name}}? Its value cannot be recovered."
+  columns:
+    resource: Resource
+    kind: Kind
+    description: Description
+    # Names the delete column for a screen reader; the header itself is visually empty.
+    actions: Actions
+
+secretList:
+  title: Secrets
+  description: Credentials, given once and referenced by name. A secret's value is never shown again.
+  add: Add secret
+  delete: Delete
+  deleting: Deleting…
+  empty: No secrets are configured for this community.
+  deleteConfirm: "Delete {{name}}? Its value cannot be recovered."
+  columns:
+    secret: Secret
+    description: Description
+    actions: Actions
+
+secretDialog:
+  title: New secret
+  changeTitle: "Change {{name}}"
+  name: Name
+  nameHint: How the secret is referenced. No spaces, no special characters.
+  description: Description
+  value: Value
+  valueHint: The current value is never shown; this replaces it.
+  save: Save
+  saving: Saving…
+  cancel: Cancel
+
+resourceCreate:
+  title: Add resource
+  submit: Create resource
+  creating: Creating…
+  cancel: Cancel
+
+saveResource:
+  title: Save as resource
+  name: Name
+  nameHint: How the resource is referenced. No spaces, no special characters.
+  description: Description
+  save: Save
+  saving: Saving…
+  cancel: Cancel
+
+resourceEditor:
+  title: Edit resource
+  renamed: A resource's name is its identity and cannot be changed here — create a new resource instead.
+
 editor:
   title: Edit module
   save: Save
@@ -50,6 +109,17 @@ form:
   choose: Choose
   type: Type
   moduleType: Module type
+  resourceKind: Resource kind
+  actions: Actions
+  resource: Resource
+  chooseResource: Choose a resource…
+  noResources: "No fitting {{kind}} resources are configured yet."
+  useResource: Use a resource
+  saveAsResource: Save as resource
+  specifyValue: Specify a value
+  chooseSecret: Choose a secret…
+  newSecret: New secret
+  noSecrets: No secrets are configured yet
   chooseType: Choose a type…
   viewAsYaml: View as YAML
   viewAsForm: View as form
@@ -79,6 +149,8 @@ errors:
     title: Not found
   resource-already-exists:
     title: Already exists
+  resource-in-use:
+    title: Still in use
   precondition-failed:
     title: Changed since you loaded it
   validation-failed:

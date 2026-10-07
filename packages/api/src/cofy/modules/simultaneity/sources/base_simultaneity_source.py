@@ -5,16 +5,20 @@ from collections.abc import Sequence
 
 import narwhals as nw
 
-from cofy.modules.timeseries import ISODuration, Timeseries, TimeseriesSource
+from cofy.modules.timeseries import CacheSettings, ISODuration, Timeseries
+
+from ..source import NetVolumeSource, RatioSource
 
 
-class BaseSimultaneitySource(TimeseriesSource, ABC):
-    def __init__(self, sources: Sequence[TimeseriesSource]):
+class BaseSimultaneitySource(RatioSource, ABC):
+    def __init__(self, sources: Sequence[NetVolumeSource], cache: CacheSettings | None = None):
         """Consumption as a percentage of production per timestamp, over sources of net volumes.
 
         Args:
             sources: Sources of net volumes, positive for consumption and negative for production.
+            cache: Cache what this source fetches, see `TimeseriesSource`.
         """
+        super().__init__(cache=cache)
         if not sources:
             raise ValueError("At least one source must be provided")
         self.sources = sources
@@ -23,7 +27,7 @@ class BaseSimultaneitySource(TimeseriesSource, ABC):
     def volumes(self, results: Sequence[Timeseries]) -> nw.DataFrame:
         """The consumption and production to compare per timestamp, from the results of the sources in order."""
 
-    async def fetch_timeseries(
+    async def _fetch_timeseries(
         self,
         start: dt.datetime,
         end: dt.datetime,

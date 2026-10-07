@@ -31,12 +31,13 @@ def tmp_data(tmp_path: Path) -> Path:
                 "type": "cofy_api",
                 "title": "Test community",
                 "description": "For tests",
+                "secrets": [{"name": "entsoe_key", "value": API_KEY}],
                 "modules": [
                     {"type": "billing", "name": "default"},
                     {
                         "type": "tariff",
                         "name": "spot",
-                        "source": {"type": "entsoe_day_ahead", "api_key": API_KEY},
+                        "source": {"type": "entsoe_day_ahead", "api_key": {"type": "secret", "name": "entsoe_key"}},
                     },
                 ],
                 "auth": {"type": "token", "tokens": {TOKEN: {"name": "M2M"}}},
@@ -140,12 +141,11 @@ def test_update_leaves_modules_untouched(client: TestClient, tmp_data: Path):
     assert [(m["type"], m["name"]) for m in stored["modules"]] == [("billing", "default"), ("tariff", "spot")]
 
 
-def test_update_leaves_module_credentials_intact(client: TestClient, tmp_data: Path):
-    """The write re-serializes the whole config, so a masked secret must not reach disk."""
+def test_update_leaves_secrets_intact(client: TestClient, tmp_data: Path):
+    """The write re-serializes the whole config, so the real value must reach disk again."""
     client.put("/management/communities/test", json={"title": "Renamed"})
 
-    spot = next(m for m in _stored(tmp_data)["modules"] if m["name"] == "spot")
-    assert spot["source"]["api_key"] == API_KEY
+    assert _stored(tmp_data)["secrets"] == [{"name": "entsoe_key", "value": API_KEY}]
 
 
 def test_update_leaves_the_auth_block_intact(client: TestClient, tmp_data: Path):

@@ -6,21 +6,26 @@ from types import SimpleNamespace
 from cofy.modules import discovery
 
 
-def test_discover_installed_types_imports_each_top_level_submodule(monkeypatch):
+def fake_iter_modules(names: dict[str, list[str]]):
+    def iter_modules(path, prefix: str):
+        return iter([SimpleNamespace(name=f"{prefix}{name}") for name in names[prefix.removesuffix(".")]])
+
+    return iter_modules
+
+
+def test_discover_installed_types_imports_each_top_level_submodule_of_modules_and_integrations(monkeypatch):
     imported = []
 
     monkeypatch.setattr(
         discovery.pkgutil,
         "iter_modules",
-        lambda *args, **kwargs: iter(
-            [SimpleNamespace(name="cofy.modules.fake_a"), SimpleNamespace(name="cofy.modules.fake_b")]
-        ),
+        fake_iter_modules({"cofy.modules": ["fake_a", "fake_b"], "cofy.integrations": ["fake_c"]}),
     )
     monkeypatch.setattr(discovery.importlib, "import_module", imported.append)
 
     discovery.discover_installed_types()
 
-    assert imported == ["cofy.modules.fake_a", "cofy.modules.fake_b"]
+    assert imported == ["cofy.modules.fake_a", "cofy.modules.fake_b", "cofy.integrations.fake_c"]
 
 
 def test_discover_installed_types_skips_module_with_missing_optional_dependency(monkeypatch, caplog):
@@ -36,12 +41,7 @@ def test_discover_installed_types_skips_module_with_missing_optional_dependency(
     monkeypatch.setattr(
         discovery.pkgutil,
         "iter_modules",
-        lambda *args, **kwargs: iter(
-            [
-                SimpleNamespace(name="cofy.modules.fake_missing_dep"),
-                SimpleNamespace(name="cofy.modules.fake_ok"),
-            ]
-        ),
+        fake_iter_modules({"cofy.modules": ["fake_missing_dep", "fake_ok"], "cofy.integrations": []}),
     )
     monkeypatch.setattr(discovery.importlib, "import_module", fake_import_module)
 

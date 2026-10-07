@@ -2,8 +2,17 @@ title: Cofy-beheer
 product: Cofy
 subtitle: beheer
 
+community:
+  tabs:
+    modules: Modules
+    resources: Bronnen
+    secrets: Geheimen
+
 newModule:
   crumb: Nieuwe module
   heading: Module toevoegen
+
+newResource:
+  crumb: Nieuwe bron
 
 notFound: Geen pagina voor {{path}}.

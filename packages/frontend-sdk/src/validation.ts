@@ -31,7 +31,8 @@ export function validate(schema: JsonSchema, value: unknown): ValidationIssue[] 
 }
 
 /**
- * Replace every discriminated union along *value*'s shape with the branch *value* selects.
+ * Replace every discriminated union along *value*'s shape - a referable field included - with the
+ * branch *value* selects.
  *
  * JSON Schema has no discriminator - it is an OpenAPI keyword - so a validator has to try
  * all branches of a `oneOf` and report the failures of each. For a module with six possible
@@ -45,6 +46,15 @@ export function validate(schema: JsonSchema, value: unknown): ValidationIssue[] 
  */
 export function narrowToInstance(schema: JsonSchema, value: unknown, root: JsonSchema): JsonSchema {
   let node = deref(schema, root);
+
+  // A referable field is its value or a reference to a resource (`x-referable`, value first), and
+  // which of the two it is follows from the instance just like a discriminator would say.
+  const branches = node["oneOf"];
+  if (isRecord(node["x-referable"]) && Array.isArray(branches) && branches.length === 2) {
+    const [valueBranch, refBranch] = branches as JsonSchema[];
+    const isRef = isRecord(value) && value["type"] === "resource";
+    node = deref((isRef ? refBranch : valueBranch)!, root);
+  }
 
   const discriminator = node["discriminator"] as { propertyName?: string; mapping?: Record<string, string> } | undefined;
   if (Array.isArray(node["oneOf"]) && discriminator?.propertyName && isRecord(value)) {

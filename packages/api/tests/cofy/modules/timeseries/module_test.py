@@ -481,10 +481,11 @@ def test_explicit_bounds_are_not_aligned():
 
 class ExpiresSource(DummyTimeseriesSource):
     def __init__(self, expires_in: dt.timedelta):
+        super().__init__()
         self.expires_in = expires_in
 
-    async def fetch_timeseries(self, start, end, resolution=dt.timedelta(hours=1), **kwargs):
-        timeseries = await super().fetch_timeseries(start, end, resolution, **kwargs)
+    async def _fetch_timeseries(self, start, end, resolution=dt.timedelta(hours=1), **kwargs):
+        timeseries = await super()._fetch_timeseries(start, end, resolution, **kwargs)
         timeseries.metadata["expires"] = dt.datetime.now(dt.UTC) + self.expires_in
         return timeseries
 

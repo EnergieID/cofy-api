@@ -1,56 +1,53 @@
-"""A credential field that is masked over HTTP but round-trips to persistence intact."""
+"""Secrets: credentials configured once in a community's secrets, and referenced by name wherever one is needed."""
 
-from typing import Annotated, Any
+from __future__ import annotations
 
-from pydantic import BaseModel, PlainSerializer, SecretStr, SerializationInfo
+from typing import Annotated, Any, Literal
 
-MASK = "**********"
-"""Placeholder serialized in place of a secret's value. Sent back unchanged, it means "keep
-the stored value"."""
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, SecretStr, SerializationInfo
 
+from .references import NamedRef
 
-def _dump_secret(value: SecretStr, info: SerializationInfo) -> str:
-    # `round_trip=True` marks a serialization whose output is fed back into validation, which
-    # is how community YAML is rewritten and the only place the real value belongs.
-    return value.get_secret_value() if info.round_trip else MASK
+NAME_PATTERN = r"^[a-zA-Z0-9_-]+$"
 
 
-Secret = Annotated[SecretStr, PlainSerializer(_dump_secret, return_type=str, when_used="always")]
-"""A settings field holding a credential.
-
-Validates from a plain string, serializes to `MASK` everywhere except the persistence round
-trip, and carries `format: password` and `writeOnly: true` into the JSON Schema.
-"""
+def _dump_value(value: SecretStr, info: SerializationInfo) -> str:
+    # `round_trip=True` marks the serialization that is written to disk, the only place the value belongs.
+    return value.get_secret_value() if info.round_trip else str(value)
 
 
-def restore_masked_secrets(incoming: Any, stored: Any) -> None:
-    """Copy secrets from *stored* onto any `MASK` placeholder in *incoming*, in place.
+SecretValue = Annotated[SecretStr, PlainSerializer(_dump_value, return_type=str, when_used="always")]
+"""A secret's value itself, only revealed when its configuration is written to disk."""
 
-    Only substitutes where the two shapes agree, so switching a polymorphic branch restores
-    nothing and the incoming values stand as sent. List elements are paired by position.
-    """
-    if isinstance(incoming, BaseModel) and isinstance(stored, BaseModel):
-        # A field name matching by coincidence across unrelated concrete classes (two source
-        # types both happening to have an `api_key`) is not "the same shape" - restoring across
-        # that would leak one service's credential onto another, so the classes must match too.
-        if type(incoming) is not type(stored):
-            return
-        # Same concrete class, so every name in `model_fields` is guaranteed to be a present
-        # attribute on both - no `hasattr` guard needed here the way the dict/list cases below
-        # need one, since those pair up by key/position instead of by a shared class.
-        for name in type(incoming).model_fields:
-            new_value, old_value = getattr(incoming, name), getattr(stored, name)
-            if isinstance(new_value, SecretStr) and isinstance(old_value, SecretStr):
-                if new_value.get_secret_value() == MASK:
-                    setattr(incoming, name, old_value)
-            else:
-                restore_masked_secrets(new_value, old_value)
 
-    elif isinstance(incoming, list) and isinstance(stored, list):
-        for new_item, old_item in zip(incoming, stored, strict=False):
-            restore_masked_secrets(new_item, old_item)
+class SecretSettings(BaseModel):
+    """A named credential."""
 
-    elif isinstance(incoming, dict) and isinstance(stored, dict):
-        for key, new_value in incoming.items():
-            if key in stored:
-                restore_masked_secrets(new_value, stored[key])
+    name: str = Field(description="The machine name of the secret, by which it is referenced.", pattern=NAME_PATTERN)
+    description: str | None = Field(None, description="A short description of the secret.")
+    value: SecretValue = Field(description="The secret itself.")
+
+    def resolve(self) -> str:
+        """The secret's actual value."""
+        return self.value.get_secret_value()
+
+
+def _secret_schema(schema: dict[str, Any]) -> None:
+    # Marked for forms to offer the community's secrets, and without a title or description of its own, which would
+    # stand in for those of the field it's in.
+    schema.pop("title", None)
+    schema.pop("description", None)
+    schema["x-secret"] = True
+
+
+class SecretRef(NamedRef):
+    """A settings field holding a credential, as a reference to the secret holding it."""
+
+    model_config = ConfigDict(json_schema_extra=_secret_schema)
+
+    type: Literal["secret"] = "secret"
+    name: str = Field(description="The name of the referenced secret.", pattern=NAME_PATTERN)
+
+
+Secret = SecretRef
+"""A settings field holding a credential, as a reference to the secret holding it."""

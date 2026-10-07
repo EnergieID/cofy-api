@@ -40,6 +40,10 @@ EXTRA_ZONES: dict[str, set[str]] = {
     "members": {"modules/members/"},
     "directive": {"modules/directive/"},
     "simultaneity": {"modules/simultaneity/"},
+    "entsoe": {"integrations/entsoe/"},
+    "energy-cost": {"integrations/energy_cost/"},
+    "energyid": {"integrations/energyid/"},
+    "acc": {"integrations/acc/"},
     "debug": {"api/debug_"},
 }
 
