@@ -40,3 +40,11 @@ def test_no_console_mount_without_static_dir(monkeypatch: pytest.MonkeyPatch) ->
     response = client.get("/")
 
     assert response.status_code == 404
+
+
+def test_does_not_start_without_login_configured(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("COFY_MANAGEMENT_OIDC_CLIENT_SECRET")
+    monkeypatch.setenv("COFY_MANAGEMENT_SESSION_LIFETIME", "P1M")
+
+    with pytest.raises(RuntimeError, match="COFY_MANAGEMENT_OIDC_CLIENT_SECRET, COFY_MANAGEMENT_SESSION_LIFETIME"):
+        _import_main(monkeypatch, None)

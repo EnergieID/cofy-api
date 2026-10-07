@@ -1,4 +1,4 @@
-from .base import FilePersistence
+from .base import CommunityFileStore, FileStore
 from .modules import FileModulesPersistence
 
-__all__ = ["FilePersistence", "FileModulesPersistence"]
+__all__ = ["CommunityFileStore", "FileModulesPersistence", "FileStore"]

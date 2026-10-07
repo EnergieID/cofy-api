@@ -22,7 +22,7 @@ export class CofyResourcePage extends CofyPage {
   @consume({ context: communityStoreContext, subscribe: true })
   public communities!: CommunityStore;
 
-  @property({ type: String }) public slug = "";
+  @property({ type: String }) public override slug = "";
   @property({ type: String }) public name = "";
 
   protected override crumbs(): Crumb[] {
@@ -33,7 +33,7 @@ export class CofyResourcePage extends CofyPage {
     ];
   }
 
-  public override render(): TemplateResult {
+  protected override content(): TemplateResult {
     return html`<cofy-resource-editor .slug=${this.slug} .name=${this.name}></cofy-resource-editor>`;
   }
 }

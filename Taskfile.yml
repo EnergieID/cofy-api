@@ -95,10 +95,14 @@ tasks:
     cmds:
       - python3 apps/demo_multitenant/scripts/reset.py
 
+  dev-idp:
+    desc: Run a local identity provider to log into the management console with (users admin, demo-admin, nobody; password pwd)
+    cmds:
+      - docker compose -f apps/dev_idp/docker-compose.yml up
+
   demo-multitenant-api:
-    desc: Run the management API for the multitenant demo locally
-    env:
-      COFY_MANAGEMENT_DATA_DIR: '{{.ROOT_DIR}}/apps/demo_multitenant/.data'
+    desc: Run the management API for the multitenant demo locally (expects `task dev-idp`)
+    dotenv: ['.env.local']
     cmds:
       - uv run --project packages/management-api --directory packages/management-api poe run
 
@@ -111,7 +115,12 @@ tasks:
     desc: Build and run the multitenant demo's production Docker image locally
     cmds:
       - docker build -t cofy-management-demo -f apps/demo_multitenant/Dockerfile .
-      - docker run --rm -p 8080:8080 -v cofy-management-data:/data cofy-management-demo
+      # Host networking, so the container reaches the dev identity provider at the same
+      # localhost address the browser does - the issuer has to be the same for both.
+      # The demo's own data is mounted in, as a server's is: the image brings none of its own.
+      - >-
+        docker run --rm --network host -v {{.ROOT_DIR}}/apps/demo_multitenant/.data:/data --env-file .env.local
+        -e COFY_MANAGEMENT_DATA_DIR=/data cofy-management-demo
 
   build:
     desc: Build the frontend packages and the console
@@ -125,6 +134,8 @@ tasks:
 
   generate:
     desc: Regenerate the typed API client from the management API's OpenAPI document
+    # It builds the same app as `demo-multitenant-api` to read its OpenAPI document, so it needs the same settings.
+    dotenv: ['.env.local']
     cmds:
       - bash -c '{{.WITH_NODE}} cd packages/frontend-sdk && npm run generate'
 

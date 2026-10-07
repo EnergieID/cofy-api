@@ -4,10 +4,12 @@ from typing import Annotated
 
 from cofy.api import ResourceSettings
 from cofy.modules.discovery import discover_all_types
-from fastapi import APIRouter, Path
+from fastapi import Path
 
+from ..auth.access import Subject
 from ..persitance.modules import ModulesPersistence
 from ..persitance.resources import ResourcesPersistence
+from ..policies.policy import Policy, PolicyRouter
 from .allowed_resources import allowed_resource_types
 from .in_use import check_unused
 
@@ -20,15 +22,17 @@ class ResourcesRouter:
     def __init__(self, persistence: ResourcesPersistence, modules: ModulesPersistence):
         self.persistence = persistence
         self.modules = modules
-        self.router = APIRouter(prefix="/management/communities/{slug}/resources", tags=["Resources"])
+        self.router = PolicyRouter(
+            subject=Subject.resources, prefix="/management/communities/{slug}/resources", tags=["Resources"]
+        )
         self._register_routes()
 
     def _register_routes(self) -> None:
-        self.router.add_api_route("", self.all, methods=["GET"])
-        self.router.add_api_route("/{name}", self.get, methods=["GET"])
-        self.router.add_api_route("", self.create, methods=["POST"], status_code=201)
-        self.router.add_api_route("/{name}", self.put, methods=["PUT"])
-        self.router.add_api_route("/{name}", self.delete, methods=["DELETE"], status_code=204)
+        self.router.add_api_route("", self.all, methods=["GET"], rule=Policy.all)
+        self.router.add_api_route("/{name}", self.get, methods=["GET"], rule=Policy.get)
+        self.router.add_api_route("", self.create, methods=["POST"], rule=Policy.create, status_code=201)
+        self.router.add_api_route("/{name}", self.put, methods=["PUT"], rule=Policy.put)
+        self.router.add_api_route("/{name}", self.delete, methods=["DELETE"], rule=Policy.delete, status_code=204)
 
     def all(
         self,

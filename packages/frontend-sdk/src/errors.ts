@@ -32,6 +32,10 @@ export class ProblemError extends Error {
     return this.problem.errors ?? [];
   }
 
+  public get isForbidden(): boolean {
+    return this.status === 403;
+  }
+
   public get isNotFound(): boolean {
     return this.status === 404;
   }

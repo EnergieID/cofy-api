@@ -21,7 +21,7 @@ export class CofyCommunitiesPage extends CofyPage {
     return [];
   }
 
-  public override render(): TemplateResult {
+  protected override content(): TemplateResult {
     // The table carries its own title and toolbar, so the page adds no chrome of its own.
     return html`
       <cofy-community-list

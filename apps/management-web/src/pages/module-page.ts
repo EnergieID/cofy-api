@@ -25,7 +25,7 @@ export class CofyModulePage extends CofyPage {
   @consume({ context: moduleStoreContext, subscribe: true })
   public modules!: ModuleStore;
 
-  @property({ type: String }) public slug = "";
+  @property({ type: String }) public override slug = "";
   @property({ attribute: false }) public moduleId: ModuleId | null = null;
 
   protected override crumbs(): Crumb[] {
@@ -38,7 +38,7 @@ export class CofyModulePage extends CofyPage {
     ];
   }
 
-  public override render(): TemplateResult {
+  protected override content(): TemplateResult {
     return html`<cofy-module-editor .slug=${this.slug} .moduleId=${this.moduleId}></cofy-module-editor>`;
   }
 }

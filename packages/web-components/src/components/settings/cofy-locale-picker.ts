@@ -12,7 +12,8 @@ import { CofyElement } from "../../cofy-element.js";
  * Chooses the language for the whole page.
  *
  * A select rather than radio buttons: the list of languages grows with the deployment, and a
- * European product will not stop at two.
+ * European product will not stop at two. With only one language there is nothing to choose, and
+ * the element hides itself, so a layout around it doesn't leave room for it either.
  */
 @customElement("cofy-locale-picker")
 export class CofyLocalePicker extends CofyElement {
@@ -20,14 +21,21 @@ export class CofyLocalePicker extends CofyElement {
     :host {
       display: block;
     }
+    :host([hidden]) {
+      display: none;
+    }
   `;
 
   /** The languages this deployment serves. Defaults to whatever i18next was configured with. */
   @property({ attribute: false }) public languages?: readonly string[];
 
+  public override willUpdate(): void {
+    this.hidden = !this.offersAChoice();
+  }
+
   public override render(): TemplateResult | typeof nothing {
+    if (this.i18n === undefined || !this.offersAChoice()) return nothing;
     const languages = this.languages ?? this.configured();
-    if (this.i18n === undefined || languages.length < 2) return nothing;
 
     return html`
       <wa-select
@@ -45,6 +53,10 @@ export class CofyLocalePicker extends CofyElement {
         )}
       </wa-select>
     `;
+  }
+
+  private offersAChoice(): boolean {
+    return (this.languages ?? this.configured()).length >= 2;
   }
 
   /** The language's own name for itself, which is what a reader looking for it expects. */

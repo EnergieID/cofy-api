@@ -1,25 +1,31 @@
-import { css, html } from "lit";
+import { consume } from "@lit/context";
+import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
+import type { SessionStore } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/button/button.js";
+import "@awesome.me/webawesome/dist/components/divider/divider.js";
 import "@awesome.me/webawesome/dist/components/drawer/drawer.js";
 import "@awesome.me/webawesome/dist/components/icon/icon.js";
 import "@awesome.me/webawesome/dist/components/tooltip/tooltip.js";
 import "../../icons.js";
 
 import { CofyElement } from "../../cofy-element.js";
+import { sessionStoreContext } from "../../context.js";
 import "./cofy-locale-picker.js";
 import "./cofy-theme-picker.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 
 /**
- * The console's global settings, behind one header action.
+ * The console's global settings, behind one header action: who is logged in, the language and
+ * appearance, and logging out.
  *
- * Appearance and language are as global as this console gets, so they live behind one control
- * in the header rather than as two, and the drawer leaves room for whatever comes next without
- * another icon.
+ * They are as global as this console gets, so they live behind one control in the header rather
+ * than several, and the drawer leaves room for whatever comes next without another icon. Without
+ * a session to consume - embedded somewhere that has no login - only the language and appearance
+ * are shown.
  *
  * The drawer opens through `<dialog>` and the top layer, so it is not affected by the layout
  * or stacking context of the header it is nested in, and it brings its own focus trap, inert
@@ -34,12 +40,20 @@ export class CofySettingsPanel extends CofyElement {
     :host {
       display: contents;
     }
+    .email {
+      color: var(--wa-color-text-quiet);
+    }
   `];
+
+  @consume({ context: sessionStoreContext, subscribe: true })
+  @state()
+  public session?: SessionStore;
 
   @state() private open = false;
 
   public override render(): TemplateResult {
     const label = this.t("settings.open", { defaultValue: "Settings" });
+    const me = this.session?.me;
 
     return html`
       <wa-button id="settings-trigger" appearance="plain" label=${label} @click=${(): void => this.toggle()}>
@@ -57,6 +71,18 @@ export class CofySettingsPanel extends CofyElement {
         }}
       >
         <div class="wa-stack">
+          ${me == null
+            ? nothing
+            : html`
+                <div class="wa-stack wa-gap-3xs">
+                  <strong>${me.name ?? me.email}</strong>
+                  ${me.name == null ? nothing : html`<span class="email">${me.email}</span>`}
+                </div>
+                <wa-button appearance="outlined" @click=${(): void => this.session?.logout()}>
+                  ${this.t("settings.logout")}
+                </wa-button>
+                <wa-divider></wa-divider>
+              `}
           <cofy-theme-picker></cofy-theme-picker>
           <cofy-locale-picker></cofy-locale-picker>
         </div>

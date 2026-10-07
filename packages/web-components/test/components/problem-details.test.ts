@@ -37,6 +37,22 @@ describe("cofy-problem-details", () => {
     expect(shown(element)).toEqual({ title: "Not found", detail: "No community 'x'." });
   });
 
+  it("shows being refused access as a warning, saying how to get it, rather than as an error", async () => {
+    const element = await mount(new ProblemError(403, { status: 403, detail: "You are not allowed to do this", code: "forbidden" }));
+
+    expect(element.shadowRoot!.querySelector("wa-callout")!.getAttribute("variant")).toBe("warning");
+    expect(shown(element)).toEqual({
+      title: "No access",
+      detail: "You don't have access to this. Ask an administrator to grant you access.",
+    });
+  });
+
+  it("shows any other failure as an error", async () => {
+    const element = await mount(new ProblemError(500, { status: 500, code: "internal-error" }));
+
+    expect(element.shadowRoot!.querySelector("wa-callout")!.getAttribute("variant")).toBe("danger");
+  });
+
   it("shows what the server said when the code is one it has no translation for", async () => {
     const element = await mount(
       new ProblemError(503, { status: 503, title: "Service Unavailable", detail: "Upstream is down.", code: "upstream-down" }),

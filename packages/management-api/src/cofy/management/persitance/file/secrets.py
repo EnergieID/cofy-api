@@ -2,10 +2,10 @@ from cofy.api import SecretSettings
 
 from ...errors import ResourceAlreadyExistsError, ResourceNotFoundError
 from ..secrets import SecretsPersistence
-from .base import FilePersistence
+from .base import CommunityFileStore
 
 
-class FileSecretsPersistence(FilePersistence, SecretsPersistence):
+class FileSecretsPersistence(CommunityFileStore, SecretsPersistence):
     def all(self, slug: str) -> list[SecretSettings]:
         with self._open_community_config(slug, "read") as config:
             return config.secrets

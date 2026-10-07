@@ -10,8 +10,11 @@ from typing import Annotated, Any
 
 from cofy.api import ResourceSettings
 from cofy.modules.discovery import discover_all_types
-from fastapi import APIRouter, Path
+from fastapi import Path
 from pydantic import BaseModel, ConfigDict, Field
+
+from ..auth.access import Subject
+from ..policies.policy import Policy, PolicyRouter
 
 # Import every installed module/source/format type, so the registry is complete.
 discover_all_types()
@@ -40,8 +43,12 @@ class AllowedResource(BaseModel):
 
 class AllowedResourcesRouter:
     def __init__(self):
-        self.router = APIRouter(prefix="/management/communities/{slug}/allowed-resources", tags=["Allowed resources"])
-        self.router.add_api_route("", self.all, methods=["GET"])
+        self.router = PolicyRouter(
+            subject=Subject.allowed_resources,
+            prefix="/management/communities/{slug}/allowed-resources",
+            tags=["Allowed resources"],
+        )
+        self.router.add_api_route("", self.all, methods=["GET"], rule=Policy.all)
 
     def all(
         self,

@@ -6,7 +6,7 @@
 communityList:
   title: Communities
   description: Each community is one Cofy configuration.
-  empty: No communities are configured.
+  empty: There are no communities you have access to. Ask an administrator to grant you access.
   columns:
     community: Community
     slug: Slug
@@ -65,6 +65,34 @@ secretDialog:
   save: Save
   saving: Saving…
   cancel: Cancel
+
+grantList:
+  title: Access
+  description: Who may manage this community. Access is granted by email and tied to the person's account when they first log in.
+  add: Grant access
+  revoke: Revoke
+  revoking: Revoking…
+  empty: Nobody has been granted access to this community yet.
+  revokeConfirm: "Revoke the access of {{email}}?"
+  bound: Account linked
+  invited: Awaiting first login
+  columns:
+    email: Email
+    role: Role
+    status: Status
+    actions: Actions
+
+grantDialog:
+  title: Grant access
+  email: Email
+  emailHint: The address the person logs in with. It must be verified at the identity provider.
+  role: Role
+  save: Grant
+  saving: Granting…
+  cancel: Cancel
+
+roles:
+  community_admin: Community admin
 
 resourceCreate:
   title: Add resource
@@ -128,6 +156,7 @@ form:
 
 settings:
   open: Settings
+  logout: Log out
   theme:
     legend: Appearance
     names:
@@ -145,6 +174,15 @@ settings:
 errors:
   unknown:
     title: Request failed
+  not-authenticated:
+    title: Not logged in
+    detail: Log in again to continue.
+  forbidden:
+    title: No access
+    detail: You don't have access to this. Ask an administrator to grant you access.
+  stored-data-invalid:
+    title: Server misconfigured
+    detail: The server's data can't be read. Ask its administrator to fix it.
   resource-not-found:
     title: Not found
   resource-already-exists:

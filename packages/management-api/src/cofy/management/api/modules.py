@@ -4,9 +4,11 @@ from typing import Annotated
 
 from cofy.api.module import ModuleSettings
 from cofy.modules.discovery import discover_all_types
-from fastapi import APIRouter, Path
+from fastapi import Path
 
+from ..auth.access import Subject
 from ..persitance.modules import ModulesPersistence
+from ..policies.policy import Policy, PolicyRouter
 from .allowed_modules import allowed_module_types
 
 # Import every installed module/source/format type,
@@ -17,15 +19,19 @@ AnyModuleSettings = ModuleSettings.union_type()
 class ModulesRouter:
     def __init__(self, persitance: ModulesPersistence):
         self.persistence = persitance
-        self.router = APIRouter(prefix="/management/communities/{slug}/modules", tags=["Modules"])
+        self.router = PolicyRouter(
+            subject=Subject.modules, prefix="/management/communities/{slug}/modules", tags=["Modules"]
+        )
         self._register_routes()
 
     def _register_routes(self) -> None:
-        self.router.add_api_route("", self.all, methods=["GET"])
-        self.router.add_api_route("/{module_type}/{name}", self.get, methods=["GET"])
-        self.router.add_api_route("", self.create, methods=["POST"], status_code=201)
-        self.router.add_api_route("/{module_type}/{name}", self.put, methods=["PUT"])
-        self.router.add_api_route("/{module_type}/{name}", self.delete, methods=["DELETE"], status_code=204)
+        self.router.add_api_route("", self.all, methods=["GET"], rule=Policy.all)
+        self.router.add_api_route("/{module_type}/{name}", self.get, methods=["GET"], rule=Policy.get)
+        self.router.add_api_route("", self.create, methods=["POST"], rule=Policy.create, status_code=201)
+        self.router.add_api_route("/{module_type}/{name}", self.put, methods=["PUT"], rule=Policy.put)
+        self.router.add_api_route(
+            "/{module_type}/{name}", self.delete, methods=["DELETE"], rule=Policy.delete, status_code=204
+        )
 
     def all(
         self,

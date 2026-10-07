@@ -5,7 +5,7 @@
 communityList:
   title: Gemeenschappen
   description: Elke gemeenschap is één Cofy-configuratie.
-  empty: Er zijn geen gemeenschappen geconfigureerd.
+  empty: Er zijn geen gemeenschappen waar je toegang toe hebt. Vraag een beheerder om je toegang te geven.
   columns:
     community: Gemeenschap
     slug: Naam
@@ -53,6 +53,7 @@ secretList:
 
 settings:
   open: Instellingen
+  logout: Afmelden
   theme:
     legend: Weergave
     names:
@@ -62,3 +63,43 @@ settings:
   language:
     legend: Taal
     choose: Kies een taal
+
+grantList:
+  title: Toegang
+  description: Wie deze gemeenschap mag beheren. Toegang wordt per e-mailadres gegeven en aan het account van de persoon gekoppeld zodra die voor het eerst aanmeldt.
+  add: Toegang geven
+  revoke: Intrekken
+  revoking: Intrekken…
+  empty: Niemand heeft al toegang tot deze gemeenschap gekregen.
+  revokeConfirm: "De toegang van {{email}} intrekken?"
+  bound: Account gekoppeld
+  invited: Wacht op eerste aanmelding
+  columns:
+    email: E-mail
+    role: Rol
+    status: Status
+    actions: Acties
+
+grantDialog:
+  title: Toegang geven
+  email: E-mail
+  emailHint: Het adres waarmee de persoon aanmeldt. Het moet bevestigd zijn bij de identiteitsprovider.
+  role: Rol
+  save: Toegang geven
+  saving: Bezig…
+  cancel: Annuleren
+
+roles:
+  community_admin: Gemeenschapsbeheerder
+
+
+errors:
+  not-authenticated:
+    title: Niet aangemeld
+    detail: Meld je opnieuw aan om verder te gaan.
+  forbidden:
+    title: Geen toegang
+    detail: Je hebt hier geen toegang toe. Vraag een beheerder om je toegang te geven.
+  stored-data-invalid:
+    title: Server verkeerd ingesteld
+    detail: De gegevens op de server kunnen niet gelezen worden. Vraag de beheerder om dit op te lossen.

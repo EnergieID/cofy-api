@@ -56,10 +56,16 @@
             "jinja": true,
             "envFile": "${workspaceFolder}/.env.local",
             "env": {
-                "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache",
-                "COFY_MANAGEMENT_DATA_DIR": "${workspaceFolder}/apps/demo_multitenant/.data"
+                "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache"
             },
             "justMyCode": false
+        },
+        {
+            "name": "Demo: multitenant (identity provider)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "task dev-idp",
+            "cwd": "${workspaceFolder}"
         },
         {
             "name": "Demo: multitenant (console)",
@@ -73,6 +79,7 @@
         {
             "name": "Demo: multitenant (API + console)",
             "configurations": [
+                "Demo: multitenant (identity provider)",
                 "Demo: multitenant (management API)",
                 "Demo: multitenant (console)"
             ],

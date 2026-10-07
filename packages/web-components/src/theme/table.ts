@@ -10,11 +10,16 @@ import { nativeStyles } from "./native-styles.js";
  * than reimplemented, so it cannot drift from what the design system actually ships. The title
  * and description above the table are `cofy-heading`, not a `<caption>`: what native.css gives
  * a caption - a single muted, smaller block - does not fit a title meant to read as a heading.
- * What is added here is behaviour Web Awesome's stylesheet has no opinion on: a clickable row.
+ * What is added here is behaviour Web Awesome's stylesheet has no opinion on: a clickable row,
+ * and a table inside the `<wa-scroller>` that keeps it usable on a narrow screen.
  */
 export const tableStyles: CSSResultGroup = [
   nativeStyles,
   css`
+    /* A layout utility zeroes its children's margins; inside the scroller, the table is no longer one of them. */
+    wa-scroller > table {
+      margin-block: 0;
+    }
     tbody tr {
       cursor: pointer;
     }

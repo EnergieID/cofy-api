@@ -1,7 +1,7 @@
 """Reset the multitenant demo's runtime data back to the committed seed.
 
-Deletes `apps/demo_multitenant/.data` (the directory the management API reads and writes
-communities from while the demo is running) and recreates it from `apps/demo_multitenant/seed`.
+Deletes `apps/demo_multitenant/.data` (the directory the management API reads and writes while the
+demo is running) and recreates it from `apps/demo_multitenant/seed`.
 """
 
 import shutil

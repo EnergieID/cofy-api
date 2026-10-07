@@ -11,9 +11,11 @@ import {
   AllowedResourcesStore,
   ApiClient,
   CommunityStore,
+  GrantStore,
   ModuleStore,
   ResourceStore,
   SecretStore,
+  SessionStore,
 } from "@cofy/frontend-sdk";
 import { StateController } from "@dodona/lit-state";
 import {
@@ -22,11 +24,13 @@ import {
   allowedResourcesStoreContext,
   communityStoreContext,
   createI18n,
+  grantStoreContext,
   i18nContext,
   moduleStoreContext,
   nativeStyles,
   resourceStoreContext,
   secretStoreContext,
+  sessionStoreContext,
   themeStateContext,
   utilityStyles,
   yamlBackend,
@@ -116,7 +120,11 @@ export class CofyApp extends LitElement {
     `,
   ];
 
-  private readonly api = new ApiClient();
+  // A request turned away for want of a login sends the browser off to log in, coming back here.
+  private readonly api: ApiClient = new ApiClient({ onUnauthenticated: (): void => this.session.login() });
+
+  @provide({ context: sessionStoreContext })
+  public session = new SessionStore(this.api);
 
   @provide({ context: communityStoreContext })
   public communities = new CommunityStore(this.api);
@@ -136,6 +144,9 @@ export class CofyApp extends LitElement {
   @provide({ context: secretStoreContext })
   public secrets = new SecretStore(this.api);
 
+  @provide({ context: grantStoreContext })
+  public grants = new GrantStore(this.api);
+
   @provide({ context: routeStateContext })
   public routeState = new RouteState(routes);
 
@@ -153,6 +164,7 @@ export class CofyApp extends LitElement {
   public override connectedCallback(): void {
     super.connectedCallback();
     this.routeState.start();
+    void this.session.load();
   }
 
   public override disconnectedCallback(): void {
@@ -161,6 +173,14 @@ export class CofyApp extends LitElement {
   }
 
   public override render(): TemplateResult {
+    // Nothing until the login is known: without one, the browser is already on its way to log in.
+    if (!this.session.loaded) {
+      const error = this.session.error;
+      return error !== null && error.status !== 401
+        ? html`<cofy-problem-details .problem=${error}></cofy-problem-details>`
+        : html``;
+    }
+
     return html`
       <wa-page>
         <!-- The console has no navigation, so the mobile hamburger has nothing to toggle.

@@ -10,6 +10,9 @@ import { utilityStyles } from "../../theme/utility-styles.js";
  * A section heading: a title, a description beneath it, and optional actions on the far side -
  * the one layout the module and community lists share, so a change to it changes both.
  *
+ * The text takes the room the actions leave and wraps within it; the actions only move beneath it
+ * once that room would be less than half the width.
+ *
  * `title` and `description` want an element to carry the `slot` attribute - only elements, not
  * bare text, can be assigned to a named slot - so a caller wraps each in a `<span>`. `actions`
  * is left empty by a caller with none, and simply renders nothing.
@@ -28,7 +31,7 @@ export class CofyHeading extends CofyElement {
 
   public override render(): TemplateResult {
     return html`
-      <div class="wa-split">
+      <div class="wa-flank:end" style="--content-percentage: 70%;">
         <div class="wa-stack wa-gap-3xs">
           <h3><slot name="title"></slot></h3>
           <p class="wa-color-text-quiet"><slot name="description"></slot></p>

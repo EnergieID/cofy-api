@@ -5,6 +5,10 @@
         }
     },
     "python.defaultInterpreterPath": "${workspaceFolder}/packages/api/.venv/bin/python",
+    // Activation types `source .../activate` into every new terminal, which races whatever is typed
+    // there first - a launch configuration's command, or someone typing quickly. Every package has
+    // its own environment and the tasks go through `uv run`, so nothing needs one activated.
+    "python-envs.terminal.autoActivationType": "off",
     "files.exclude": {
         "**/node_modules": true,
         "**/dist": true,

@@ -6,12 +6,14 @@ from typing import Annotated
 
 from cofy.api import SecretSettings
 from cofy.api.secret import NAME_PATTERN
-from fastapi import APIRouter, Path
+from fastapi import Path
 from pydantic import BaseModel, Field
 
+from ..auth.access import Subject
 from ..persitance.modules import ModulesPersistence
 from ..persitance.resources import ResourcesPersistence
 from ..persitance.secrets import SecretsPersistence
+from ..policies.policy import Policy, PolicyRouter
 from .in_use import check_unused
 
 
@@ -42,12 +44,14 @@ class SecretsRouter:
         self.persistence = persistence
         self.modules = modules
         self.resources = resources
-        self.router = APIRouter(prefix="/management/communities/{slug}/secrets", tags=["Secrets"])
-        self.router.add_api_route("", self.all, methods=["GET"])
-        self.router.add_api_route("/{name}", self.get, methods=["GET"])
-        self.router.add_api_route("", self.create, methods=["POST"], status_code=201)
-        self.router.add_api_route("/{name}", self.put, methods=["PUT"])
-        self.router.add_api_route("/{name}", self.delete, methods=["DELETE"], status_code=204)
+        self.router = PolicyRouter(
+            subject=Subject.secrets, prefix="/management/communities/{slug}/secrets", tags=["Secrets"]
+        )
+        self.router.add_api_route("", self.all, methods=["GET"], rule=Policy.all)
+        self.router.add_api_route("/{name}", self.get, methods=["GET"], rule=Policy.get)
+        self.router.add_api_route("", self.create, methods=["POST"], rule=Policy.create, status_code=201)
+        self.router.add_api_route("/{name}", self.put, methods=["PUT"], rule=Policy.put)
+        self.router.add_api_route("/{name}", self.delete, methods=["DELETE"], rule=Policy.delete, status_code=204)
 
     def all(self, slug: Annotated[str, Path(description="Community slug")]) -> list[SecretInfo]:
         return [SecretInfo.of(secret) for secret in self.persistence.all(slug)]

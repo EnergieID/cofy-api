@@ -5,6 +5,7 @@ import { customElement } from "lit/decorators.js";
 import type { CommunityInfo, CommunityStore } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
+import "@awesome.me/webawesome/dist/components/scroller/scroller.js";
 
 import { CofyElement } from "../../cofy-element.js";
 import { communityStoreContext } from "../../context.js";
@@ -59,22 +60,24 @@ export class CofyCommunityList extends CofyElement {
           <span slot="description">${this.t("communityList.description")}</span>
         </cofy-heading>
 
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">${this.t("communityList.columns.community")}</th>
-              <th scope="col">${this.t("communityList.columns.slug")}</th>
-              <th scope="col">${this.t("communityList.columns.modules")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${communities.length === 0
-              ? html`<tr class="empty">
-                  <td class="secondary" colspan="3">${this.t("communityList.empty")}</td>
-                </tr>`
-              : communities.map((community): TemplateResult => this.row(community))}
-          </tbody>
-        </table>
+        <wa-scroller>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">${this.t("communityList.columns.community")}</th>
+                <th scope="col">${this.t("communityList.columns.slug")}</th>
+                <th scope="col">${this.t("communityList.columns.modules")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${communities.length === 0
+                ? html`<tr class="empty">
+                    <td class="secondary" colspan="3">${this.t("communityList.empty")}</td>
+                  </tr>`
+                : communities.map((community): TemplateResult => this.row(community))}
+            </tbody>
+          </table>
+        </wa-scroller>
       </div>
     `;
   }

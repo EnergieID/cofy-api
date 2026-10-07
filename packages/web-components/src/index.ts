@@ -4,10 +4,12 @@ export {
   communitySlugContext,
   communityStoreContext,
   fieldRegistryContext,
+  grantStoreContext,
   i18nContext,
   moduleStoreContext,
   resourceStoreContext,
   secretStoreContext,
+  sessionStoreContext,
   themeStateContext,
 } from "./context.js";
 export { CofyElement } from "./cofy-element.js";
@@ -48,6 +50,8 @@ export { CofyActionMenu, type MenuAction } from "./components/form/cofy-action-m
 export { CofySaveResourceDialog } from "./components/resource/cofy-save-resource-dialog.js";
 export { CofySecretDialog } from "./components/secret/cofy-secret-dialog.js";
 export { CofySecretList } from "./components/secret/cofy-secret-list.js";
+export { CofyGrantDialog } from "./components/grant/cofy-grant-dialog.js";
+export { CofyGrantList } from "./components/grant/cofy-grant-list.js";
 export { CofyResourceCreate } from "./components/resource/cofy-resource-create.js";
 export { CofyResourceEditor } from "./components/resource/cofy-resource-editor.js";
 export { CofyResourceList } from "./components/resource/cofy-resource-list.js";

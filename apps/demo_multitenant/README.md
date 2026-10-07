@@ -13,16 +13,34 @@ deploy them.
 
 ```sh
 task demo-multitenant-reset   # first run only, or whenever you want to start over
+task dev-idp                  # local identity provider on :8081 (needs Docker)
 task demo-multitenant-api     # management API on :8000
 task demo-multitenant-web     # console dev server on :5173, proxying to the API
 ```
 
+The API's settings come from `.env.local` at the repository root: copy the `COFY_MANAGEMENT_*`
+lines from `.env.example`, which point at the local identity provider, and fill in the absolute
+path of your checkout in `COFY_MANAGEMENT_DATA_DIR`.
+
+Opening the console sends you to the local identity provider ([`apps/dev_idp`](../dev_idp/docker-compose.yml))
+to log in. Its users all have the password `pwd`:
+
+| User         | Can                                                       |
+|--------------|-----------------------------------------------------------|
+| `admin`      | everything: a system admin                                |
+| `demo-admin` | manage the `demo` community                               |
+| `nobody`     | log in, and see that there is nothing for them            |
+
 ## Data
 
-`seed/` holds the committed default communities. `task demo-multitenant-reset` copies it into
+`seed/` holds the committed defaults. `task demo-multitenant-reset` copies it into
 `.data/`, which is git-ignored and is what the management API actually reads and writes while
-the demo runs (`COFY_MANAGEMENT_DATA_DIR`, set by the `demo-multitenant-api` task). Run the
+the demo runs (`COFY_MANAGEMENT_DATA_DIR`, in `.env.local`). Run the
 reset task again any time to discard local changes and start from the committed defaults.
+
+It holds the community configs in `communities/`, and in `access/users.yaml` who may do what -
+the system admins, and each person's role in each community. Logging in writes each person's
+identity in beside their email, so that file changes as you use the demo too.
 
 ## Docker
 
@@ -38,15 +56,19 @@ Runs the same build and run as:
 
 ```sh
 docker build -f apps/demo_multitenant/Dockerfile -t cofy-management-demo .
-docker run -p 8080:8080 -v cofy-management-data:/data cofy-management-demo
+docker run --network host -v "$PWD/apps/demo_multitenant/.data:/data" --env-file .env.local -e COFY_MANAGEMENT_DATA_DIR=/data cofy-management-demo
 ```
 
+It logs in through `task dev-idp` too, which is why it runs on the host network: the container
+and the browser must reach the identity provider at the same address.
+
 Build from the repo root, since the image needs sources from several packages. `/data` is
-where community configs (and the modules they reference) live - mount a volume there so they
-survive a redeploy instead of resetting. On first boot, an empty `/data` is seeded from
-`seed/`; once anything exists there, it's left alone. The container reads `PORT` (defaults to
+where the community configs and the users live, and it is mounted in from the host - here the
+demo's own `.data`. The image brings no data of its own and never seeds or rewrites what is
+mounted there. The container reads `PORT` (defaults to
 `8080`, matching most cloud platforms, including Scaleway's container runtime) and honors a
-`VERSION` build arg for `APP_VERSION`.
+`VERSION` build arg for `APP_VERSION`. `/data/access/users.yaml` is the file to edit to change who
+the system admins are.
 
 ## Production deploy
 
@@ -57,6 +79,14 @@ outside is through Caddy's automatic Let's Encrypt HTTPS on 80/443 - see
 [deploy-scaleway.yml](../../.github/workflows/deploy-scaleway.yml) for exactly what it copies
 to the server and runs. `caddy_data`/`caddy_config` (the issued certificate and Caddy's own
 state) are named volumes, so a redeploy doesn't force reissuing the certificate.
+
+The server needs two things the repository doesn't carry:
+
+- a `.env` file next to `docker-compose.yml`, with the login configuration: `COFY_MANAGEMENT_OIDC_ISSUER`,
+  `COFY_MANAGEMENT_OIDC_CLIENT_ID`, `COFY_MANAGEMENT_OIDC_CLIENT_SECRET` and a long random
+  `COFY_MANAGEMENT_SESSION_SECRET`;
+- the data in `/data`: the community configs in `communities/`, and in `access/users.yaml` at least your own entry,
+  with `system_admin: true`.
 
 This is how EnergyID runs its own hosted instance, not a generally reachable image - the
 `ghcr.io/energieid/cofy-api/management` package is private, so `docker-compose.yml` as

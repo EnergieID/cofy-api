@@ -14,9 +14,86 @@ stack running together.
 
 ## Configuration
 
-`COFY_MANAGEMENT_DATA_DIR` must be set to a writable directory where community configs are
-stored - there is no built-in default. See [apps/demo_multitenant](../../apps/demo_multitenant)
+`COFY_MANAGEMENT_DATA_DIR` must be set to a writable directory for everything the API stores -
+there is no built-in default. It holds the community configs in `communities/<slug>.yaml`, and who
+may do what in `access/users.yaml`. See [apps/demo_multitenant](../../apps/demo_multitenant)
 for a worked example, including a reset script that restores its data to committed defaults.
+
+## Logging in
+
+Every route needs a login, except the login itself. The API doesn't keep accounts: it logs people
+in through an OpenID Connect provider of your choice - Keycloak, Authentik, Entra ID, Duende
+IdentityServer, ... - as a confidential client using the authorization code flow with PKCE, and
+keeps who logged in in a signed, HTTP-only session cookie. The browser never holds a token.
+
+| Variable                             | Meaning                                                       |
+|--------------------------------------|---------------------------------------------------------------|
+| `COFY_MANAGEMENT_OIDC_ISSUER`        | The provider's issuer URL, where its discovery document is.   |
+| `COFY_MANAGEMENT_OIDC_CLIENT_ID`     | This API's client id at the provider.                         |
+| `COFY_MANAGEMENT_OIDC_CLIENT_SECRET` | Its client secret.                                            |
+| `COFY_MANAGEMENT_OIDC_SCOPES`        | Optional, `openid profile email` by default.                  |
+| `COFY_MANAGEMENT_SESSION_SECRET`     | A long random value the session cookie is signed with.        |
+| `COFY_MANAGEMENT_SESSION_LIFETIME`   | Optional, how long a login lasts, as an ISO 8601 duration; `PT8H` by default. |
+| `COFY_MANAGEMENT_SECURE_COOKIES`     | Optional, `true` by default; `false` only to develop over plain HTTP. |
+
+The API won't start without the first four. At the provider, register the redirect URI
+`https://<host>/auth/callback`, and have it report a verified `email` claim, in the ID token or
+from its userinfo endpoint.
+
+Behind a TLS-terminating proxy, run uvicorn with `--proxy-headers` so that callback URL is built
+with the public scheme and host.
+
+### Who may do what
+
+Everyone who may do something is listed in `access/users.yaml` in the data directory, each with
+the role they have in each community:
+
+```yaml
+users:
+  - email: you@example.com
+    system_admin: true
+  - email: ann@example.com
+    grants:
+      demo: community_admin
+```
+
+- **System admins** may do everything. Who they are is edited in this file on the server, not
+  through the API.
+- **Community admins** may manage the communities they are granted, including who else has
+  access to them, through `/management/communities/{slug}/grants`. Deleting a community takes
+  away every role in it.
+
+Access is granted to an email, since that is all anyone knows of a person who hasn't logged in yet.
+At that person's first login with a verified email, their identity at the provider is written
+in beside it and matched on from then on, so changing their email there neither loses their
+access nor hands it to whoever gets the address next.
+
+A permission is an action - `read` or `write` - on a subject of a community: its own settings,
+its modules, resources, secrets, grants, or the types it may use (`cofy/management/auth/access.py`). A role is a
+set of permissions, so adding one - a viewer, say - is a matter of listing what it may do.
+
+Every route is registered with the rule of `cofy/management/policies/` guarding it, and a router
+refuses a route without one. One policy covers every subject alike: seeing it takes `read` on it,
+changing it `write`. A subject whose rules differ gets a subclass, as communities do, which only
+a system admin may delete. System admins are let through every rule.
+
+`/auth/me` reports what the person logged in may do, per community, and for a system admin also
+outside any one community (`slug: null`), such as creating communities. Listing communities takes
+being able to see at least one; anyone else is refused, as for a community they can't see.
+
+### EnergyID
+
+EnergyID's identity server is a Duende IdentityServer, configured in its database. The
+management API needs a client there with:
+
+- a client secret, the `authorization_code` grant, PKCE required and consent off;
+- the redirect URI `https://<host>/auth/callback`, and `https://<host>/` as post-logout redirect URI;
+- the scopes `openid`, `profile` and `email`, with the `email` identity resource present.
+
+Each such client counts towards the clients the Duende license allows.
+
+For development, `task dev-idp` runs a local provider built on Duende as well - see
+[apps/demo_multitenant](../../apps/demo_multitenant).
 
 ## Development
 

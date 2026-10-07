@@ -94,6 +94,12 @@ export default defineConfig(({ command }) => ({
         target: process.env["COFY_MANAGEMENT_API"] ?? "http://127.0.0.1:8000",
         changeOrigin: true,
       },
+      // The original host is kept, so the API sends the identity provider back to this dev
+      // server - where the session cookie lives - rather than to itself.
+      "/auth": {
+        target: process.env["COFY_MANAGEMENT_API"] ?? "http://127.0.0.1:8000",
+        changeOrigin: false,
+      },
     },
   },
   build: {
