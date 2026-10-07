@@ -14,7 +14,7 @@ class AuthSettings(BaseSettingsModel):
     type: Literal["auth"] = "auth"
 
 
-class Auth(FromSettingsMixin, ABC, settings=AuthSettings):
+class Auth(FromSettingsMixin, ABC, settings=AuthSettings, abstract=True):
     @abstractmethod
     def verify(self, request: Request, *args, **kwargs):
         """Verify the request."""
