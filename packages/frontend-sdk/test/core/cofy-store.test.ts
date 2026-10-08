@@ -74,9 +74,18 @@ describe("CofyStore", () => {
   });
 
   it.each([
-    ["given", (store: CofyStore): Promise<unknown> => store.grants.create("test", { email: "bob@example.com", role: "community_admin" })],
-    ["revoked", (store: CofyStore): Promise<unknown> => store.grants.delete("test", "bob@example.com")],
-  ])("makes who is logged in, and which communities they see, out of date when a grant is %s", async (_, write) => {
+    [
+      "given",
+      (store: CofyStore): Promise<unknown> =>
+        store.grants.create("test", { email: "bob@example.com", role: "community_admin" }),
+      ["GET /auth/me"],
+    ],
+    [
+      "revoked",
+      (store: CofyStore): Promise<unknown> => store.grants.delete("test", "bob@example.com"),
+      ["GET /auth/me", "GET /management/communities"],
+    ],
+  ])("makes who is logged in out of date when a grant is %s, and the communities they see when revoked", async (_, write, expected) => {
     // The grant may be their own.
     const { store, calls } = cofy();
     await Promise.all([store.session.fetch(), store.communities.fetch()]);
@@ -87,7 +96,7 @@ describe("CofyStore", () => {
     store.communities.all();
     await flush();
 
-    expect(requestsSince(calls, from)).toEqual(["GET /auth/me", "GET /management/communities"]);
+    expect(requestsSince(calls, from)).toEqual(expected);
   });
 
   it("makes everything about a community out of date when a grant to it is revoked, which may be their own", async () => {
