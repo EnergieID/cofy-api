@@ -8,6 +8,7 @@ import { ModuleStore } from "../stores/module-store.js";
 import { ResourceStore } from "../stores/resource-store.js";
 import { SecretStore } from "../stores/secret-store.js";
 import { SessionStore } from "../stores/session-store.js";
+import type { Cache } from "./cache.js";
 
 /**
  * Every store of the management API, against one client.
@@ -48,16 +49,29 @@ export class CofyStore {
     this.secrets = new SecretStore(api, ({ scope: [slug] }) => this.status.invalidate(slug));
 
     // A grant may be to the person logged in, which changes what they may do - and which
-    // communities they may see at all.
-    this.grants = new GrantStore(api, () => {
+    // communities they may see at all. Revoking one may leave them seeing nothing of it.
+    this.grants = new GrantStore(api, ({ action, scope: [slug] }) => {
       this.session.invalidate();
-      this.communities.invalidate();
+      if (action === "delete") {
+        this.communities.invalidate();
+        this.invalidate(slug);
+      }
     });
+  }
+
+  /** Mark everything cached about *slug* as out of date. */
+  private invalidate(slug: string): void {
+    for (const store of this.perCommunity()) store.invalidate(slug);
   }
 
   /** Drop everything cached about *slug*, a community that no longer exists. */
   private forget(slug: string): void {
-    for (const store of [
+    for (const store of this.perCommunity()) store.forget(slug);
+  }
+
+  /** The stores that cache something per community. */
+  private perCommunity(): Cache<[slug: string], unknown>[] {
+    return [
       this.status,
       this.modules,
       this.allowedModules,
@@ -65,8 +79,6 @@ export class CofyStore {
       this.allowedResources,
       this.secrets,
       this.grants,
-    ]) {
-      store.forget(slug);
-    }
+    ];
   }
 }

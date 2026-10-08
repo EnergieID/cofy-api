@@ -90,6 +90,23 @@ describe("CofyStore", () => {
     expect(requestsSince(calls, from)).toEqual(["GET /auth/me", "GET /management/communities"]);
   });
 
+  it("makes everything about a community out of date when a grant to it is revoked, which may be their own", async () => {
+    const { store, calls } = cofy();
+    await Promise.all([store.modules.fetch("test"), store.secrets.fetch("test"), store.modules.fetch("other")]);
+
+    await store.grants.delete("test", "bob@example.com");
+    const from = calls.length;
+    store.modules.all("test");
+    store.secrets.all("test");
+    store.modules.all("other");
+    await flush();
+
+    expect(requestsSince(calls, from)).toEqual([
+      "GET /management/communities/test/modules",
+      "GET /management/communities/test/secrets",
+    ]);
+  });
+
   it("makes who is logged in out of date after creating a community, which gives them a role on it", async () => {
     const { store, calls } = cofy();
     await store.session.fetch();
