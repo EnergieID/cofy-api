@@ -6,10 +6,9 @@ import "@awesome.me/webawesome/dist/components/copy-button/copy-button.js";
 
 import { CofyElement } from "../../cofy-element.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
-import "../../icons.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 
-/** Where a community's API is served: its address, to copy, and its documentation, to open in a new tab. */
+/** Where a community's API is served: its address, to open in a new tab, and to copy. */
 @customElement("cofy-api-link")
 export class CofyApiLink extends CofyElement {
   public static override styles = [

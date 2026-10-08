@@ -17,26 +17,25 @@ describe("cofy-api-link", () => {
     document.body.replaceChildren();
   });
 
-  it("shows the address, and copies it", async () => {
+  it("links to the address, opening it in a new tab", async () => {
+    const link = (await mount("https://cofy.example/communities/demo/")).shadowRoot!.querySelector("a");
+
+    expect(link?.textContent).toBe("https://cofy.example/communities/demo/");
+    expect(link?.getAttribute("href")).toBe("https://cofy.example/communities/demo/");
+    expect(link?.getAttribute("target")).toBe("_blank");
+  });
+
+  it("copies the address", async () => {
     const element = await mount("https://cofy.example/communities/demo/");
 
-    expect(element.shadowRoot!.querySelector("code")?.textContent).toBe("https://cofy.example/communities/demo/");
     expect(element.shadowRoot!.querySelector("wa-copy-button")?.getAttribute("value")).toBe(
       "https://cofy.example/communities/demo/",
     );
   });
 
-  it("opens the documentation in a new tab", async () => {
-    const open = (await mount("https://cofy.example/communities/demo/")).shadowRoot!.querySelector("wa-button");
-
-    expect(open?.getAttribute("href")).toBe("https://cofy.example/communities/demo/docs");
-    expect(open?.getAttribute("target")).toBe("_blank");
-    expect(open?.querySelector("wa-icon")?.getAttribute("label")).toBe("Documentation");
-  });
-
   it("shows nothing without an address", async () => {
     const element = await mount("");
 
-    expect(element.shadowRoot!.querySelector("code, wa-copy-button, wa-button")).toBeNull();
+    expect(element.shadowRoot!.querySelector("a, wa-copy-button")).toBeNull();
   });
 });

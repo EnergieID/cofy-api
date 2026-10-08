@@ -17,7 +17,6 @@ apiLink:
   copy: Copy the address
   copied: Copied
   copyFailed: Could not copy
-  open: Documentation
 
 communityStatus:
   live:
