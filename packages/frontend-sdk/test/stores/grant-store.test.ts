@@ -11,28 +11,28 @@ describe("GrantStore", () => {
     const { api, calls } = stubbedApi(() => ({ body: [ann, bob] }));
     const store = new GrantStore(api);
 
-    await store.load("test");
+    await store.fetch("test");
 
-    expect(store.list("test")).toEqual([ann, bob]);
-    expect(store.find("test", "bob@example.com")).toEqual(bob);
+    expect(store.all("test")).toEqual([ann, bob]);
+    expect(store.get("test", "bob@example.com")).toEqual(bob);
     expect(calls[0]!.path).toBe("/management/communities/test/grants");
   });
 
   it("grants a role, appending what the server reported to a loaded cache", async () => {
     const { api, calls } = stubbedApi((call) => (call.method === "GET" ? { body: [ann] } : { body: bob }));
     const store = new GrantStore(api);
-    await store.load("test");
+    await store.fetch("test");
 
     await store.create("test", { email: "bob@example.com", role: "community_admin" });
 
     expect(calls[1]).toMatchObject({ method: "POST", body: { email: "bob@example.com", role: "community_admin" } });
-    expect(store.list("test")).toEqual([ann, bob]);
+    expect(store.all("test")).toEqual([ann, bob]);
   });
 
   it("changes a role", async () => {
     const { api, calls } = stubbedApi((call) => (call.method === "GET" ? { body: [ann] } : { body: ann }));
     const store = new GrantStore(api);
-    await store.load("test");
+    await store.fetch("test");
 
     await store.replace("test", "ann@example.com", { email: "ann@example.com", role: "community_admin" });
 
@@ -42,11 +42,11 @@ describe("GrantStore", () => {
   it("drops a revoked grant from a loaded cache", async () => {
     const { api } = stubbedApi((call) => (call.method === "GET" ? { body: [ann] } : { status: 204 }));
     const store = new GrantStore(api);
-    await store.load("test");
+    await store.fetch("test");
 
-    await store.remove("test", "ann@example.com");
+    await store.delete("test", "ann@example.com");
 
-    expect(store.list("test")).toEqual([]);
+    expect(store.all("test")).toEqual([]);
   });
 
   it("converts a raw fetch failure into a ProblemError on create", async () => {

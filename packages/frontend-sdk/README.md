@@ -14,10 +14,18 @@ need this directly if you're building a custom console with
   resolves with the response body or throws a `ProblemError` carrying the
   [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem document the API returned - a
   wrong path, a missing parameter, or a mistyped body is a compile error, not a runtime one.
-- `CommunityStore`, `ModuleStore`, `AllowedModulesStore` - reactive state built on
-  [`@dodona/lit-state`](https://github.com/dodona-edu/lit-state), each wrapping one part of the
-  API (communities, a community's modules, which module types are available) as loadable,
-  observable state instead of one-off requests.
+- `CofyStore` - every store of the API against one client: `communities`, `status`, `modules`,
+  `allowedModules`, `resources`, `allowedResources`, `secrets`, `grants` and `session`. It also
+  decides what a write to one store makes out of date in another - a saved module invalidates
+  its community's status, say.
+- `Cache`, `ReadonlyCollection`, `Collection` - the abstract, cached, reactive state those
+  stores are built from, on [`@dodona/lit-state`](https://github.com/dodona-edu/lit-state). A
+  store implements its requests as methods. Every collection reads with `all(...scope)` and
+  `get(...scope, id)`, and writes with `create`, `replace` and `delete`; a single value - the
+  session, a community's status - reads with `get(...scope)`. Reading loads: it returns
+  `undefined` until the answer arrives, and a component rendering it re-renders when it does.
+  `invalidate` marks a scope out of date, and it is fetched again as soon as something reads
+  it.
 - `ModuleDraft`, `EditableValue` - in-progress edits to a module's settings, validated against
   the module's JSON Schema as you type, before anything is sent to the API.
 - `validate`, `narrowToInstance` - JSON Schema validation helpers used by the drafts above and
@@ -37,11 +45,15 @@ npm run build
 ## Usage
 
 ```ts
-import { ApiClient, CommunityStore } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore } from "@cofy/frontend-sdk";
 
-const api = new ApiClient({ baseUrl: "http://127.0.0.1:8000" });
-const communities = new CommunityStore(api);
-await communities.load();
+const cofy = new CofyStore(new ApiClient({ baseUrl: "http://127.0.0.1:8000" }));
+
+// In a render: `undefined` at first, and the communities once they arrive.
+cofy.communities.all();
+
+// Outside one, to wait for them.
+await cofy.communities.fetch();
 ```
 
 `ApiClient` defaults to the page's own origin (`baseUrl: "/"`), which is what lets a console

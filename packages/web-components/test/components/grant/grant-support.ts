@@ -1,7 +1,7 @@
 import { ContextProvider } from "@lit/context";
-import { ApiClient, GrantStore, type GrantInfo } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore, type GrantInfo } from "@cofy/frontend-sdk";
 
-import { communitySlugContext, grantStoreContext, i18nContext } from "../../../src/context.js";
+import { cofyStoreContext, communitySlugContext, i18nContext } from "../../../src/context.js";
 import { testI18n } from "../../support/i18n.js";
 
 export interface Community {
@@ -46,7 +46,7 @@ export async function mountIn<T extends HTMLElement & { updateComplete: Promise<
   state: Community,
 ): Promise<T> {
   const host = document.createElement("div");
-  new ContextProvider(host, { context: grantStoreContext, initialValue: new GrantStore(stubApi(state)) });
+  new ContextProvider(host, { context: cofyStoreContext, initialValue: new CofyStore(stubApi(state)) });
   new ContextProvider(host, { context: communitySlugContext, initialValue: "test" });
   new ContextProvider(host, { context: i18nContext, initialValue: await testI18n() });
   document.body.append(host);

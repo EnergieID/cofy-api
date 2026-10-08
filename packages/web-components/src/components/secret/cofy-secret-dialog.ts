@@ -2,7 +2,7 @@ import { consume } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import type { ProblemError, SecretBody, SecretInfo, SecretStore } from "@cofy/frontend-sdk";
+import type { ProblemError, SecretBody, SecretInfo } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/dialog/dialog.js";
@@ -10,7 +10,7 @@ import "@awesome.me/webawesome/dist/components/input/input.js";
 import "../cofy-problem-details.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { communitySlugContext, secretStoreContext } from "../../context.js";
+import { communitySlugContext } from "../../context.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 
 /**
@@ -30,10 +30,6 @@ export class CofySecretDialog extends CofyElement {
       }
     `,
   ];
-
-  @consume({ context: secretStoreContext, subscribe: true })
-  @state()
-  public secretStore?: SecretStore;
 
   @consume({ context: communitySlugContext, subscribe: true })
   @state()
@@ -127,15 +123,16 @@ export class CofySecretDialog extends CofyElement {
   }
 
   private async save(): Promise<void> {
-    if (this.secretStore === undefined) return;
+    const cofy = this.cofy;
+    if (cofy === undefined) return;
 
     this.saving = true;
     this.error = null;
     try {
       const saved =
         this.secret === null
-          ? await this.secretStore.create(this.slug, this.body())
-          : await this.secretStore.replace(this.slug, this.secret.name, this.body());
+          ? await cofy.secrets.create(this.slug, this.body())
+          : await cofy.secrets.replace(this.slug, this.secret.name, this.body());
       this.dispatchEvent(new CustomEvent("secret-saved", { detail: { name: saved.name }, bubbles: true, composed: true }));
     } catch (error) {
       this.error = error as ProblemError;

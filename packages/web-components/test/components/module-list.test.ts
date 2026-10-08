@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiClient, ModuleStore, type ModuleSettings } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore, type ModuleSettings } from "@cofy/frontend-sdk";
 
 import { CofyModuleList } from "../../src/components/module/cofy-module-list.js";
 import { testI18n } from "../support/i18n.js";
@@ -28,7 +28,7 @@ function stubApi(state: { modules: ModuleSettings[] }): ApiClient {
 async function mount(state: { modules: ModuleSettings[] }): Promise<CofyModuleList> {
   const element = new CofyModuleList();
   element.i18n = await testI18n();
-  element.store = new ModuleStore(stubApi(state));
+  element.cofy = new CofyStore(stubApi(state));
   element.slug = "test";
   document.body.append(element);
   await element.updateComplete;
@@ -75,7 +75,7 @@ describe("cofy-module-list", () => {
     const state = { modules: [...modules] };
     const element = await mount(state);
 
-    await element.store.remove("test", { type: "tariff", name: "entsoe" });
+    await element.cofy.modules.delete("test", { type: "tariff", name: "entsoe" });
     await element.updateComplete;
 
     expect(rowNames(element)).toEqual(["tariff:kiwatt", "billing:default"]);

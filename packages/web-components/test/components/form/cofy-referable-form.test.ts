@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { ContextProvider } from "@lit/context";
-import { ApiClient, ResourceStore, type JsonSchema, type ResourceSettings } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore, type JsonSchema, type ResourceSettings } from "@cofy/frontend-sdk";
 
 import type { MenuAction } from "../../../src/components/form/cofy-action-menu.js";
 import type { CofyAnyForm } from "../../../src/components/form/cofy-any-form.js";
 import { CofyReferableForm } from "../../../src/components/form/cofy-referable-form.js";
 import { defaultFieldRegistry } from "../../../src/components/form/field-registry.js";
-import { communitySlugContext, i18nContext, resourceStoreContext } from "../../../src/context.js";
+import { cofyStoreContext, communitySlugContext, i18nContext } from "../../../src/context.js";
 import type { CofySaveResourceDialog } from "../../../src/components/resource/cofy-save-resource-dialog.js";
 import { testI18n } from "../../support/i18n.js";
 
@@ -70,7 +70,7 @@ async function settle(element: HTMLElement & { updateComplete: Promise<unknown> 
 /** Mounted inside providers of the store and community, as an editor provides them - the dialog it opens reads them too. */
 async function mount(schema: JsonSchema, value: unknown, posted: Posted[] = []): Promise<CofyReferableForm> {
   const host = document.createElement("div");
-  new ContextProvider(host, { context: resourceStoreContext, initialValue: new ResourceStore(stubApi(posted)) });
+  new ContextProvider(host, { context: cofyStoreContext, initialValue: new CofyStore(stubApi(posted)) });
   new ContextProvider(host, { context: communitySlugContext, initialValue: "test" });
   new ContextProvider(host, { context: i18nContext, initialValue: await testI18n() });
   document.body.append(host);

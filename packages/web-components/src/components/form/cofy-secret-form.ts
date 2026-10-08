@@ -3,7 +3,7 @@ import { css, html } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
-import type { SecretInfo, SecretRef, SecretStore } from "@cofy/frontend-sdk";
+import type { SecretInfo, SecretRef } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/option/option.js";
@@ -11,7 +11,7 @@ import "@awesome.me/webawesome/dist/components/select/select.js";
 import "./cofy-field-shell.js";
 import "../secret/cofy-secret-dialog.js";
 
-import { communitySlugContext, secretStoreContext } from "../../context.js";
+import { communitySlugContext } from "../../context.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import { CofyFormField } from "./form-field.js";
 import { isRecord } from "./schema/ref.js";
@@ -39,24 +39,14 @@ export class CofySecretForm extends CofyFormField {
     `,
   ];
 
-  @consume({ context: secretStoreContext, subscribe: true })
-  @state()
-  public secretStore?: SecretStore;
-
   @consume({ context: communitySlugContext, subscribe: true })
   @state()
   public slug = "";
 
   @state() private creating = false;
 
-  public override willUpdate(changed: Map<string, unknown>): void {
-    if ((changed.has("slug") || changed.has("secretStore")) && this.slug !== "") {
-      void this.secretStore?.ensure(this.slug);
-    }
-  }
-
   public override render(): TemplateResult {
-    const secrets = this.secretStore?.list(this.slug) ?? [];
+    const secrets = (this.slug === "" ? undefined : this.cofy?.secrets.all(this.slug)) ?? [];
     const none = secrets.length === 0;
 
     return html`

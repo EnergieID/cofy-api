@@ -1,8 +1,7 @@
-import { consume } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { moduleKey, type ModuleSettings, type ModuleStore, type ProblemError } from "@cofy/frontend-sdk";
+import { moduleKey, type ModuleSettings, type ProblemError } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
@@ -10,7 +9,6 @@ import "@awesome.me/webawesome/dist/components/tag/tag.js";
 import "@awesome.me/webawesome/dist/components/scroller/scroller.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { moduleStoreContext } from "../../context.js";
 import { tableStyles } from "../../theme/table.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import "../layout/cofy-heading.js";
@@ -42,26 +40,16 @@ export class CofyModuleList extends CofyElement {
     `,
   ];
 
-  @consume({ context: moduleStoreContext, subscribe: true })
-  @state()
-  public store!: ModuleStore;
-
   @property({ type: String }) public slug = "";
 
   @state() private deleting = false;
   @state() private deleteError: ProblemError | null = null;
 
-  public override willUpdate(changed: Map<string, unknown>): void {
-    if (changed.has("slug") || changed.has("store")) {
-      if (this.slug !== "") void this.store?.ensure(this.slug);
-    }
-  }
-
   public override render(): TemplateResult | typeof nothing {
-    if (this.store === undefined) return nothing;
+    if (this.cofy === undefined || this.slug === "") return nothing;
 
-    const modules = this.store.list(this.slug);
-    const error = this.deleteError ?? this.store.error;
+    const modules = this.cofy.modules.all(this.slug);
+    const error = this.deleteError ?? this.cofy.modules.error(this.slug);
 
     if (error != null) return html`<cofy-problem-details .problem=${error}></cofy-problem-details>`;
     if (modules === undefined) {
@@ -164,7 +152,7 @@ export class CofyModuleList extends CofyElement {
     this.deleting = true;
     this.deleteError = null;
     try {
-      await this.store.remove(this.slug, { type: module.type, name: module.name });
+      await this.cofy.modules.delete(this.slug, { type: module.type, name: module.name });
     } catch (error) {
       this.deleteError = error as ProblemError;
     } finally {

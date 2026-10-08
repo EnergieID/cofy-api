@@ -1,8 +1,6 @@
-import { consume } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import type { SessionStore } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/divider/divider.js";
@@ -12,7 +10,6 @@ import "@awesome.me/webawesome/dist/components/tooltip/tooltip.js";
 import "../../icons.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { sessionStoreContext } from "../../context.js";
 import "./cofy-locale-picker.js";
 import "./cofy-theme-picker.js";
 import { nativeStyles } from "../../theme/native-styles.js";
@@ -45,15 +42,11 @@ export class CofySettingsPanel extends CofyElement {
     }
   `];
 
-  @consume({ context: sessionStoreContext, subscribe: true })
-  @state()
-  public session?: SessionStore;
-
   @state() private open = false;
 
   public override render(): TemplateResult {
     const label = this.t("settings.open", { defaultValue: "Settings" });
-    const me = this.session?.me;
+    const me = this.cofy?.session.get();
 
     return html`
       <wa-button id="settings-trigger" appearance="plain" label=${label} @click=${(): void => this.toggle()}>
@@ -78,7 +71,7 @@ export class CofySettingsPanel extends CofyElement {
                   <strong>${me.name ?? me.email}</strong>
                   ${me.name == null ? nothing : html`<span class="email">${me.email}</span>`}
                 </div>
-                <wa-button appearance="outlined" @click=${(): void => this.session?.logout()}>
+                <wa-button appearance="outlined" @click=${(): void => this.cofy?.session.logout()}>
                   ${this.t("settings.logout")}
                 </wa-button>
                 <wa-divider></wa-divider>

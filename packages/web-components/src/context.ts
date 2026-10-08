@@ -1,38 +1,18 @@
 import { createContext } from "@lit/context";
-import type {
-  AllowedModulesStore,
-  AllowedResourcesStore,
-  CommunityStatusStore,
-  CommunityStore,
-  GrantStore,
-  ModuleStore,
-  ResourceStore,
-  SecretStore,
-  SessionStore,
-} from "@cofy/frontend-sdk";
+import type { CofyStore } from "@cofy/frontend-sdk";
 
 import type { FieldRegistry } from "./components/form/field-registry.js";
 import type { CofyI18n } from "./i18n/cofy-i18n.js";
 import type { ThemeState } from "./theme/theme-state.js";
 
 /**
- * The store instances a component tree works against.
+ * The stores a component tree works against.
  *
- * Provided rather than imported as module singletons, so two trees on one page can point at
+ * Provided rather than imported as a module singleton, so two trees on one page can point at
  * different backends - which is the difference between a library and an application's
  * globals.
  */
-export const communityStoreContext = createContext<CommunityStore>(Symbol("cofy-community-store"));
-export const communityStatusStoreContext = createContext<CommunityStatusStore>(Symbol("cofy-community-status-store"));
-export const moduleStoreContext = createContext<ModuleStore>(Symbol("cofy-module-store"));
-export const allowedModulesStoreContext = createContext<AllowedModulesStore>(Symbol("cofy-allowed-modules-store"));
-export const resourceStoreContext = createContext<ResourceStore>(Symbol("cofy-resource-store"));
-export const secretStoreContext = createContext<SecretStore>(Symbol("cofy-secret-store"));
-export const grantStoreContext = createContext<GrantStore>(Symbol("cofy-grant-store"));
-export const sessionStoreContext = createContext<SessionStore>(Symbol("cofy-session-store"));
-export const allowedResourcesStoreContext = createContext<AllowedResourcesStore>(
-  Symbol("cofy-allowed-resources-store"),
-);
+export const cofyStoreContext = createContext<CofyStore>(Symbol("cofy-store"));
 
 /**
  * The community a subtree edits, provided by the editor at its root, so a field deep inside a

@@ -1,11 +1,10 @@
-import { consume } from "@lit/context";
 import { css, html } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { CommunityInfo, CommunityStore } from "@cofy/frontend-sdk";
+import type { CommunityInfo } from "@cofy/frontend-sdk";
 import type { Crumb } from "@cofy/web-components";
 
-import { communityStoreContext, utilityStyles } from "@cofy/web-components";
+import { utilityStyles } from "@cofy/web-components";
 import "@cofy/web-components";
 import "@awesome.me/webawesome/dist/components/tab/tab.js";
 import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
@@ -34,17 +33,8 @@ export class CofyCommunityPage extends CofyPage {
     `,
   ];
 
-  @consume({ context: communityStoreContext, subscribe: true })
-  public communities!: CommunityStore;
-
   @property({ type: String }) public override slug = "";
   @property({ type: String }) public tab: CommunityTab = "modules";
-
-  public override connectedCallback(): void {
-    super.connectedCallback();
-    // Opened directly rather than from the list, nothing else has loaded the community this page shows.
-    void this.communities?.ensure();
-  }
 
   protected override crumbs(): Crumb[] {
     return [{ label: this.communityName() }];
@@ -98,7 +88,7 @@ export class CofyCommunityPage extends CofyPage {
   }
 
   private community(): CommunityInfo | undefined {
-    return this.communities?.communities.find((entry) => entry.slug === this.slug);
+    return this.cofy?.communities.get(this.slug);
   }
 
   /** Falls back to the slug until the community's name has loaded. */

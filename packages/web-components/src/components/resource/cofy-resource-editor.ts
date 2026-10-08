@@ -1,14 +1,12 @@
-import { consume, provide } from "@lit/context";
+import { provide } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   ResourceDraft,
   type AllowedResource,
-  type AllowedResourcesStore,
   type ProblemError,
   type ResourceSettings,
-  type ResourceStore,
 } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/badge/badge.js";
@@ -16,7 +14,7 @@ import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { allowedResourcesStoreContext, communitySlugContext, resourceStoreContext } from "../../context.js";
+import { communitySlugContext } from "../../context.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import "../cofy-problem-details.js";
@@ -43,14 +41,6 @@ export class CofyResourceEditor extends CofyElement {
     `,
   ];
 
-  @consume({ context: resourceStoreContext, subscribe: true })
-  @state()
-  public resourceStore!: ResourceStore;
-
-  @consume({ context: allowedResourcesStoreContext, subscribe: true })
-  @state()
-  public allowedResources!: AllowedResourcesStore;
-
   // Provided, so the reference fields in the form list this community's resources.
   @provide({ context: communitySlugContext })
   @property({ type: String })
@@ -64,15 +54,16 @@ export class CofyResourceEditor extends CofyElement {
   @state() private mode: ModuleFormMode = "form";
 
   public override willUpdate(changed: Map<string, unknown>): void {
-    if (changed.has("slug") || changed.has("name") || changed.has("resourceStore")) {
-      void this.open();
-    }
+    if (changed.has("slug") || changed.has("name") || changed.has("cofy")) this.close();
+    // Rendering without a draft reads what it waits for, so its arrival comes back here.
+    if (this.draft === null) this.open();
   }
 
   public override render(): TemplateResult {
     if (this.draft === null) {
-      return this.resourceStore?.error != null
-        ? html`<cofy-problem-details .problem=${this.resourceStore.error}></cofy-problem-details>`
+      const error = this.cofy?.resources.error(this.slug) ?? this.cofy?.allowedResources.error(this.slug) ?? null;
+      return error !== null
+        ? html`<cofy-problem-details .problem=${error}></cofy-problem-details>`
         : html`<div class="wa-stack">
             ${Array.from({ length: 5 }, () => html`<wa-skeleton></wa-skeleton>`)}
           </div>`;
@@ -139,24 +130,24 @@ export class CofyResourceEditor extends CofyElement {
     `;
   }
 
-  private async open(): Promise<void> {
-    const { slug, name, resourceStore } = this;
-    if (slug === "" || name === "" || resourceStore === undefined) return;
+  /** Start editing the stored resource, once it and its community's catalog are loaded. */
+  private open(): void {
+    const { slug, name, cofy } = this;
+    if (slug === "" || name === "" || cofy === undefined) return;
 
-    this.saveError = null;
-    this.saved = false;
-    this.mode = "form";
-    await Promise.all([resourceStore.ensure(slug), this.allowedResources?.ensure(slug)]);
-
-    const stored = resourceStore.find(slug, name);
-    if (stored === undefined) {
-      this.draft = null;
-      return;
-    }
+    const stored = cofy.resources.get(slug, name);
+    if (stored === undefined || cofy.allowedResources.all(slug) === undefined) return;
 
     const draft = new ResourceDraft(stored);
     this.draft = draft;
     this.check(draft);
+  }
+
+  private close(): void {
+    this.draft = null;
+    this.saveError = null;
+    this.saved = false;
+    this.mode = "form";
   }
 
   private onFormChange(event: CustomEvent<{ value: ResourceSettings }>): void {
@@ -169,7 +160,7 @@ export class CofyResourceEditor extends CofyElement {
   }
 
   private catalog(): readonly AllowedResource[] {
-    return this.allowedResources?.list(this.slug) ?? [];
+    return this.cofy?.allowedResources.all(this.slug) ?? [];
   }
 
   private check(draft: ResourceDraft): void {
@@ -179,12 +170,12 @@ export class CofyResourceEditor extends CofyElement {
   }
 
   private async save(): Promise<void> {
-    const draft = this.draft;
-    if (draft === null) return;
+    const { draft, cofy } = this;
+    if (draft === null || cofy === undefined) return;
 
     this.saveError = null;
     try {
-      const saved = await draft.save(this.resourceStore, this.slug);
+      const saved = await draft.save(cofy.resources, this.slug);
       // Reopen against what the server actually stored, as `cofy-module-editor` does.
       this.draft = new ResourceDraft(saved);
       this.saved = true;

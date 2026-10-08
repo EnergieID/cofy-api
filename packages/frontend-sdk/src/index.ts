@@ -27,6 +27,9 @@ export {
   type Subject,
 } from "./types.js";
 export { narrowToInstance, validate, type JsonSchema, type ValidationIssue } from "./validation.js";
+export { Cache } from "./core/cache.js";
+export { Collection, ReadonlyCollection, type Change } from "./core/collection.js";
+export { CofyStore } from "./core/cofy-store.js";
 export { CommunityStore } from "./stores/community-store.js";
 export { CommunityStatusStore } from "./stores/community-status-store.js";
 export { ModuleStore } from "./stores/module-store.js";

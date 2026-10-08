@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { AllowedResourcesStore, ApiClient, ResourceStore, type ResourceSettings } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore, type ResourceSettings } from "@cofy/frontend-sdk";
 
 import { CofyResourceEditor } from "../../src/components/resource/cofy-resource-editor.js";
 import { testI18n } from "../support/i18n.js";
@@ -26,8 +26,7 @@ async function mount(puts: unknown[] = []): Promise<CofyResourceEditor> {
   const api = stubApi(puts);
   const element = new CofyResourceEditor();
   element.i18n = await testI18n();
-  element.resourceStore = new ResourceStore(api);
-  element.allowedResources = new AllowedResourcesStore(api);
+  element.cofy = new CofyStore(api);
   element.slug = "test";
   element.name = "day_ahead";
   document.body.append(element);

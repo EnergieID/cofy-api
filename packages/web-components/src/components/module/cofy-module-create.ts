@@ -1,13 +1,11 @@
-import { consume, provide } from "@lit/context";
+import { provide } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   EditableValue,
   type AllowedModule,
-  type AllowedModulesStore,
   type ModuleSettings,
-  type ModuleStore,
   type ProblemError,
 } from "@cofy/frontend-sdk";
 
@@ -16,7 +14,7 @@ import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { allowedModulesStoreContext, communitySlugContext, moduleStoreContext } from "../../context.js";
+import { communitySlugContext } from "../../context.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import "../cofy-problem-details.js";
@@ -43,14 +41,6 @@ export class CofyModuleCreate extends CofyElement {
     `,
   ];
 
-  @consume({ context: moduleStoreContext, subscribe: true })
-  @state()
-  public moduleStore!: ModuleStore;
-
-  @consume({ context: allowedModulesStoreContext, subscribe: true })
-  @state()
-  public allowedModules!: AllowedModulesStore;
-
   // Provided, so the reference fields in the form list this community's resources.
   @provide({ context: communitySlugContext })
   @property({ type: String })
@@ -61,14 +51,8 @@ export class CofyModuleCreate extends CofyElement {
   @state() private error: ProblemError | null = null;
   @state() private mode: ModuleFormMode = "form";
 
-  public override willUpdate(changed: Map<string, unknown>): void {
-    if ((changed.has("slug") || changed.has("allowedModules")) && this.slug !== "") {
-      void this.allowedModules?.ensure(this.slug);
-    }
-  }
-
   public override render(): TemplateResult {
-    const catalog = this.allowedModules?.list(this.slug);
+    const catalog = this.slug === "" ? undefined : this.cofy?.allowedModules.all(this.slug);
     if (catalog === undefined) {
       return html`<div class="wa-stack">
         ${Array.from({ length: 4 }, () => html`<wa-skeleton></wa-skeleton>`)}
@@ -135,7 +119,7 @@ export class CofyModuleCreate extends CofyElement {
   }
 
   private catalog(): readonly AllowedModule[] {
-    return this.allowedModules?.list(this.slug) ?? [];
+    return this.cofy?.allowedModules.all(this.slug) ?? [];
   }
 
   private check(draft: EditableValue<ModuleSettings>): void {
@@ -145,13 +129,13 @@ export class CofyModuleCreate extends CofyElement {
   }
 
   private async create(): Promise<void> {
-    const draft = this.draft;
-    if (draft === null) return;
+    const { draft, cofy } = this;
+    if (draft === null || cofy === undefined) return;
 
     this.saving = true;
     this.error = null;
     try {
-      const created = await this.moduleStore.create(this.slug, draft.current);
+      const created = await cofy.modules.create(this.slug, draft.current);
       this.dispatchEvent(
         new CustomEvent("module-created", {
           detail: { slug: this.slug, id: { type: created.type, name: created.name } },

@@ -3,7 +3,7 @@ import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
-import type { JsonSchema, Referable, ResourceRef, ResourceSettings, ResourceStore } from "@cofy/frontend-sdk";
+import type { JsonSchema, Referable, ResourceRef, ResourceSettings } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/option/option.js";
 import "@awesome.me/webawesome/dist/components/select/select.js";
@@ -12,7 +12,7 @@ import "./cofy-any-form.js";
 import "./cofy-field-shell.js";
 import "../resource/cofy-save-resource-dialog.js";
 
-import { communitySlugContext, fieldRegistryContext, resourceStoreContext } from "../../context.js";
+import { communitySlugContext, fieldRegistryContext } from "../../context.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import type { MenuAction } from "./cofy-action-menu.js";
 import type { FieldRegistry } from "./field-registry.js";
@@ -49,10 +49,6 @@ export class CofyReferableForm extends CofyFormField {
     `,
   ];
 
-  @consume({ context: resourceStoreContext, subscribe: true })
-  @state()
-  public resourceStore?: ResourceStore;
-
   @consume({ context: communitySlugContext, subscribe: true })
   @state()
   public slug = "";
@@ -65,12 +61,6 @@ export class CofyReferableForm extends CofyFormField {
   /** The value a reference replaced, restored when a value is specified again. */
   private replaced: unknown;
 
-  public override willUpdate(changed: Map<string, unknown>): void {
-    if ((changed.has("slug") || changed.has("resourceStore")) && this.slug !== "") {
-      void this.resourceStore?.ensure(this.slug);
-    }
-  }
-
   public override render(): TemplateResult {
     const referable = referableOf(this.schema);
     const branches = referableBranches(this.schema);
@@ -82,7 +72,7 @@ export class CofyReferableForm extends CofyFormField {
   private renderValue(referable: Referable, schema: JsonSchema): TemplateResult {
     const actions: MenuAction[] = [];
     // Only offered once there is something to pick.
-    if ((this.resourceStore?.fitting(this.slug, referable).length ?? 0) > 0) {
+    if (this.fitting(referable).length > 0) {
       actions.push({ id: "use-resource", label: this.t("form.useResource"), run: (): void => this.useResource() });
     }
     if (this.canSave()) {
@@ -133,7 +123,7 @@ export class CofyReferableForm extends CofyFormField {
   }
 
   private renderRef(ref: ResourceRef, referable: Referable, valueSchema: JsonSchema): TemplateResult {
-    const options = this.resourceStore?.fitting(this.slug, referable) ?? [];
+    const options = this.fitting(referable);
     // No label of its own: it always sits under the field's, which names what it picks.
     const picker = html`<wa-select
       aria-label=${this.label || this.t("form.resource")}
@@ -177,9 +167,14 @@ export class CofyReferableForm extends CofyFormField {
     return this.required ? `${this.label}*` : this.label;
   }
 
+  /** The community's resources this field can reference. */
+  private fitting(referable: Referable): ResourceSettings[] {
+    return this.slug === "" ? [] : (this.cofy?.resources.fitting(this.slug, referable) ?? []);
+  }
+
   /** Whether there is a value to save as a resource. */
   private canSave(): boolean {
-    return this.resourceStore !== undefined && this.value !== undefined && this.value !== null;
+    return this.cofy !== undefined && this.value !== undefined && this.value !== null;
   }
 
   /** The reference's own issues, and those of its name - it has no form of its own to show them in. */

@@ -1,14 +1,12 @@
-import { consume } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement } from "lit/decorators.js";
-import type { CommunityInfo, CommunityStore } from "@cofy/frontend-sdk";
+import type { CommunityInfo } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 import "@awesome.me/webawesome/dist/components/scroller/scroller.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { communityStoreContext } from "../../context.js";
 import { tableStyles } from "../../theme/table.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import "../layout/cofy-heading.js";
@@ -34,21 +32,14 @@ export class CofyCommunityList extends CofyElement {
     `,
   ];
 
-  @consume({ context: communityStoreContext, subscribe: true })
-  public store!: CommunityStore;
-
-  public override connectedCallback(): void {
-    super.connectedCallback();
-    void this.store?.ensure();
-  }
-
   public override render(): TemplateResult | typeof nothing {
-    if (this.store === undefined) return nothing;
+    if (this.cofy === undefined) return nothing;
 
-    const { communities, error, loaded, loading } = this.store;
+    const communities = this.cofy.communities.all();
+    const error = this.cofy.communities.error();
 
     if (error !== null) return html`<cofy-problem-details .problem=${error}></cofy-problem-details>`;
-    if (loading && !loaded) {
+    if (communities === undefined) {
       return html`<div class="wa-stack">
         ${Array.from({ length: 4 }, () => html`<wa-skeleton></wa-skeleton>`)}
       </div>`;

@@ -31,10 +31,9 @@ describe("SessionStore", () => {
     const { api, calls } = stubbedApi(() => ({ body: me }));
     const store = new SessionStore(api, page(""));
 
-    await store.load();
+    await store.fetch();
 
-    expect(store.me).toEqual(me);
-    expect(store.loaded).toBe(true);
+    expect(store.get()).toEqual(me);
     expect(calls[0]!.path).toBe("/auth/me");
   });
 
@@ -42,11 +41,22 @@ describe("SessionStore", () => {
     const { api } = stubbedApi(() => ({ status: 401, body: { status: 401, code: "not-authenticated" } }));
     const store = new SessionStore(api, page(""));
 
-    await store.load();
+    await store.fetch().catch(() => {});
 
-    expect(store.me).toBeNull();
-    expect(store.loaded).toBe(false);
-    expect(store.error?.status).toBe(401);
+    expect(store.get()).toBeUndefined();
+    expect(store.error()?.status).toBe(401);
+  });
+
+  it("asks again who is logged in once invalidated", async () => {
+    const { api, calls } = stubbedApi(() => ({ body: me }));
+    const store = new SessionStore(api, page(""));
+    await store.fetch();
+
+    store.invalidate();
+    store.get();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(calls).toHaveLength(2);
   });
 
   it("logs in by sending the browser to the API, to come back to the page shown", () => {
@@ -61,7 +71,7 @@ describe("SessionStore", () => {
   it("answers whether an action on a subject is allowed in a community", async () => {
     const { api } = stubbedApi(() => ({ body: me }));
     const store = new SessionStore(api, page(""));
-    await store.load();
+    await store.fetch();
 
     expect(store.can("read", "grants", "demo")).toBe(true);
     expect(store.can("write", "grants", "demo")).toBe(false);
@@ -71,14 +81,14 @@ describe("SessionStore", () => {
   it("answers for outside any one community under a null slug", async () => {
     const { api } = stubbedApi(() => ({ body: me }));
     const store = new SessionStore(api, page(""));
-    await store.load();
+    await store.fetch();
 
     expect(store.can("read", "community", null)).toBe(true);
     expect(store.can("write", "community", null)).toBe(false);
   });
 
   it("allows nothing before anyone is known to be logged in", () => {
-    const { api } = stubbedApi(() => undefined);
+    const { api } = stubbedApi(() => ({ body: me }));
 
     expect(new SessionStore(api, page("")).can("read", "community", null)).toBe(false);
   });

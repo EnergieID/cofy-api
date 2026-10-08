@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ContextProvider } from "@lit/context";
-import { ApiClient, ResourceStore, type ResourceSettings } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore, type ResourceSettings } from "@cofy/frontend-sdk";
 
 import { CofyResourceList } from "../../src/components/resource/cofy-resource-list.js";
 import { i18nContext } from "../../src/context.js";
@@ -44,7 +44,7 @@ async function mount(state: Community): Promise<CofyResourceList> {
   new ContextProvider(host, { context: i18nContext, initialValue: await testI18n() });
   document.body.append(host);
   const element = new CofyResourceList();
-  element.store = new ResourceStore(stubApi(state));
+  element.cofy = new CofyStore(stubApi(state));
   element.slug = "test";
   host.append(element);
   await element.updateComplete;

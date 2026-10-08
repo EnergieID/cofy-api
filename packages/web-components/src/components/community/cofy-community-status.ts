@@ -1,14 +1,12 @@
-import { consume } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import type { CommunityState, CommunityStatusStore } from "@cofy/frontend-sdk";
+import { customElement, property } from "lit/decorators.js";
+import type { CommunityState } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/badge/badge.js";
 import "@awesome.me/webawesome/dist/components/tooltip/tooltip.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { communityStatusStoreContext } from "../../context.js";
 
 const VARIANTS: Record<CommunityState, string> = {
   live: "success",
@@ -33,10 +31,6 @@ export class CofyCommunityStatus extends CofyElement {
     }
   `;
 
-  @consume({ context: communityStatusStoreContext, subscribe: true })
-  @state()
-  public store?: CommunityStatusStore;
-
   @property({ type: String }) public slug = "";
 
   private timer: ReturnType<typeof setTimeout> | undefined;
@@ -55,11 +49,13 @@ export class CofyCommunityStatus extends CofyElement {
   }
 
   public override willUpdate(changed: Map<string, unknown>): void {
-    if (changed.has("slug") || changed.has("store")) void this.refresh();
+    if (changed.has("slug") || changed.has("cofy")) void this.refresh();
   }
 
   public override render(): TemplateResult | typeof nothing {
-    const status = this.store?.status(this.slug);
+    if (this.cofy === undefined || this.slug === "") return nothing;
+    // An earlier answer would be shown as if it still held.
+    const status = this.cofy.status.error(this.slug) === null ? this.cofy.status.get(this.slug) : undefined;
     if (status === undefined) return nothing;
 
     return html`
@@ -72,13 +68,14 @@ export class CofyCommunityStatus extends CofyElement {
 
   private async refresh(): Promise<void> {
     clearTimeout(this.timer);
-    if (this.store === undefined || this.slug === "") return;
+    const { cofy, slug } = this;
+    if (cofy === undefined || slug === "") return;
 
     const refresh = ++this.refreshes;
-    await this.store.load(this.slug);
+    await cofy.status.fetch(slug).catch(() => {});
     if (refresh !== this.refreshes || !this.isConnected) return;
 
-    const pending = this.store.status(this.slug)?.state === "pending";
+    const pending = cofy.status.get(slug)?.state === "pending";
     this.timer = setTimeout(
       () => void this.refresh(),
       pending ? CofyCommunityStatus.PENDING_INTERVAL : CofyCommunityStatus.SETTLED_INTERVAL,

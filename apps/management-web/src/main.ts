@@ -6,33 +6,14 @@ import "@awesome.me/webawesome/dist/styles/webawesome.css";
 import "@awesome.me/webawesome/dist/components/page/page.js";
 
 import { provide } from "@lit/context";
-import {
-  AllowedModulesStore,
-  AllowedResourcesStore,
-  ApiClient,
-  CommunityStatusStore,
-  CommunityStore,
-  GrantStore,
-  ModuleStore,
-  ResourceStore,
-  SecretStore,
-  SessionStore,
-} from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore } from "@cofy/frontend-sdk";
 import { StateController } from "@dodona/lit-state";
 import {
   ThemeState,
-  allowedModulesStoreContext,
-  allowedResourcesStoreContext,
-  communityStatusStoreContext,
-  communityStoreContext,
+  cofyStoreContext,
   createI18n,
-  grantStoreContext,
   i18nContext,
-  moduleStoreContext,
   nativeStyles,
-  resourceStoreContext,
-  secretStoreContext,
-  sessionStoreContext,
   themeStateContext,
   utilityStyles,
   yamlBackend,
@@ -73,11 +54,11 @@ theme.start();
 /**
  * The console shell.
  *
- * It owns the stores, the route and the breadcrumb trail, provides them to the tree, and
+ * It owns the store, the route and the breadcrumb trail, provides them to the tree, and
  * renders the header plus whatever the route table returns. It knows about no individual
  * page: adding one is a new module and one entry in `routes.ts`.
  *
- * The stores, theme and translations are constructed here rather than imported as singletons,
+ * The store, theme and translations are constructed here rather than imported as singletons,
  * which is what lets the components be embedded in someone else's app against a different
  * backend, theme and language.
  *
@@ -123,34 +104,10 @@ export class CofyApp extends LitElement {
   ];
 
   // A request turned away for want of a login sends the browser off to log in, coming back here.
-  private readonly api: ApiClient = new ApiClient({ onUnauthenticated: (): void => this.session.login() });
+  private readonly api: ApiClient = new ApiClient({ onUnauthenticated: (): void => this.cofy.session.login() });
 
-  @provide({ context: sessionStoreContext })
-  public session = new SessionStore(this.api);
-
-  @provide({ context: communityStoreContext })
-  public communities = new CommunityStore(this.api);
-
-  @provide({ context: communityStatusStoreContext })
-  public communityStatuses = new CommunityStatusStore(this.api);
-
-  @provide({ context: moduleStoreContext })
-  public modules = new ModuleStore(this.api);
-
-  @provide({ context: allowedModulesStoreContext })
-  public allowedModules = new AllowedModulesStore(this.api);
-
-  @provide({ context: resourceStoreContext })
-  public resources = new ResourceStore(this.api);
-
-  @provide({ context: allowedResourcesStoreContext })
-  public allowedResources = new AllowedResourcesStore(this.api);
-
-  @provide({ context: secretStoreContext })
-  public secrets = new SecretStore(this.api);
-
-  @provide({ context: grantStoreContext })
-  public grants = new GrantStore(this.api);
+  @provide({ context: cofyStoreContext })
+  public cofy = new CofyStore(this.api);
 
   @provide({ context: routeStateContext })
   public routeState = new RouteState(routes);
@@ -169,7 +126,6 @@ export class CofyApp extends LitElement {
   public override connectedCallback(): void {
     super.connectedCallback();
     this.routeState.start();
-    void this.session.load();
   }
 
   public override disconnectedCallback(): void {
@@ -178,9 +134,10 @@ export class CofyApp extends LitElement {
   }
 
   public override render(): TemplateResult {
-    // Nothing until the login is known: without one, the browser is already on its way to log in.
-    if (!this.session.loaded) {
-      const error = this.session.error;
+    // Nothing until the login is known, which reading it asks for. Without one, the browser is
+    // already on its way to log in.
+    if (this.cofy.session.get() === undefined) {
+      const error = this.cofy.session.error();
       return error !== null && error.status !== 401
         ? html`<cofy-problem-details .problem=${error}></cofy-problem-details>`
         : html``;
