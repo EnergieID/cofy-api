@@ -24,6 +24,7 @@ class Subject(StrEnum):
     modules = "modules"
     resources = "resources"
     secrets = "secrets"
+    tokens = "tokens"
     grants = "grants"
     allowed_modules = "allowed_modules"
     allowed_resources = "allowed_resources"

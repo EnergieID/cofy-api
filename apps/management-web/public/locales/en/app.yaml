@@ -10,6 +10,7 @@ community:
     modules: Modules
     resources: Resources
     secrets: Secrets
+    tokens: API tokens
     grants: Access
 
 newModule:

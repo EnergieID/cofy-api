@@ -35,6 +35,10 @@ export const routes = {
     path: "/communities/:slug/secrets",
     render: ({ slug }) => html`<cofy-community-page .slug=${slug} tab="secrets"></cofy-community-page>`,
   },
+  tokens: {
+    path: "/communities/:slug/tokens",
+    render: ({ slug }) => html`<cofy-community-page .slug=${slug} tab="tokens"></cofy-community-page>`,
+  },
   grants: {
     path: "/communities/:slug/grants",
     render: ({ slug }) => html`<cofy-community-page .slug=${slug} tab="grants"></cofy-community-page>`,

@@ -13,6 +13,7 @@ from .api.modules import ModulesRouter
 from .api.resources import ResourcesRouter
 from .api.secrets import SecretsRouter
 from .api.status import StatusRouter
+from .api.tokens import TokensRouter
 from .auth.config import OidcConfig
 from .auth.router import AuthRouter
 from .auth.session import install_session
@@ -25,6 +26,7 @@ from .persitance.file.grants import FileGrantsPersistence
 from .persitance.file.modules import FileModulesPersistence
 from .persitance.file.resources import FileResourcesPersistence
 from .persitance.file.secrets import FileSecretsPersistence
+from .persitance.file.tokens import FileTokensPersistence
 from .persitance.file.users import FileUsersPersistence
 
 STATIC_DIR_ENV_VAR = "COFY_MANAGEMENT_STATIC_DIR"
@@ -78,6 +80,7 @@ app.include_router(ModulesRouter(FileModulesPersistence()).router)
 app.include_router(AllowedModulesRouter().router)
 app.include_router(ResourcesRouter(FileResourcesPersistence(), FileModulesPersistence()).router)
 app.include_router(SecretsRouter(FileSecretsPersistence(), FileModulesPersistence(), FileResourcesPersistence()).router)
+app.include_router(TokensRouter(FileTokensPersistence()).router)
 app.include_router(AllowedResourcesRouter().router)
 app.include_router(GrantsRouter(grants, FileCommunitiesPersistence()).router)
 app.include_router(StatusRouter(FileCommunitiesPersistence(), community_api).router)

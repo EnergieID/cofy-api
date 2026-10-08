@@ -44,6 +44,7 @@ describe("CofyStore", () => {
       (store: CofyStore): Promise<unknown> => store.resources.create("test", { type: "source", name: "s", value: {} }),
     ],
     ["a secret", (store: CofyStore): Promise<unknown> => store.secrets.delete("test", "key")],
+    ["a token", (store: CofyStore): Promise<unknown> => store.tokens.delete("test", "app")],
   ])("makes a community's status out of date on a write to %s", async (_, write) => {
     const { store, calls } = cofy();
     await store.status.fetch("test");

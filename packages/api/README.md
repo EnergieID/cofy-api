@@ -161,12 +161,33 @@ a field of your own opts in with `Annotated[..., Referable("<kind>")]`.
 Protect the API with bearer-token authentication:
 
 ```python
+from os import environ
+
 from cofy.api import CofyAPI, TokenAuth, TokenInfo
 
-app = CofyAPI(auth=TokenAuth({"my-secret-token": TokenInfo(name="Admin")}))
+app = CofyAPI(auth=TokenAuth([TokenInfo(name="admin", key=environ["COFY_API_TOKEN"])]))
 ```
 
-Clients authenticate via header (`Authorization: Bearer my-secret-token`) or query parameter (`?token=my-secret-token`).
+Or in settings:
+
+```yaml
+auth:
+  type: token
+  tokens:
+    - name: admin
+      description: Our admin app
+      key: ${COFY_API_TOKEN}
+      expires: 2027-01-01T00:00:00Z  # optional
+```
+
+A token is given as its `key`, or as its `hash` to keep the key itself out of the settings; when both are given, the
+hash is used. Generate a strong key and its hash with:
+
+```sh
+python -c "from cofy.api import generate_key, hash_key; key = generate_key(); print(key, hash_key(key))"
+```
+
+Clients authenticate via header (`Authorization: Bearer <key>`) or query parameter (`?token=<key>`).
 
 
 ## Development

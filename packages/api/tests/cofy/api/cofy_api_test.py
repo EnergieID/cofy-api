@@ -72,7 +72,7 @@ def test_creation_from_settings():
 
 
 def test_auth_adds_dependency_when_no_dependencies_provided():
-    cofy = CofyAPI(auth=TokenAuth({"token": TokenInfo(name="Demo")}))
+    cofy = CofyAPI(auth=TokenAuth([TokenInfo(name="demo", key="token")]))
     client = TestClient(cofy)
 
     response = client.get("/health", params={"token": "token"})
@@ -82,7 +82,7 @@ def test_auth_adds_dependency_when_no_dependencies_provided():
 
 def test_auth_appends_dependency_when_dependencies_already_provided():
     cofy = CofyAPI(
-        auth=TokenAuth({"token": TokenInfo(name="Demo")}),
+        auth=TokenAuth([TokenInfo(name="demo", key="token")]),
         dependencies=[],
     )
     client = TestClient(cofy)
@@ -203,7 +203,7 @@ def test_version_is_left_alone_without_a_revision():
 
 
 def test_health_reports_the_revision_without_a_token():
-    cofy = CofyAPI(auth=TokenAuth({"token": TokenInfo(name="Demo")}), revision=5)
+    cofy = CofyAPI(auth=TokenAuth([TokenInfo(name="demo", key="token")]), revision=5)
 
     response = TestClient(cofy).get("/health")
 

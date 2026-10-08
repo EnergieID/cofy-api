@@ -21,7 +21,7 @@ DATA_DIR = Path(__file__).resolve().parent / "data"
 
 # Initialize the Cofy API
 cofy = CofyAPI(
-    auth=TokenAuth({environ.get("COFY_API_TOKEN", ""): TokenInfo(name="Demo User")}),
+    auth=TokenAuth([TokenInfo(name="demo", description="Demo User", key=environ["COFY_API_TOKEN"])]),
     debug_mode=environ.get("COFY_DEBUG", "").lower() in ("1", "true", "yes"),
 )
 
