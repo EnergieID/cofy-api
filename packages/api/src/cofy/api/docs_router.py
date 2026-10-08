@@ -10,7 +10,7 @@ class DocsRouter(APIRouter):
     Overrides default FastAPI docs behavior to include security.
     """
 
-    def __init__(self, get_openapi: Callable[[], dict]):
+    def __init__(self, get_openapi: Callable[[Request], dict]):
         super().__init__()
         self.get_openapi = get_openapi
         self.add_api_route(
@@ -20,16 +20,21 @@ class DocsRouter(APIRouter):
         )
         self.add_api_route(
             "/openapi.json",
-            self.get_openapi,
+            self.openapi,
             include_in_schema=False,
         )
+
+    def openapi(self, request: Request) -> dict:
+        # Not `get_openapi` itself as the endpoint: FastAPI only passes the request to a parameter typed `Request`
+        # exactly, and `CofyAPI.openapi` can also be called without one.
+        return self.get_openapi(request)
 
     async def get_swagger_ui_html(self, request: Request):
         response = get_swagger_ui_html(
             openapi_url="/openapi.json",
             title="Docs",
             swagger_ui_parameters={
-                "spec": self.get_openapi(),
+                "spec": self.openapi(request),
                 "onComplete": "AUTHORIZE_API",
             },
         )

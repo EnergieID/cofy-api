@@ -8,7 +8,7 @@ import { stubFetch } from "./support/stub-fetch.js";
 const COLLECTION = "/management/communities" as const;
 const ITEM = "/management/communities/{slug}" as const;
 
-const community = { slug: "test", title: "Test", description: "", debug_mode: false, module_count: 1 };
+const community = { slug: "test", title: "Test", description: "", debug_mode: false, module_count: 1, revision: 1, api_url: "http://localhost/test/" };
 
 describe("ApiClient", () => {
   it("resolves with the response body, not the fetch result", async () => {

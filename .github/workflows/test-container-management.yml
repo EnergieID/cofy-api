@@ -14,11 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: "build the container, and check it end to end with a login through the dev identity provider"
+      - name: "build the containers, and check them end to end with a login through the dev identity provider"
         run: |
             set -euxo pipefail
 
-            docker build -t cofy-management-demo:latest -f apps/demo_multitenant/Dockerfile .
+            docker build -t cofy-management-demo:latest -f apps/demo_multitenant/management.Dockerfile .
+            docker build -t cofy-runner-demo:latest -f apps/demo_multitenant/runner.Dockerfile .
 
             # The same identity provider as in development, waited on until its health check passes.
             docker compose -f apps/dev_idp/docker-compose.yml up -d --wait
@@ -28,6 +29,7 @@ jobs:
             cp -r apps/demo_multitenant/seed/. "$DATA_DIR"/
 
             CONTAINER_NAME=cofy-management-demo-test
+            RUNNER_NAME=cofy-runner-demo-test
             cleanup() {
                 status=$?
                 echo "Step exit status: $status"
@@ -35,10 +37,14 @@ jobs:
                 docker ps -a || true
                 echo "--- container logs ---"
                 docker logs "$CONTAINER_NAME" || true
+                echo "--- runner logs ---"
+                docker logs "$RUNNER_NAME" || true
                 echo "--- identity provider logs ---"
                 docker compose -f apps/dev_idp/docker-compose.yml logs --tail 50 || true
                 docker stop "$CONTAINER_NAME" >/dev/null 2>&1 || true
                 docker rm "$CONTAINER_NAME" >/dev/null 2>&1 || true
+                docker stop "$RUNNER_NAME" >/dev/null 2>&1 || true
+                docker rm "$RUNNER_NAME" >/dev/null 2>&1 || true
                 docker compose -f apps/dev_idp/docker-compose.yml down || true
                 exit $status
             }
@@ -49,10 +55,20 @@ jobs:
             docker run -d \
                 --name "$CONTAINER_NAME" \
                 --network host \
-                -v "$DATA_DIR:/data" \
+                -v "$DATA_DIR/management:/data" \
+                -v "$DATA_DIR/communities:/communities" \
                 --env-file .env.example \
                 -e COFY_MANAGEMENT_DATA_DIR=/data \
+                -e COFY_MANAGEMENT_COMMUNITIES_DIR=/communities \
                 cofy-management-demo:latest
+
+            # On the port `.env.example` points the management API at, reading the communities only.
+            docker run -d \
+                --name "$RUNNER_NAME" \
+                --network host \
+                -v "$DATA_DIR/communities:/communities:ro" \
+                -e UVICORN_PORT=8001 \
+                cofy-runner-demo:latest
 
             for i in {1..15}; do
                 echo "Health check attempt $i"
@@ -61,5 +77,14 @@ jobs:
                 fi
                 sleep 2
             done
+
+            for i in {1..15}; do
+                echo "Runner health check attempt $i"
+                if curl -sSf http://localhost:8001/demo/health; then
+                    break
+                fi
+                sleep 2
+            done
+            curl -sSf http://localhost:8001/demo/health | grep -q '"status":"ok"'
 
             python3 apps/demo_multitenant/scripts/smoke_test.py http://localhost:8080

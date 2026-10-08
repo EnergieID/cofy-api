@@ -10,6 +10,24 @@ communityList:
     community: Gemeenschap
     slug: Naam
     modules: Modules
+    status: Status
+
+apiLink:
+  copy: Kopieer het adres
+  copied: Gekopieerd
+  copyFailed: Kopiëren mislukt
+  open: Documentatie
+
+communityStatus:
+  live:
+    label: Actief
+    description: De API gebruikt de laatst opgeslagen instellingen.
+  pending:
+    label: Wijzigingen in afwachting
+    description: De API gebruikt nog de vorige instellingen. Opgeslagen wijzigingen worden normaal binnen enkele seconden toegepast.
+  unavailable:
+    label: Niet beschikbaar
+    description: De API draait niet.
 
 moduleList:
   title: Modules

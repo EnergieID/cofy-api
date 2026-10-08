@@ -2,10 +2,10 @@ import { consume } from "@lit/context";
 import { css, html } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { CommunityStore } from "@cofy/frontend-sdk";
+import type { CommunityInfo, CommunityStore } from "@cofy/frontend-sdk";
 import type { Crumb } from "@cofy/web-components";
 
-import { communityStoreContext } from "@cofy/web-components";
+import { communityStoreContext, utilityStyles } from "@cofy/web-components";
 import "@cofy/web-components";
 import "@awesome.me/webawesome/dist/components/tab/tab.js";
 import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
@@ -25,17 +25,26 @@ export type CommunityTab = (typeof COMMUNITY_TABS)[number];
  */
 @customElement("cofy-community-page")
 export class CofyCommunityPage extends CofyPage {
-  public static override styles = css`
-    :host {
-      display: block;
-    }
-  `;
+  public static override styles = [
+    utilityStyles,
+    css`
+      :host {
+        display: block;
+      }
+    `,
+  ];
 
   @consume({ context: communityStoreContext, subscribe: true })
   public communities!: CommunityStore;
 
   @property({ type: String }) public override slug = "";
   @property({ type: String }) public tab: CommunityTab = "modules";
+
+  public override connectedCallback(): void {
+    super.connectedCallback();
+    // Opened directly rather than from the list, nothing else has loaded the community this page shows.
+    void this.communities?.ensure();
+  }
 
   protected override crumbs(): Crumb[] {
     return [{ label: this.communityName() }];
@@ -44,6 +53,10 @@ export class CofyCommunityPage extends CofyPage {
   protected override content(): TemplateResult {
     // The tables carry their own titles and toolbars, so a tab adds no chrome of its own.
     return html`
+      <div class="wa-split">
+        <cofy-api-link .url=${this.community()?.api_url ?? ""}></cofy-api-link>
+        <cofy-community-status .slug=${this.slug}></cofy-community-status>
+      </div>
       <wa-tab-group .active=${this.tab} @wa-tab-show=${(event: CustomEvent<{ name: string }>): void => this.show(event)}>
         ${COMMUNITY_TABS.map((tab) => html`<wa-tab panel=${tab}>${this.t(`community.tabs.${tab}`)}</wa-tab>`)}
 
@@ -84,9 +97,13 @@ export class CofyCommunityPage extends CofyPage {
     this.routes.navigate(tab, { slug: this.slug });
   }
 
+  private community(): CommunityInfo | undefined {
+    return this.communities?.communities.find((entry) => entry.slug === this.slug);
+  }
+
   /** Falls back to the slug until the community's name has loaded. */
   private communityName(): string {
-    return this.communities?.communities.find((entry) => entry.slug === this.slug)?.title ?? this.slug;
+    return this.community()?.title ?? this.slug;
   }
 }
 

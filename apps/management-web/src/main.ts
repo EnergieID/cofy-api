@@ -10,6 +10,7 @@ import {
   AllowedModulesStore,
   AllowedResourcesStore,
   ApiClient,
+  CommunityStatusStore,
   CommunityStore,
   GrantStore,
   ModuleStore,
@@ -22,6 +23,7 @@ import {
   ThemeState,
   allowedModulesStoreContext,
   allowedResourcesStoreContext,
+  communityStatusStoreContext,
   communityStoreContext,
   createI18n,
   grantStoreContext,
@@ -128,6 +130,9 @@ export class CofyApp extends LitElement {
 
   @provide({ context: communityStoreContext })
   public communities = new CommunityStore(this.api);
+
+  @provide({ context: communityStatusStoreContext })
+  public communityStatuses = new CommunityStatusStore(this.api);
 
   @provide({ context: moduleStoreContext })
   public modules = new ModuleStore(this.api);

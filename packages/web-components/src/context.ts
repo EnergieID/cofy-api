@@ -2,6 +2,7 @@ import { createContext } from "@lit/context";
 import type {
   AllowedModulesStore,
   AllowedResourcesStore,
+  CommunityStatusStore,
   CommunityStore,
   GrantStore,
   ModuleStore,
@@ -22,6 +23,7 @@ import type { ThemeState } from "./theme/theme-state.js";
  * globals.
  */
 export const communityStoreContext = createContext<CommunityStore>(Symbol("cofy-community-store"));
+export const communityStatusStoreContext = createContext<CommunityStatusStore>(Symbol("cofy-community-status-store"));
 export const moduleStoreContext = createContext<ModuleStore>(Symbol("cofy-module-store"));
 export const allowedModulesStoreContext = createContext<AllowedModulesStore>(Symbol("cofy-allowed-modules-store"));
 export const resourceStoreContext = createContext<ResourceStore>(Symbol("cofy-resource-store"));

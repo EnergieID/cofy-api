@@ -9,7 +9,7 @@ from cofy.api.token_auth import TokenAuth, TokenInfo
 class TestDocsRouter:
     def setup_method(self):
         self.docs_router = DocsRouter(
-            lambda: {
+            lambda request: {
                 "openapi": "3.0.0",
                 "info": {
                     "title": "Test API",

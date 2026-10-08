@@ -48,3 +48,10 @@ def test_does_not_start_without_login_configured(monkeypatch: pytest.MonkeyPatch
 
     with pytest.raises(RuntimeError, match="COFY_MANAGEMENT_OIDC_CLIENT_SECRET, COFY_MANAGEMENT_SESSION_LIFETIME"):
         _import_main(monkeypatch, None)
+
+
+def test_does_not_start_without_the_communities_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("COFY_MANAGEMENT_COMMUNITIES_URL")
+
+    with pytest.raises(RuntimeError, match="COFY_MANAGEMENT_COMMUNITIES_URL"):
+        _import_main(monkeypatch, None)

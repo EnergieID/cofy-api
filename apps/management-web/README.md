@@ -51,5 +51,5 @@ npm test
 npm run check
 npm run lint
 npm run build      # outputs to dist/, served by the management API in production - see
-                    # apps/demo_multitenant/Dockerfile
+                    # apps/demo_multitenant/management.Dockerfile
 ```

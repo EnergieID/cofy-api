@@ -1,14 +1,29 @@
-# Deployed to the Scaleway instance by `.github/workflows/deploy-scaleway.yml`. `app` has no
-# published port - it's only reachable from `caddy` over the compose network, so the only way
-# in from outside is through Caddy's TLS-terminated 80/443.
+# Deployed to the Scaleway instance by `.github/workflows/deploy-scaleway.yml`. `app` and
+# `runner` have no published port - they're only reachable from `caddy` (and each other) over
+# the compose network, so the only way in from outside is through Caddy's TLS-terminated 80/443.
 services:
   app:
     image: ghcr.io/energieid/cofy-api/management:latest
     container_name: cofy-management
     restart: unless-stopped
     env_file: .env
+    # The community configs are their own volume, so they can live elsewhere than the rest of the data.
     volumes:
-      - /data:/data
+      - /data/management:/data
+      - /data/communities:/communities
+    expose:
+      - "8080"
+
+  # Serves every community's API from its settings, which it only reads.
+  runner:
+    image: ghcr.io/energieid/cofy-api/runner:latest
+    container_name: cofy-runner
+    restart: unless-stopped
+    environment:
+      # Caddy strips this prefix; told it, the communities' API docs point at where they really are.
+      UVICORN_ROOT_PATH: /communities
+    volumes:
+      - /data/communities:/communities:ro
     expose:
       - "8080"
 
@@ -25,6 +40,7 @@ services:
       - caddy_config:/config
     depends_on:
       - app
+      - runner
 
 volumes:
   # Let's Encrypt certificates and Caddy's own state - must survive a redeploy, or every

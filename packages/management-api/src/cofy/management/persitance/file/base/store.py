@@ -1,10 +1,11 @@
 import fcntl
 import os
+import tempfile
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import IO, ClassVar, Generic, Literal, TypeVar
+from typing import ClassVar, Generic, Literal, TypeVar
 
 import yaml
 from pydantic import BaseModel
@@ -15,7 +16,7 @@ DATA_DIR_ENV_VAR = "COFY_MANAGEMENT_DATA_DIR"
 
 
 def data_dir() -> Path:
-    """Where the management API keeps everything it stores, each kind in a subdirectory of its own.
+    """Where the management API keeps what it stores other than the community configs, each kind in a subdirectory.
 
     There is no built-in default: this is a deployment's writable state, not something the
     library can guess at or ship a sample of, so the environment variable is required.
@@ -48,46 +49,66 @@ class FileStore(ABC, Generic[Document]):
         """The error for a document that doesn't exist."""
         return ResourceNotFoundError(f"{path.name} not found")
 
+    @staticmethod
+    def _lock_path(path: Path) -> Path:
+        """The hidden lock file beside the document at *path*."""
+        return path.with_name(f".{path.name}.lock")
+
     @contextmanager
-    def _locked_file(
-        self, path: Path, *, exclusive: bool, writable: bool = False, create: bool = False
-    ) -> Generator[IO[str]]:
-        """Open the file at *path* and hold a lock on it for the duration of the block.
+    def _locked(self, path: Path, *, exclusive: bool, create: bool = False) -> Generator[None]:
+        """Hold a lock on the document at *path* for the duration of the block.
 
         A *shared* lock (`exclusive=False`) excludes a concurrent exclusive lock (a write or a
-        delete) - so a reader is never handed a document mid-write, or one that has just been
-        deleted - without excluding other concurrent shared holders (other reads). An
-        *exclusive* lock excludes readers and writers/deleters alike, so concurrent requests
-        against the same document serialize instead of racing each other.
+        delete) - so a reader is never handed a document that has just been deleted - without
+        excluding other concurrent shared holders (other reads). An *exclusive* lock excludes
+        readers and writers/deleters alike, so concurrent requests against the same document
+        serialize instead of racing each other.
 
-        Unless *create* makes a missing file, existence is checked once before opening and once
-        again after the lock is held: the first check can race a concurrent create/delete of the
-        same file between the check and the `open` call, so only the second, lock-protected
-        check is authoritative - a caller that skipped it could still open a file a concurrent
-        delete removes moments later.
+        The lock is taken on a lock file beside the document rather than on the document itself,
+        because a write replaces the document with a new file (see `_write`): a lock on the old one
+        would no longer guard anything. The lock file outlives a deleted document, as removing it
+        could leave a waiter holding a lock on a file nobody else locks.
 
-        Either way, the lock is always released. It is a plain `flock` on the file itself, so it
-        holds across both threads and processes without needing a separate lock file - but it is
-        advisory and POSIX-only: it only excludes other code that goes through this same method,
-        and it is not available on Windows.
+        Unless *create* allows a missing document, existence is checked once before locking and
+        once again after the lock is held: the first check keeps a request for a document that
+        doesn't exist from leaving a lock file behind, but can race a concurrent create/delete, so
+        only the second, lock-protected check is authoritative.
+
+        It is a plain `flock`, so it holds across both threads and processes - but it is advisory
+        and POSIX-only: it only excludes other code that goes through this same method, and it is
+        not available on Windows. Code that only reads, and doesn't take it, still never sees a
+        half-written document, as a write is a rename.
         """
-        if create:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            # Opened through `os.open`, as `open`'s modes can't create a file without truncating it.
-            handle = os.fdopen(os.open(path, os.O_RDWR | os.O_CREAT, 0o644), "r+", encoding="utf-8")
-        elif not path.exists():
+        if not create and not path.exists():
             raise self._not_found(path)
-        else:
-            handle = path.open("r+" if writable else "r", encoding="utf-8")
+        path.parent.mkdir(parents=True, exist_ok=True)
 
-        with handle:
+        with self._lock_path(path).open("a") as handle:
             fcntl.flock(handle, fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH)
             try:
-                if not path.exists():
+                if not create and not path.exists():
                     raise self._not_found(path)
-                yield handle
+                yield
             finally:
                 fcntl.flock(handle, fcntl.LOCK_UN)
+
+    @staticmethod
+    def _write(path: Path, text: str) -> None:
+        """Replace the document at *path* with *text* in one step: written to a temporary file beside it, then renamed
+        over it, so anyone opening it sees either the previous document or this one, never part of it."""
+        fd, temporary = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(text)
+                # On disk before the rename, or a crash could leave the new name on an empty file.
+                handle.flush()
+                os.fsync(handle.fileno())
+            # `mkstemp` makes the file private to this user; what reads it - the runner - may run as another.
+            os.chmod(temporary, 0o644)
+            os.replace(temporary, path)
+        except BaseException:
+            Path(temporary).unlink(missing_ok=True)
+            raise
 
     @contextmanager
     def _open_document(
@@ -95,37 +116,23 @@ class FileStore(ABC, Generic[Document]):
     ) -> Generator[Document]:
         """Open the document at *path* for either a read or a read-modify-write.
 
-        `mode="read"` takes a shared lock (see `_locked_file`) and writes nothing back.
+        `mode="read"` takes a shared lock (see `_locked`) and writes nothing back.
 
         `mode="write"` takes an exclusive lock. If the block completes normally, the (possibly
         mutated) document is written back automatically; if it raises - e.g. a not-found or
         already-exists error - nothing is written. With *create*, a missing file is created and
         starts out as an empty document.
         """
-        created = create and not path.exists()
-        with self._locked_file(path, exclusive=mode == "write", writable=mode == "write", create=create) as handle:
-            loaded = yaml.safe_load(handle)
-            if loaded is None and created:
-                loaded = {}
+        with self._locked(path, exclusive=mode == "write", create=create):
+            loaded = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
             if not isinstance(loaded, dict):
-                # `safe_load` of an empty or all-comments file returns `None`, which used to be
-                # quietly turned into `{}` here - every field defaults, so that validated as a
-                # legitimate blank document instead of surfacing a truncated file (e.g. from a
-                # crash mid-write) as the corruption it actually is.
+                # `safe_load` of an empty or all-comments file returns `None`, which must not be
+                # quietly turned into `{}`: every field defaults, so that would validate as a
+                # legitimate blank document instead of surfacing a damaged file as what it is.
                 raise ValueError(f"The file at {path} must be a YAML mapping")
 
             document = self._parse(loaded, path)
             yield document
 
             if mode == "write":
-                # Serialize before truncating, so a dump that raises leaves the previous
-                # contents alone instead of emptying the file.
-                dumped = self._serialize(document)
-                handle.seek(0)
-                handle.truncate()
-                handle.write(dumped)
-                # Flush inside the lock: the write is buffered and the lock is released before
-                # the handle is closed, so without this the next reader could take the lock and
-                # still see the truncated file.
-                handle.flush()
-                os.fsync(handle.fileno())
+                self._write(path, self._serialize(document))

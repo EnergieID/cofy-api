@@ -14,10 +14,24 @@ stack running together.
 
 ## Configuration
 
-`COFY_MANAGEMENT_DATA_DIR` must be set to a writable directory for everything the API stores -
-there is no built-in default. It holds the community configs in `communities/<slug>.yaml`, and who
-may do what in `access/users.yaml`. See [apps/demo_multitenant](../../apps/demo_multitenant)
+`COFY_MANAGEMENT_DATA_DIR` and `COFY_MANAGEMENT_COMMUNITIES_DIR` must be set to writable
+directories - there is no built-in default. The first holds who may do what in
+`access/users.yaml`, the second the community configs, as `<slug>.yaml`. They are apart so the
+community configs can live elsewhere: the [runner](../runner) serving them needs nothing else. See [apps/demo_multitenant](../../apps/demo_multitenant)
 for a worked example, including a reset script that restores its data to committed defaults.
+
+Every write replaces a file whole, renaming a new one over it, so whatever reads the files without
+going through this API never sees one half-written; the locks writes take are on hidden `.lock`
+files beside them. A community config's `revision` is raised by one on every write; raise it when
+editing one by hand too, so the change shows as a new revision.
+
+`COFY_MANAGEMENT_COMMUNITIES_URL` must be set to where the communities' APIs are served, such as
+`https://cofy.example/communities` - by the [runner](../runner), or anything else serving each
+under its slug. A community's `api_url` is its slug under it, and
+`/management/communities/{slug}/status` asks its `/health` for the revision it runs, answering in
+one of three states: `live` when that is the saved one, `pending` while it is an earlier one - for
+a few seconds after a change, or for as long as the change fails to apply - and `unavailable`. Why
+is in the log of what serves it, not in the answer.
 
 ## Logging in
 

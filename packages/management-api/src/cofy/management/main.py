@@ -1,5 +1,6 @@
 import os
 
+import httpx
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
@@ -11,10 +12,12 @@ from .api.grants import GrantsRouter
 from .api.modules import ModulesRouter
 from .api.resources import ResourcesRouter
 from .api.secrets import SecretsRouter
+from .api.status import StatusRouter
 from .auth.config import OidcConfig
 from .auth.router import AuthRouter
 from .auth.session import install_session
 from .auth.user import install_users
+from .community_api import CommunityApi
 from .errors import add_exception_handlers
 from .persitance.file.base import data_dir
 from .persitance.file.communities import FileCommunitiesPersistence
@@ -25,6 +28,7 @@ from .persitance.file.secrets import FileSecretsPersistence
 from .persitance.file.users import FileUsersPersistence
 
 STATIC_DIR_ENV_VAR = "COFY_MANAGEMENT_STATIC_DIR"
+COMMUNITIES_URL_ENV_VAR = "COFY_MANAGEMENT_COMMUNITIES_URL"
 
 #: Each `OidcConfig` field, and the environment variable it is read from.
 OIDC_ENV_VARS = {
@@ -48,7 +52,17 @@ def oidc_config_from_env() -> OidcConfig:
         raise RuntimeError(f"Login is not configured correctly, check {fields}") from exc
 
 
+def community_api_from_env() -> CommunityApi:
+    """The communities' APIs, served each under its slug at the URL in the environment."""
+    url = os.environ.get(COMMUNITIES_URL_ENV_VAR)
+    if not url:
+        raise RuntimeError(f"{COMMUNITIES_URL_ENV_VAR} must be set to where the communities' APIs are served")
+    # Short, so an API that hangs is reported unavailable rather than making the console slow.
+    return CommunityApi(httpx.Client(base_url=url, timeout=2.0))
+
+
 oidc_config = oidc_config_from_env()
+community_api = community_api_from_env()
 users_file = data_dir() / "access" / "users.yaml"
 users = FileUsersPersistence(users_file)
 grants = FileGrantsPersistence(users_file)
@@ -59,13 +73,14 @@ install_session(app, oidc_config)
 install_users(app, users)
 
 app.include_router(AuthRouter(oidc_config, users, FileCommunitiesPersistence()).router)
-app.include_router(CommunitiesRouter(FileCommunitiesPersistence(), grants).router)
+app.include_router(CommunitiesRouter(FileCommunitiesPersistence(), grants, community_api).router)
 app.include_router(ModulesRouter(FileModulesPersistence()).router)
 app.include_router(AllowedModulesRouter().router)
 app.include_router(ResourcesRouter(FileResourcesPersistence(), FileModulesPersistence()).router)
 app.include_router(SecretsRouter(FileSecretsPersistence(), FileModulesPersistence(), FileResourcesPersistence()).router)
 app.include_router(AllowedResourcesRouter().router)
 app.include_router(GrantsRouter(grants, FileCommunitiesPersistence()).router)
+app.include_router(StatusRouter(FileCommunitiesPersistence(), community_api).router)
 
 # Serving the console's built assets is optional and off by default, so the API stays usable
 # on its own (e.g. behind the Vite dev server's proxy). A deployment that wants a single

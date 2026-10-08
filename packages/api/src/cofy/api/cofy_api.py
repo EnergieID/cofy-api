@@ -40,6 +40,7 @@ class CofyAPISettings(BaseSettingsModel):
     description: str = DEFAULT_ARGS["description"]
     debug_mode: bool = False
     debug_dir: Path | None = None
+    revision: int | None = None
     modules: "list[AnyModuleSettings]" = []
     auth: "AnyAuthSettings | None" = None
     resources: "list[AnyResourceSettings]" = []
@@ -65,6 +66,7 @@ class CofyAPI(FastAPI, FromSettingsMixin, settings=CofyAPISettings):
         auth: Auth | None = None,
         debug_mode: bool = False,
         debug_dir: Path | None = None,
+        revision: int | None = None,
         modules: list[Module] | None = None,
         **kwargs,
     ):
@@ -73,7 +75,11 @@ class CofyAPI(FastAPI, FromSettingsMixin, settings=CofyAPISettings):
                 kwargs["dependencies"].append(Depends(auth.verify))
             else:
                 kwargs["dependencies"] = [Depends(auth.verify)]
+        if revision is not None:
+            # As semver build metadata, so the version changes with both the software and the configuration.
+            kwargs["version"] = f"{kwargs.get('version', DEFAULT_ARGS['version'])}+{revision}"
         super().__init__(**(DEFAULT_ARGS | kwargs))
+        self.revision = revision
         self._modules: list[Module] = []
         self.include_router(DocsRouter(self.openapi))
         self.add_route("/health", self.health_check, methods=["GET"])
@@ -90,14 +96,14 @@ class CofyAPI(FastAPI, FromSettingsMixin, settings=CofyAPISettings):
             for module in modules:
                 self.register_module(module)
 
-    def openapi(self):
+    def openapi(self, request: Request | None = None) -> dict[str, Any]:
+        """The schema, with the path *request* was served under as its first server, as it may be mounted in another."""
         self.openapi_tags = self.tags_metadata
         schema = super().openapi()
-        if self.root_path:
-            root_path = self.root_path.rstrip("/")
-            server_urls = {s.get("url") for s in schema.get("servers", [])}
-            if root_path not in server_urls:
-                schema["servers"] = [{"url": root_path}] + schema.get("servers", [])
+        root_path = request.scope.get("root_path", "").rstrip("/") if request else ""
+        if root_path and root_path not in {server.get("url") for server in schema.get("servers", [])}:
+            # A copy, as FastAPI keeps the schema to hand out again.
+            schema = {**schema, "servers": [{"url": root_path}, *schema.get("servers", [])]}
         return schema
 
     def register_module(self, module: Module):
@@ -105,7 +111,7 @@ class CofyAPI(FastAPI, FromSettingsMixin, settings=CofyAPISettings):
         self.include_router(module)
 
     def health_check(self, request: Request) -> JSONResponse:
-        return JSONResponse({"status": "ok"})
+        return JSONResponse({"status": "ok", "revision": self.revision})
 
     @property
     def tags_metadata(self) -> list[dict[str, Any]]:
