@@ -1,5 +1,4 @@
 import logging
-import os
 
 import yaml
 from cofy.api.cofy_api import CofyAPISettings
@@ -10,8 +9,8 @@ from .base import CommunityFileStore
 
 #: Community-level fields a client may set. Everything else in a stored config either belongs
 #: to another endpoint (`modules`), is managed outside the console (`auth`, whose token
-#: map cannot be masked because the tokens are dict *keys*), or is a local operational detail
-#: (`debug_dir`).
+#: map cannot be masked because the tokens are dict *keys*), is a local operational detail
+#: (`debug_dir`), or is kept by the store itself (`revision`).
 WRITABLE_FIELDS = ("title", "description", "debug_mode")
 
 logger = logging.getLogger(__name__)
@@ -39,21 +38,12 @@ class FileCommunitiesPersistence(CommunityFileStore, CommunitiesPersistence):
 
     def create(self, slug: str, settings: CofyAPISettings) -> CofyAPISettings:
         path = self._community_path(slug)  # also validates the slug before it becomes a filename
-        self.base_path.mkdir(parents=True, exist_ok=True)
-
         dumped = self._serialize(settings)
-        try:
-            # O_EXCL makes the existence check and the create one atomic step, so two
-            # concurrent creates of the same slug cannot both believe they won.
-            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
-        except FileExistsError as exc:
-            raise ResourceAlreadyExistsError(f"Community {slug!r} already exists") from exc
-
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            handle.write(dumped)
-            handle.flush()
-            os.fsync(handle.fileno())
-
+        # Exclusive, so two concurrent creates of the same slug cannot both believe they won.
+        with self._locked(path, exclusive=True, create=True):
+            if path.exists():
+                raise ResourceAlreadyExistsError(f"Community {slug!r} already exists")
+            self._write(path, dumped)
         return settings
 
     def update(self, slug: str, settings: CofyAPISettings) -> CofyAPISettings:
@@ -67,8 +57,8 @@ class FileCommunitiesPersistence(CommunityFileStore, CommunitiesPersistence):
 
     def delete(self, slug: str) -> None:
         # An exclusive lock serializes concurrent deletes of the same slug instead of letting
-        # both pass `_locked_file`'s existence check and race each other's `unlink` - the loser
-        # sees a clean, idempotent not-found (raised by `_locked_file` itself) rather than a
+        # both pass `_locked`'s existence check and race each other's `unlink` - the loser
+        # sees a clean, idempotent not-found (raised by `_locked` itself) rather than a
         # raw `FileNotFoundError` from a second unlink.
-        with self._locked_file(self._community_path(slug), exclusive=True):
+        with self._locked(self._community_path(slug), exclusive=True):
             self._community_path(slug).unlink()

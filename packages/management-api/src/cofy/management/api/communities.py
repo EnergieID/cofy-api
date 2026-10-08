@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 
 from ..auth.access import Subject
 from ..auth.user import User, current_user
+from ..community_api import CommunityApi
 from ..persitance.communities import CommunitiesPersistence
 from ..persitance.grants import GrantsPersistence
 from ..policies.community import CommunityPolicy
@@ -64,22 +65,27 @@ class CommunityInfo(CommunityBody):
 
     slug: str = SLUG_FIELD
     module_count: int = Field(description="How many modules are configured, for listings.")
+    revision: int | None = Field(description="The revision of the settings, raised on every change.")
+    api_url: str = Field(description="Where the community's own API is served.")
 
     @classmethod
-    def of(cls, slug: str, settings: CofyAPISettings) -> CommunityInfo:
+    def of(cls, slug: str, settings: CofyAPISettings, api_url: str) -> CommunityInfo:
         return cls(
             slug=slug,
             title=settings.title,
             description=settings.description,
             debug_mode=settings.debug_mode,
             module_count=len(settings.modules),
+            revision=settings.revision,
+            api_url=api_url,
         )
 
 
 class CommunitiesRouter:
-    def __init__(self, persitance: CommunitiesPersistence, grants: GrantsPersistence):
+    def __init__(self, persitance: CommunitiesPersistence, grants: GrantsPersistence, api: CommunityApi):
         self.persistence = persitance
         self.grants = grants
+        self.api = api
         self.router = PolicyRouter(
             subject=Subject.community, policy=CommunityPolicy, prefix="/management/communities", tags=["Communities"]
         )
@@ -96,26 +102,29 @@ class CommunitiesRouter:
 
     def all(self, user: Annotated[User, Depends(current_user)]) -> list[CommunityInfo]:
         communities = dict(self.persistence.all())
-        return [CommunityInfo.of(slug, communities[slug]) for slug in CommunityPolicy.scope(user, list(communities))]
+        return [self._info(slug, communities[slug]) for slug in CommunityPolicy.scope(user, list(communities))]
 
     def get(
         self,
         slug: Annotated[str, Path(description="Community slug")],
     ) -> CommunityInfo:
-        return CommunityInfo.of(slug, self.persistence.get(slug))
+        return self._info(slug, self.persistence.get(slug))
 
     def create(
         self,
         payload: Annotated[CommunityCreate, Body(description="Community settings")],
     ) -> CommunityInfo:
-        return CommunityInfo.of(payload.slug, self.persistence.create(payload.slug, payload.to_settings()))
+        return self._info(payload.slug, self.persistence.create(payload.slug, payload.to_settings()))
 
     def put(
         self,
         slug: str,
         payload: Annotated[CommunityBody, Body(description="Community settings")],
     ) -> CommunityInfo:
-        return CommunityInfo.of(slug, self.persistence.update(slug, payload.to_settings()))
+        return self._info(slug, self.persistence.update(slug, payload.to_settings()))
+
+    def _info(self, slug: str, settings: CofyAPISettings) -> CommunityInfo:
+        return CommunityInfo.of(slug, settings, self.api.url(slug))
 
     def delete(self, slug: str) -> None:
         # Revoked first, or a community created later under the same slug could inherit them; should deleting then

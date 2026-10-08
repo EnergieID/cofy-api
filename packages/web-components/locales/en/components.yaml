@@ -11,6 +11,23 @@ communityList:
     community: Community
     slug: Slug
     modules: Modules
+    status: Status
+
+apiLink:
+  copy: Copy the address
+  copied: Copied
+  copyFailed: Could not copy
+
+communityStatus:
+  live:
+    label: Live
+    description: The API runs the latest saved settings.
+  pending:
+    label: Changes pending
+    description: The API still runs the previous settings. Saved changes normally take a few seconds to apply.
+  unavailable:
+    label: Unavailable
+    description: The API is not running.
 
 moduleList:
   title: Modules

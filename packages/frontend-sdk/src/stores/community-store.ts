@@ -48,6 +48,11 @@ export class CommunityStore extends State {
     }
   }
 
+  /** Load the communities unless they are loaded, or being loaded, already. */
+  public async ensure(): Promise<void> {
+    if (!this.loaded && !this.loading) await this.load();
+  }
+
   public async get(slug: string): Promise<CommunityInfo> {
     return await withProblem(() => this.api.GET(CommunityStore.ITEM, { params: { path: { slug } } }));
   }

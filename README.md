@@ -33,8 +33,8 @@ If you're hosting Cofy on behalf of more than one community — a federation, a 
 software partner — Cofy also ships a management API and a web console to create and configure
 each community's setup without touching code per community.
 
-[apps/demo_multitenant](apps/demo_multitenant) shows how the management API and the console fit
-together, how to run them locally, and how to build and deploy the combined Docker image
+[apps/demo_multitenant](apps/demo_multitenant) shows how the management API, the console and the
+runner serving each community's API fit together, how to run them locally, and how to build and deploy the combined Docker image
 yourself.
 
 ## 3. A fully custom setup
@@ -44,6 +44,8 @@ Every piece above is its own package, so you can take only what you need and bui
 - [packages/api](packages/api) — the runtime module system used by route 1
 - [packages/management-api](packages/management-api) — CRUD API for one or more community
   configs, used by route 2
+- [packages/runner](packages/runner) — serves the community configs the management API keeps,
+  each as its own Cofy API, used by route 2
 - [packages/frontend-sdk](packages/frontend-sdk) — a typed TypeScript client and reactive state
   stores for the management API
 - [packages/web-components](packages/web-components) — Lit UI building blocks (config forms, a
@@ -57,6 +59,7 @@ Each has its own README with install and usage instructions.
 
 - Runtime API package: [packages/api](packages/api)
 - Management API package: [packages/management-api](packages/management-api)
+- Runner package: [packages/runner](packages/runner)
 - Frontend SDK package: [packages/frontend-sdk](packages/frontend-sdk)
 - Web components package: [packages/web-components](packages/web-components)
 - Default management console: [apps/management-web](apps/management-web)

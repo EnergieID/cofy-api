@@ -2,6 +2,7 @@ export {
   allowedModulesStoreContext,
   allowedResourcesStoreContext,
   communitySlugContext,
+  communityStatusStoreContext,
   communityStoreContext,
   fieldRegistryContext,
   grantStoreContext,
@@ -36,7 +37,9 @@ export { CofyAnyForm } from "./components/form/cofy-any-form.js";
 export { CofyFieldShell } from "./components/form/cofy-field-shell.js";
 export { CofyYamlForm } from "./components/form/cofy-yaml-form.js";
 export { CofyBreadcrumbs, type Crumb } from "./components/layout/cofy-breadcrumbs.js";
+export { CofyApiLink } from "./components/community/cofy-api-link.js";
 export { CofyCommunityList } from "./components/community/cofy-community-list.js";
+export { CofyCommunityStatus } from "./components/community/cofy-community-status.js";
 export { CofyHeading } from "./components/layout/cofy-heading.js";
 export { CofyLinkButton } from "./components/layout/cofy-link-button.js";
 export { CofyLocalePicker } from "./components/settings/cofy-locale-picker.js";

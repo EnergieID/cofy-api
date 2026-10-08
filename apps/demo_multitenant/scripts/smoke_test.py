@@ -3,7 +3,7 @@
 Usage: python3 smoke_test.py [http://localhost:8080]
 
 The API has to run on the demo's seed data, against the dev identity provider, whose users all have the password
-`pwd`. Standard library only, so it runs wherever Python does.
+`pwd`, with the runner serving the same data. Standard library only, so it runs wherever Python does.
 """
 
 import html
@@ -71,6 +71,8 @@ def main(api: str) -> None:
     check("a system admin is logged in", get_json(admin, f"{api}/auth/me")["system_admin"] is True)
     slugs = [community["slug"] for community in get_json(admin, f"{api}/management/communities")]
     check(f"a system admin sees every community ({', '.join(slugs)})", {"demo", "empty"} <= set(slugs))
+    state = get_json(admin, f"{api}/management/communities/demo/status")["state"]
+    check(f"the runner serves a community's saved settings ({state})", state == "live")
 
     nobody = log_in(api, "nobody")
     check("someone without access is logged in", status(nobody, f"{api}/auth/me") == 200)

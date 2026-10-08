@@ -32,13 +32,13 @@ WORKDIR /app
 RUN apk add --no-cache git
 
 # `cofy-management-api` depends on `cofy-api` through an editable local path, so both package
-# sources are needed before `uv sync` can resolve it - unlike the root Dockerfile's single
-# package, there is no dependency-only layer to cache separately here.
+# sources are needed before `uv sync` can resolve it - there is no dependency-only layer to
+# cache separately here.
 COPY packages/api ./packages/api
 COPY packages/management-api ./packages/management-api
 
 RUN uv sync --project packages/management-api --frozen --no-dev \
-    && find /app/packages/management-api/.venv -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+    && find /app/packages -path '*/.venv/*' -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
 # --- Final stage (no uv, no build deps, no node) ---
 FROM python:3.12-alpine
@@ -49,8 +49,6 @@ WORKDIR /app
 # venv resolves it through a path back to packages/api/src at the same absolute location.
 COPY --from=api-builder /app /app
 COPY --from=frontend-builder /app/apps/management-web/dist /app/console
-COPY apps/demo_multitenant/docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
 
 ARG VERSION=dev
 ENV APP_VERSION=${VERSION}
@@ -60,9 +58,17 @@ ENV APP_VERSION=${VERSION}
 # packages/management-api/src/cofy/management/main.py.
 ENV COFY_MANAGEMENT_STATIC_DIR=/app/console
 
-# The data directory is mounted in from the host, which provides it; the image brings no data of its own.
+# The data and the community configs are mounted in from the host, which provides them; the
+# image brings no data of its own.
 ENV COFY_MANAGEMENT_DATA_DIR=/data
-VOLUME /data
+ENV COFY_MANAGEMENT_COMMUNITIES_DIR=/communities
+VOLUME /data /communities
 
-# Most cloud platforms inject a PORT env var - default to 8080 locally
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+# uvicorn reads each of its options from a UVICORN_* variable, so a deployment overrides any of
+# these the same way, e.g. UVICORN_PORT. Behind a TLS-terminating proxy, the forwarded headers
+# are what make the login callback URL an https:// one on the public host; only the proxy can
+# reach this port.
+ENV UVICORN_HOST=0.0.0.0 \
+    UVICORN_PORT=8080 \
+    UVICORN_FORWARDED_ALLOW_IPS=*
+CMD ["/app/packages/management-api/.venv/bin/uvicorn", "cofy.management.main:app"]

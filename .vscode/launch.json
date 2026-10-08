@@ -61,6 +61,25 @@
             "justMyCode": false
         },
         {
+            "name": "Demo: multitenant (runner)",
+            "type": "debugpy",
+            "request": "launch",
+            "python": "${workspaceFolder}/packages/runner/.venv/bin/python",
+            "module": "uvicorn",
+            "args": [
+                "cofy.runner.main:app",
+                "--reload",
+                "--port",
+                "8001"
+            ],
+            "jinja": true,
+            "envFile": "${workspaceFolder}/.env.local",
+            "env": {
+                "PYTHONPYCACHEPREFIX": "${workspaceFolder}/.pycache"
+            },
+            "justMyCode": false
+        },
+        {
             "name": "Demo: multitenant (identity provider)",
             "type": "node-terminal",
             "request": "launch",
@@ -77,10 +96,11 @@
     ],
     "compounds": [
         {
-            "name": "Demo: multitenant (API + console)",
+            "name": "Demo: multitenant (API + runner + console)",
             "configurations": [
                 "Demo: multitenant (identity provider)",
                 "Demo: multitenant (management API)",
+                "Demo: multitenant (runner)",
                 "Demo: multitenant (console)"
             ],
             "stopAll": true

@@ -4,6 +4,12 @@ export type CommunityInfo = components["schemas"]["CommunityInfo"];
 export type CommunityBody = components["schemas"]["CommunityBody"];
 export type CommunityCreate = components["schemas"]["CommunityCreate"];
 
+/** Whether a community's API runs its saved settings: `live`, `pending` or `unavailable`. */
+export type CommunityState = components["schemas"]["CommunityState"];
+
+/** A community's state, with the revision saved and the one its API runs. */
+export type CommunityStatus = components["schemas"]["CommunityStatus"];
+
 /** What may be done to a subject: seeing it, or changing it. */
 export type Action = components["schemas"]["Action"];
 

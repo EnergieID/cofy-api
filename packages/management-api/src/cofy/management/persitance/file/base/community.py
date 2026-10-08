@@ -1,3 +1,4 @@
+import os
 import re
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -8,15 +9,21 @@ import yaml
 from cofy.api.cofy_api import CofyAPISettings
 
 from ....errors import ManagementError, ResourceNotFoundError
-from .store import FileStore, data_dir
+from .store import FileStore
 
 SLUG_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 """Characters a community slug may contain, matching the rule for module names."""
 
 
+COMMUNITIES_DIR_ENV_VAR = "COFY_MANAGEMENT_COMMUNITIES_DIR"
+
+
 def default_base_path() -> Path:
-    """Where community configs live."""
-    return data_dir() / "communities"
+    """Where community configs live: apart from the rest of the data, as what serves the communities needs only these."""
+    configured = os.environ.get(COMMUNITIES_DIR_ENV_VAR)
+    if not configured:
+        raise RuntimeError(f"{COMMUNITIES_DIR_ENV_VAR} must be set to a writable directory for the community configs")
+    return Path(configured)
 
 
 class CommunityFileStore(FileStore[CofyAPISettings]):
@@ -47,11 +54,12 @@ class CommunityFileStore(FileStore[CofyAPISettings]):
 
     def _serialize(self, document: CofyAPISettings) -> str:
         """As in `FileStore._serialize`, for a community config: a fresh `create` and a
-        read-modify-write alike.
+        read-modify-write alike, each of which raises its revision by one.
 
         The config is validated again as a whole, exactly as it will be read back: a write
         that edits one part can break a rule spanning several, like a module referencing a
         resource, and must fail rather than store a config that can't be read anymore."""
+        document.revision = (document.revision or 0) + 1
         dumped = document.model_dump(exclude_none=True, polymorphic_serialization=True, round_trip=True)
         CofyAPISettings.model_validate(dumped)
         return yaml.safe_dump(dumped, sort_keys=True)

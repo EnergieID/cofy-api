@@ -51,7 +51,7 @@ jobs:
             RESPONSE=$(curl -fsS http://localhost:8080/health)
             echo "Health check response: $RESPONSE"
 
-            if [[ "$RESPONSE" != '{"status":"ok"}' ]]; then
+            if [[ "$RESPONSE" != '{"status":"ok","revision":null}' ]]; then
                 echo "Health check failed"
                 exit 1
             fi

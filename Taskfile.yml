@@ -17,6 +17,7 @@ tasks:
     cmds:
       - uv run --project packages/api --directory packages/api poe test
       - uv run --project packages/management-api --directory packages/management-api poe test
+      - uv run --project packages/runner --directory packages/runner poe test
       - task: test-frontend
 
   test-frontend:
@@ -36,6 +37,7 @@ tasks:
     cmds:
       - uv run --project packages/api --directory packages/api poe lint
       - uv run --project packages/management-api --directory packages/management-api poe lint
+      - uv run --project packages/runner --directory packages/runner poe lint
       - |
         bash -c '{{.WITH_NODE}}
         for pkg in {{.NODE_PACKAGES}}; do
@@ -48,6 +50,7 @@ tasks:
     cmds:
       - uv run --project packages/api --directory packages/api poe format
       - uv run --project packages/management-api --directory packages/management-api poe format
+      - uv run --project packages/runner --directory packages/runner poe format
       - |
         bash -c '{{.WITH_NODE}}
         for pkg in {{.NODE_PACKAGES}}; do
@@ -61,6 +64,7 @@ tasks:
     cmds:
       - uv run --project packages/api --directory packages/api poe check
       - uv run --project packages/management-api --directory packages/management-api poe check
+      - uv run --project packages/runner --directory packages/runner poe check
       - |
         bash -c '{{.WITH_NODE}}
         for pkg in {{.NODE_PACKAGES}}; do
@@ -106,6 +110,12 @@ tasks:
     cmds:
       - uv run --project packages/management-api --directory packages/management-api poe run
 
+  demo-multitenant-runner:
+    desc: Run the runner serving the multitenant demo's communities locally, on :8001
+    dotenv: ['.env.local']
+    cmds:
+      - uv run --project packages/runner --directory packages/runner uvicorn cofy.runner.main:app --reload --port 8001
+
   demo-multitenant-web:
     desc: Run the management console locally (expects `task demo-multitenant-api` on :8000)
     cmds:
@@ -114,13 +124,14 @@ tasks:
   demo-multitenant-docker:
     desc: Build and run the multitenant demo's production Docker image locally
     cmds:
-      - docker build -t cofy-management-demo -f apps/demo_multitenant/Dockerfile .
+      - docker build -t cofy-management-demo -f apps/demo_multitenant/management.Dockerfile .
       # Host networking, so the container reaches the dev identity provider at the same
       # localhost address the browser does - the issuer has to be the same for both.
       # The demo's own data is mounted in, as a server's is: the image brings none of its own.
       - >-
-        docker run --rm --network host -v {{.ROOT_DIR}}/apps/demo_multitenant/.data:/data --env-file .env.local
-        -e COFY_MANAGEMENT_DATA_DIR=/data cofy-management-demo
+        docker run --rm --network host -v {{.ROOT_DIR}}/apps/demo_multitenant/.data/management:/data
+        -v {{.ROOT_DIR}}/apps/demo_multitenant/.data/communities:/communities --env-file .env.local
+        -e COFY_MANAGEMENT_DATA_DIR=/data -e COFY_MANAGEMENT_COMMUNITIES_DIR=/communities cofy-management-demo
 
   build:
     desc: Build the frontend packages and the console

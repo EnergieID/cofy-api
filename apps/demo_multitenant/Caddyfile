@@ -1,3 +1,11 @@
 dev.cofy.cloud, 1a359b2c-2759-499a-83f3-1cf449b951e8.pub.instances.scw.cloud {
-	reverse_proxy app:8080
+	# The communities' APIs, each under /communities/<slug>/; the prefix is stripped, and the
+	# runner told it through UVICORN_ROOT_PATH.
+	handle_path /communities/* {
+		reverse_proxy runner:8080
+	}
+	# Everything else is the management API and its console.
+	handle {
+		reverse_proxy app:8080
+	}
 }

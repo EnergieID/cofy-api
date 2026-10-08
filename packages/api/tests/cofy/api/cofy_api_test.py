@@ -155,7 +155,7 @@ class TestCofyAPIModuleRegistration:
     def test_health_check_endpoint(self):
         response = self.client.get("/health")
         assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+        assert response.json() == {"status": "ok", "revision": None}
 
     def test_root_path_updates_paths_in_openapi(self):
         parent = FastAPI()
@@ -174,3 +174,44 @@ class TestCofyAPIModuleRegistration:
         response = client.get(f"/api/v1{self.module.prefix}/hello")
         assert response.status_code == 200
         assert response.text == '"Hello from DummyModule test_module"'
+
+    def test_mount_path_is_a_server_without_a_root_path(self):
+        """An API mounted by something that builds it from settings only knows where it is from the request."""
+        parent = FastAPI()
+        parent.mount("/demo", self.cofy)
+        client = TestClient(parent)
+
+        servers = [s["url"] for s in client.get("/demo/openapi.json").json().get("servers", [])]
+
+        assert servers == ["/demo"]
+        assert "servers" not in self.cofy.openapi()
+
+
+def test_revision_is_added_to_the_version_as_build_metadata():
+    cofy = CofyAPI(version="1.2.3", revision=12)
+
+    assert cofy.version == "1.2.3+12"
+    assert cofy.revision == 12
+    assert cofy.openapi()["info"]["version"] == "1.2.3+12"
+
+
+def test_version_is_left_alone_without_a_revision():
+    cofy = CofyAPI(version="1.2.3")
+
+    assert cofy.version == "1.2.3"
+    assert cofy.revision is None
+
+
+def test_health_reports_the_revision_without_a_token():
+    cofy = CofyAPI(auth=TokenAuth({"token": TokenInfo(name="Demo")}), revision=5)
+
+    response = TestClient(cofy).get("/health")
+
+    assert (response.status_code, response.json()) == (200, {"status": "ok", "revision": 5})
+
+
+def test_revision_from_settings():
+    cofy = CofyAPI.create({"type": "cofy_api", "revision": 3})
+
+    assert cofy.revision == 3
+    assert cofy.version.endswith("+3")

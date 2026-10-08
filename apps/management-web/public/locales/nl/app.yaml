@@ -3,6 +3,7 @@ product: Cofy
 subtitle: beheer
 
 community:
+  status: Status van de API
   tabs:
     modules: Modules
     resources: Bronnen

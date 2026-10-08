@@ -13,6 +13,7 @@ import { tableStyles } from "../../theme/table.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import "../layout/cofy-heading.js";
 import "../cofy-problem-details.js";
+import "./cofy-community-status.js";
 
 /**
  * The communities this API will show.
@@ -38,7 +39,7 @@ export class CofyCommunityList extends CofyElement {
 
   public override connectedCallback(): void {
     super.connectedCallback();
-    if (!this.store?.loaded) void this.store?.load();
+    void this.store?.ensure();
   }
 
   public override render(): TemplateResult | typeof nothing {
@@ -67,12 +68,13 @@ export class CofyCommunityList extends CofyElement {
                 <th scope="col">${this.t("communityList.columns.community")}</th>
                 <th scope="col">${this.t("communityList.columns.slug")}</th>
                 <th scope="col">${this.t("communityList.columns.modules")}</th>
+                <th scope="col">${this.t("communityList.columns.status")}</th>
               </tr>
             </thead>
             <tbody>
               ${communities.length === 0
                 ? html`<tr class="empty">
-                    <td class="secondary" colspan="3">${this.t("communityList.empty")}</td>
+                    <td class="secondary" colspan="4">${this.t("communityList.empty")}</td>
                   </tr>`
                 : communities.map((community): TemplateResult => this.row(community))}
             </tbody>
@@ -99,6 +101,7 @@ export class CofyCommunityList extends CofyElement {
         <td>${community.title || community.slug}</td>
         <td class="secondary">${community.slug}</td>
         <td>${community.module_count}</td>
+        <td><cofy-community-status .slug=${community.slug}></cofy-community-status></td>
       </tr>
     `;
   }

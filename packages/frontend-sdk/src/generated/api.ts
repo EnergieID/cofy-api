@@ -309,6 +309,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/management/communities/{slug}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["get_management_communities__slug__status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -830,6 +847,16 @@ export interface components {
              * @description How many modules are configured, for listings.
              */
             module_count: number;
+            /**
+             * Revision
+             * @description The revision of the settings, raised on every change.
+             */
+            revision: number | null;
+            /**
+             * Api Url
+             * @description Where the community's own API is served.
+             */
+            api_url: string;
         };
         /**
          * CommunityPermissions
@@ -843,6 +870,26 @@ export interface components {
             slug: string | null;
             /** Permissions */
             permissions: components["schemas"]["Permission"][];
+        };
+        /**
+         * CommunityState
+         * @enum {string}
+         */
+        CommunityState: "live" | "pending" | "unavailable";
+        /** CommunityStatus */
+        CommunityStatus: {
+            /** @description `live` when the API runs the saved settings, `pending` while it runs earlier ones - for a few seconds after a change, or for as long as the change fails to apply - and `unavailable` when it doesn't run. */
+            state: components["schemas"]["CommunityState"];
+            /**
+             * Revision
+             * @description The revision of the saved settings.
+             */
+            revision: number | null;
+            /**
+             * Running Revision
+             * @description The revision of the settings the API runs, if it runs.
+             */
+            running_revision: number | null;
         };
         /**
          * CostGroup
@@ -2960,6 +3007,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_management_communities__slug__status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommunityStatus"];
+                };
             };
             /** @description Validation Error */
             422: {

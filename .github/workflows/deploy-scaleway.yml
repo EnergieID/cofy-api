@@ -23,6 +23,7 @@ jobs:
       packages: write
     env:
       IMAGE: ghcr.io/energieid/cofy-api/management
+      RUNNER_IMAGE: ghcr.io/energieid/cofy-api/runner
     steps:
       - uses: actions/checkout@v7
 
@@ -33,15 +34,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Both from the same commit, so the runner builds the community configs with the same cofy-api the management
+      # API validated them with.
       - name: Build and push
         run: |
           docker build \
             -t ${{ env.IMAGE }}:${{ github.sha }} \
             -t ${{ env.IMAGE }}:latest \
-            -f apps/demo_multitenant/Dockerfile \
+            -f apps/demo_multitenant/management.Dockerfile \
+            .
+          docker build \
+            -t ${{ env.RUNNER_IMAGE }}:${{ github.sha }} \
+            -t ${{ env.RUNNER_IMAGE }}:latest \
+            -f apps/demo_multitenant/runner.Dockerfile \
             .
           docker push ${{ env.IMAGE }}:${{ github.sha }}
           docker push ${{ env.IMAGE }}:latest
+          docker push ${{ env.RUNNER_IMAGE }}:${{ github.sha }}
+          docker push ${{ env.RUNNER_IMAGE }}:latest
 
       - name: Copy the compose stack to the server
         uses: appleboy/scp-action@v1

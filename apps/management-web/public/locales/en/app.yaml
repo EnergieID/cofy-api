@@ -5,6 +5,7 @@ product: Cofy
 subtitle: management
 
 community:
+  status: API status
   tabs:
     modules: Modules
     resources: Resources

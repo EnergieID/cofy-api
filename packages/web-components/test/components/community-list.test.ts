@@ -5,8 +5,8 @@ import { CofyCommunityList } from "../../src/components/community/cofy-community
 import { testI18n } from "../support/i18n.js";
 
 const communities: CommunityInfo[] = [
-  { slug: "demo", title: "Demo Energy Community", description: "", debug_mode: false, module_count: 2 },
-  { slug: "riverside", title: "", description: "", debug_mode: false, module_count: 0 },
+  { slug: "demo", title: "Demo Energy Community", description: "", debug_mode: false, module_count: 2, revision: 4, api_url: "http://localhost/demo/" },
+  { slug: "riverside", title: "", description: "", debug_mode: false, module_count: 0, revision: null, api_url: "http://localhost/riverside/" },
 ];
 
 function stubApi(rows: CommunityInfo[]): ApiClient {
@@ -57,6 +57,14 @@ describe("cofy-community-list", () => {
     expect(element.shadowRoot!.querySelector('cofy-heading [slot="title"]')?.textContent?.trim()).toBe(
       "Communities",
     );
+  });
+
+  it("shows each community's status", async () => {
+    const element = await mount();
+
+    const statuses = Array.from(element.shadowRoot!.querySelectorAll("cofy-community-status"));
+
+    expect(statuses.map((status) => status.slug)).toEqual(["demo", "riverside"]);
   });
 
   it("says so when there are no communities", async () => {

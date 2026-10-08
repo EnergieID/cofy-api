@@ -22,7 +22,9 @@ from yaml.representer import RepresenterError
 
 from cofy.management.errors import ResourceAlreadyExistsError
 from cofy.management.persitance.file.base import (
+    COMMUNITIES_DIR_ENV_VAR,
     DATA_DIR_ENV_VAR,
+    data_dir,
     default_base_path,
 )
 from cofy.management.persitance.file.modules import FileModulesPersistence
@@ -36,9 +38,9 @@ def tmp_data(tmp_path: Path) -> Path:
 
 
 def _exclusive_lock_is_held(path: Path) -> bool:
-    """True if some other file handle currently holds any lock (shared or exclusive) that
-    conflicts with acquiring an exclusive lock ourselves."""
-    with path.open("r") as probe:
+    """True if some other file handle currently holds any lock (shared or exclusive) on the
+    document at *path* that conflicts with acquiring an exclusive lock ourselves."""
+    with path.with_name(f".{path.name}.lock").open("a") as probe:
         try:
             fcntl.flock(probe, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
@@ -54,8 +56,6 @@ def _exclusive_lock_is_held(path: Path) -> bool:
 def test_write_lock_is_held_for_the_whole_block_and_released_on_clean_exit(tmp_data: Path):
     persistence = FileModulesPersistence(tmp_data)
     path = tmp_data / "test.yaml"
-
-    assert not _exclusive_lock_is_held(path)
 
     with persistence._open_community_config("test", "write") as config:
         assert _exclusive_lock_is_held(path)
@@ -149,6 +149,49 @@ def test_concurrent_creates_of_the_same_module_do_not_race(tmp_data: Path, monke
     assert sum(1 for m in saved if m["type"] == "billing" and m["name"] == "race") == 1
 
 
+def test_a_write_replaces_the_file_instead_of_rewriting_it(tmp_data: Path):
+    """A reader that takes no lock - the runner - must see the previous document or the new
+    one, never one half-written, so a write renames a new file over the old one."""
+    persistence = FileModulesPersistence(tmp_data)
+    path = tmp_data / "test.yaml"
+    before = path.stat().st_ino
+
+    with path.open() as reader:
+        persistence.create("test", BillingModuleSettings(name="new"))
+        # A file opened before the write still reads the previous document, whole.
+        assert [m["name"] for m in yaml.safe_load(reader)["modules"]] == ["default"]
+
+    assert path.stat().st_ino != before
+    assert [m["name"] for m in yaml.safe_load(path.read_text())["modules"]] == ["default", "new"]
+
+
+def test_a_write_leaves_only_the_document_and_its_lock_behind(tmp_data: Path):
+    persistence = FileModulesPersistence(tmp_data)
+
+    persistence.create("test", BillingModuleSettings(name="new"))
+
+    assert sorted(path.name for path in tmp_data.iterdir()) == [".test.yaml.lock", "test.yaml"]
+    assert (tmp_data / "test.yaml").stat().st_mode & 0o777 == 0o644
+
+
+def test_a_write_raises_the_revision(tmp_data: Path):
+    persistence = FileModulesPersistence(tmp_data)
+
+    persistence.create("test", BillingModuleSettings(name="first"))
+    persistence.create("test", BillingModuleSettings(name="second"))
+
+    assert yaml.safe_load((tmp_data / "test.yaml").read_text())["revision"] == 2
+
+
+def test_a_failed_write_leaves_the_revision_alone(tmp_data: Path):
+    persistence = FileModulesPersistence(tmp_data)
+
+    with pytest.raises(ResourceAlreadyExistsError):
+        persistence.create("test", BillingModuleSettings(name="default"))
+
+    assert "revision" not in yaml.safe_load((tmp_data / "test.yaml").read_text())
+
+
 # ── read mode: shared lock, never saves ────────────────────────────────────
 
 
@@ -200,15 +243,13 @@ def test_concurrent_reads_do_not_block_each_other(tmp_data: Path):
     reader_thread.join(timeout=5)
 
 
-def test_read_waits_for_an_in_progress_write_instead_of_seeing_a_torn_file(
-    tmp_data: Path, monkeypatch: pytest.MonkeyPatch
-):
-    """The write path truncates the file before rewriting it, so a read landing in that
-    window (if it weren't excluded) would see an empty/partial file instead of either the
-    old or the new content. A read must instead wait for the write to finish.
+def test_read_waits_for_an_in_progress_write(tmp_data: Path, monkeypatch: pytest.MonkeyPatch):
+    """A read that went ahead while a write is in progress would be handed the document as it
+    was, and anything it then decides on would be out of date by the time it returns. A read
+    must instead wait for the write to finish.
 
     The writer is paused at its serialization step, which is inside the locked block and
-    just ahead of the truncate, so the reader below is genuinely contending for a lock the
+    just ahead of the rename, so the reader below is genuinely contending for a lock the
     writer still holds."""
     persistence = FileModulesPersistence(tmp_data)
     original_dump = yaml.safe_dump
@@ -247,13 +288,12 @@ def test_read_waits_for_an_in_progress_write_instead_of_seeing_a_torn_file(
     writer_thread.join(timeout=5)
     reader_thread.join(timeout=5)
 
-    # The reader must see the complete, final write - not a torn, in-between file.
+    # The reader must see the final write, not the document as it was before it.
     assert reader_result["names"] == ["default", "new"]
 
 
 def test_a_failed_serialization_leaves_the_file_intact(tmp_data: Path, monkeypatch: pytest.MonkeyPatch):
-    """The config is serialized before the file is truncated, so a dump that raises must not
-    destroy the previous contents - truncating first would leave an empty config behind."""
+    """A dump that raises must not destroy the previous contents, nor leave a temporary file behind."""
     persistence = FileModulesPersistence(tmp_data)
     path = tmp_data / "test.yaml"
     before = path.read_bytes()
@@ -267,6 +307,7 @@ def test_a_failed_serialization_leaves_the_file_intact(tmp_data: Path, monkeypat
         persistence.create("test", BillingModuleSettings(name="new"))
 
     assert path.read_bytes() == before
+    assert not list(tmp_data.glob("*.tmp"))
 
 
 # ── slug safety: defense in depth ─────────────────────────────────────────
@@ -295,13 +336,20 @@ def test_data_directory_is_required(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv(DATA_DIR_ENV_VAR, raising=False)
 
     with pytest.raises(RuntimeError, match=DATA_DIR_ENV_VAR):
+        data_dir()
+
+
+def test_communities_directory_is_required(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv(COMMUNITIES_DIR_ENV_VAR, raising=False)
+
+    with pytest.raises(RuntimeError, match=COMMUNITIES_DIR_ENV_VAR):
         default_base_path()
 
 
-def test_data_directory_can_be_configured(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+def test_communities_directory_can_be_configured(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     """A deployment that creates communities must be able to point this somewhere writable -
     the packaged path lives inside the installed distribution."""
-    monkeypatch.setenv(DATA_DIR_ENV_VAR, str(tmp_path))
+    monkeypatch.setenv(COMMUNITIES_DIR_ENV_VAR, str(tmp_path))
 
-    assert default_base_path() == tmp_path / "communities"
-    assert FileModulesPersistence().base_path == tmp_path / "communities"
+    assert default_base_path() == tmp_path
+    assert FileModulesPersistence().base_path == tmp_path

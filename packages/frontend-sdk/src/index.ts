@@ -8,6 +8,8 @@ export {
   type CommunityBody,
   type CommunityCreate,
   type CommunityInfo,
+  type CommunityState,
+  type CommunityStatus,
   type CommunityPermissions,
   type GrantBody,
   type GrantInfo,
@@ -26,6 +28,7 @@ export {
 } from "./types.js";
 export { narrowToInstance, validate, type JsonSchema, type ValidationIssue } from "./validation.js";
 export { CommunityStore } from "./stores/community-store.js";
+export { CommunityStatusStore } from "./stores/community-status-store.js";
 export { ModuleStore } from "./stores/module-store.js";
 export { AllowedModulesStore } from "./stores/allowed-modules-store.js";
 export { ResourceStore } from "./stores/resource-store.js";

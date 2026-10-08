@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import httpx
 import pytest
 import yaml
 from fastapi import FastAPI
@@ -17,6 +18,7 @@ from fastapi.testclient import TestClient
 from cofy.management.api.communities import CommunitiesRouter
 from cofy.management.auth.access import Grant, Role
 from cofy.management.auth.user import User
+from cofy.management.community_api import CommunityApi
 from cofy.management.errors import add_exception_handlers
 from cofy.management.persitance.file.communities import FileCommunitiesPersistence
 from cofy.management.persitance.file.grants import FileGrantsPersistence
@@ -24,6 +26,7 @@ from cofy.management.persitance.file.grants import FileGrantsPersistence
 from ..access_fixture import log_in, log_in_as_system_admin, user
 
 TOKEN = "super-secret-token"
+API = CommunityApi(httpx.Client(base_url="https://cofy.example/communities/"))
 API_KEY = "secret-key"
 
 
@@ -58,7 +61,7 @@ def client(tmp_data: Path) -> TestClient:
     app = FastAPI()
     add_exception_handlers(app)
     log_in_as_system_admin(app)
-    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(tmp_data), grants_in(tmp_data)).router)
+    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(tmp_data), grants_in(tmp_data), API).router)
     return TestClient(app, raise_server_exceptions=False)
 
 
@@ -91,7 +94,7 @@ def test_listing_is_empty_when_no_communities_exist(tmp_path: Path):
     add_exception_handlers(app)
     log_in_as_system_admin(app)
     app.include_router(
-        CommunitiesRouter(FileCommunitiesPersistence(tmp_path / "missing"), grants_in(tmp_path / "missing")).router
+        CommunitiesRouter(FileCommunitiesPersistence(tmp_path / "missing"), grants_in(tmp_path / "missing"), API).router
     )
 
     r = TestClient(app).get("/management/communities")
@@ -167,6 +170,21 @@ def test_update_leaves_the_auth_block_intact(client: TestClient, tmp_data: Path)
     assert _stored(tmp_data)["auth"]["tokens"] == {TOKEN: {"name": "M2M"}}
 
 
+def test_update_raises_the_revision(client: TestClient, tmp_data: Path):
+    first = client.put("/management/communities/test", json={"title": "Renamed"}).json()["revision"]
+    second = client.put("/management/communities/test", json={"title": "Renamed again"}).json()["revision"]
+
+    assert (first, second) == (1, 2)
+    assert _stored(tmp_data)["revision"] == 2
+
+
+def test_update_ignores_a_revision_in_the_request(client: TestClient, tmp_data: Path):
+    """The store keeps the revision; a client can't set it back or skip ahead."""
+    client.put("/management/communities/test", json={"title": "Renamed", "revision": 40})
+
+    assert _stored(tmp_data)["revision"] == 1
+
+
 def test_update_unknown_community_returns_404(client: TestClient):
     assert client.put("/management/communities/nope", json={"title": "x"}).status_code == 404
 
@@ -184,6 +202,8 @@ def test_create_writes_a_new_community(client: TestClient, tmp_data: Path):
         "description": "",
         "debug_mode": False,
         "module_count": 0,
+        "revision": 1,
+        "api_url": "https://cofy.example/communities/fresh/",
     }
     assert _stored(tmp_data, "fresh")["title"] == "Fresh"
 
@@ -208,7 +228,7 @@ def test_create_in_a_missing_data_directory_creates_it(tmp_path: Path):
     app = FastAPI()
     add_exception_handlers(app)
     log_in_as_system_admin(app)
-    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(data_dir), grants_in(data_dir)).router)
+    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(data_dir), grants_in(data_dir), API).router)
 
     r = TestClient(app).post("/management/communities", json={"slug": "first", "title": "First"})
 
@@ -303,7 +323,7 @@ def client_as(tmp_data: Path, logged_in: User) -> TestClient:
     app = FastAPI()
     add_exception_handlers(app)
     log_in(app, logged_in)
-    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(tmp_data), grants_in(tmp_data)).router)
+    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(tmp_data), grants_in(tmp_data), API).router)
     return TestClient(app, raise_server_exceptions=False)
 
 
@@ -366,7 +386,7 @@ def test_a_failed_delete_leaves_the_community_without_access_rather_than_access_
     app = FastAPI()
     add_exception_handlers(app)
     log_in_as_system_admin(app)
-    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(tmp_data), grants).router)
+    app.include_router(CommunitiesRouter(FileCommunitiesPersistence(tmp_data), grants, API).router)
 
     assert TestClient(app, raise_server_exceptions=False).delete("/management/communities/test").status_code == 500
 
