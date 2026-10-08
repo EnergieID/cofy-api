@@ -1,14 +1,12 @@
-import { consume, provide } from "@lit/context";
+import { provide } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   ModuleDraft,
   type AllowedModule,
-  type AllowedModulesStore,
   type ModuleId,
   type ModuleSettings,
-  type ModuleStore,
   type ProblemError,
 } from "@cofy/frontend-sdk";
 
@@ -17,7 +15,7 @@ import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { allowedModulesStoreContext, communitySlugContext, moduleStoreContext } from "../../context.js";
+import { communitySlugContext } from "../../context.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import "../cofy-problem-details.js";
@@ -51,14 +49,6 @@ export class CofyModuleEditor extends CofyElement {
     `,
   ];
 
-  @consume({ context: moduleStoreContext, subscribe: true })
-  @state()
-  public moduleStore!: ModuleStore;
-
-  @consume({ context: allowedModulesStoreContext, subscribe: true })
-  @state()
-  public allowedModules!: AllowedModulesStore;
-
   // Provided, so the reference fields in the form list this community's resources.
   @provide({ context: communitySlugContext })
   @property({ type: String })
@@ -71,15 +61,16 @@ export class CofyModuleEditor extends CofyElement {
   @state() private mode: ModuleFormMode = "form";
 
   public override willUpdate(changed: Map<string, unknown>): void {
-    if (changed.has("slug") || changed.has("moduleId") || changed.has("moduleStore")) {
-      void this.open();
-    }
+    if (changed.has("slug") || changed.has("moduleId") || changed.has("cofy")) this.close();
+    // Rendering without a draft reads what it waits for, so its arrival comes back here.
+    if (this.draft === null) this.open();
   }
 
   public override render(): TemplateResult {
     if (this.draft === null) {
-      return this.moduleStore?.error != null
-        ? html`<cofy-problem-details .problem=${this.moduleStore.error}></cofy-problem-details>`
+      const error = this.cofy?.modules.error(this.slug) ?? this.cofy?.allowedModules.error(this.slug) ?? null;
+      return error !== null
+        ? html`<cofy-problem-details .problem=${error}></cofy-problem-details>`
         : html`<div class="wa-stack">
             ${Array.from({ length: 5 }, () => html`<wa-skeleton></wa-skeleton>`)}
           </div>`;
@@ -145,24 +136,24 @@ export class CofyModuleEditor extends CofyElement {
     `;
   }
 
-  private async open(): Promise<void> {
-    const { slug, moduleId, moduleStore } = this;
-    if (slug === "" || moduleId === null || moduleStore === undefined) return;
+  /** Start editing the stored module, once it and its community's catalog are loaded. */
+  private open(): void {
+    const { slug, moduleId, cofy } = this;
+    if (slug === "" || moduleId === null || cofy === undefined) return;
 
-    this.saveError = null;
-    this.saved = false;
-    this.mode = "form";
-    await Promise.all([moduleStore.ensure(slug), this.allowedModules?.ensure(slug)]);
-
-    const stored = moduleStore.find(slug, moduleId);
-    if (stored === undefined) {
-      this.draft = null;
-      return;
-    }
+    const stored = cofy.modules.get(slug, moduleId);
+    if (stored === undefined || cofy.allowedModules.all(slug) === undefined) return;
 
     const draft = new ModuleDraft(stored);
     this.draft = draft;
     this.check(draft);
+  }
+
+  private close(): void {
+    this.draft = null;
+    this.saveError = null;
+    this.saved = false;
+    this.mode = "form";
   }
 
   private onFormChange(event: CustomEvent<{ value: ModuleSettings }>): void {
@@ -175,7 +166,7 @@ export class CofyModuleEditor extends CofyElement {
   }
 
   private catalog(): readonly AllowedModule[] {
-    return this.allowedModules?.list(this.slug) ?? [];
+    return this.cofy?.allowedModules.all(this.slug) ?? [];
   }
 
   private check(draft: ModuleDraft): void {
@@ -185,12 +176,12 @@ export class CofyModuleEditor extends CofyElement {
   }
 
   private async save(): Promise<void> {
-    const draft = this.draft;
-    if (draft === null) return;
+    const { draft, cofy } = this;
+    if (draft === null || cofy === undefined) return;
 
     this.saveError = null;
     try {
-      const saved = await draft.save(this.moduleStore, this.slug);
+      const saved = await draft.save(cofy.modules, this.slug);
       // Reopen against what the server actually stored, so a second edit starts from there
       // and any value the server normalised is visible.
       this.draft = new ModuleDraft(saved);

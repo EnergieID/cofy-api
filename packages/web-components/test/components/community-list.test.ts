@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { ApiClient, CommunityStore, type CommunityInfo } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore, type CommunityInfo } from "@cofy/frontend-sdk";
 
 import { CofyCommunityList } from "../../src/components/community/cofy-community-list.js";
 import { testI18n } from "../support/i18n.js";
@@ -20,7 +20,7 @@ function stubApi(rows: CommunityInfo[]): ApiClient {
 async function mount(rows: CommunityInfo[] = communities): Promise<CofyCommunityList> {
   const element = new CofyCommunityList();
   element.i18n = await testI18n();
-  element.store = new CommunityStore(stubApi(rows));
+  element.cofy = new CofyStore(stubApi(rows));
   document.body.append(element);
   await element.updateComplete;
   await new Promise((resolve) => setTimeout(resolve, 10));

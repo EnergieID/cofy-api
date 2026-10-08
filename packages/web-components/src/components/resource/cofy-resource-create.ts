@@ -1,14 +1,12 @@
-import { consume, provide } from "@lit/context";
+import { provide } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   EditableValue,
   type AllowedResource,
-  type AllowedResourcesStore,
   type ProblemError,
   type ResourceSettings,
-  type ResourceStore,
 } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/badge/badge.js";
@@ -16,7 +14,7 @@ import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { allowedResourcesStoreContext, communitySlugContext, resourceStoreContext } from "../../context.js";
+import { communitySlugContext } from "../../context.js";
 import { nativeStyles } from "../../theme/native-styles.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import "../cofy-problem-details.js";
@@ -37,14 +35,6 @@ export class CofyResourceCreate extends CofyElement {
     `,
   ];
 
-  @consume({ context: resourceStoreContext, subscribe: true })
-  @state()
-  public resourceStore!: ResourceStore;
-
-  @consume({ context: allowedResourcesStoreContext, subscribe: true })
-  @state()
-  public allowedResources!: AllowedResourcesStore;
-
   // Provided, so the reference fields in the form list this community's resources.
   @provide({ context: communitySlugContext })
   @property({ type: String })
@@ -55,14 +45,8 @@ export class CofyResourceCreate extends CofyElement {
   @state() private error: ProblemError | null = null;
   @state() private mode: ModuleFormMode = "form";
 
-  public override willUpdate(changed: Map<string, unknown>): void {
-    if ((changed.has("slug") || changed.has("allowedResources")) && this.slug !== "") {
-      void this.allowedResources?.ensure(this.slug);
-    }
-  }
-
   public override render(): TemplateResult {
-    const catalog = this.allowedResources?.list(this.slug);
+    const catalog = this.slug === "" ? undefined : this.cofy?.allowedResources.all(this.slug);
     if (catalog === undefined) {
       return html`<div class="wa-stack">
         ${Array.from({ length: 4 }, () => html`<wa-skeleton></wa-skeleton>`)}
@@ -130,7 +114,7 @@ export class CofyResourceCreate extends CofyElement {
   }
 
   private catalog(): readonly AllowedResource[] {
-    return this.allowedResources?.list(this.slug) ?? [];
+    return this.cofy?.allowedResources.all(this.slug) ?? [];
   }
 
   private check(draft: EditableValue<ResourceSettings>): void {
@@ -140,13 +124,13 @@ export class CofyResourceCreate extends CofyElement {
   }
 
   private async create(): Promise<void> {
-    const draft = this.draft;
-    if (draft === null) return;
+    const { draft, cofy } = this;
+    if (draft === null || cofy === undefined) return;
 
     this.saving = true;
     this.error = null;
     try {
-      const created = await this.resourceStore.create(this.slug, draft.current);
+      const created = await cofy.resources.create(this.slug, draft.current);
       this.dispatchEvent(
         new CustomEvent("resource-created", {
           detail: { slug: this.slug, name: created.name },

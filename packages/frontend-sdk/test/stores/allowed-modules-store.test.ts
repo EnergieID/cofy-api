@@ -13,18 +13,19 @@ describe("AllowedModulesStore", () => {
     const { api, calls } = stubbedApi(() => ({ body: catalog }));
     const store = new AllowedModulesStore(api);
 
-    await store.load("test");
+    await store.fetch("test");
 
-    expect(store.list("test")).toEqual(catalog);
+    expect(store.all("test")).toEqual(catalog);
     expect(calls[0]!.path).toBe("/management/communities/test/allowed-modules");
   });
 
-  it("caches indefinitely, because a schema only changes when the server does", async () => {
+  it("fetches once however often it is read, because a schema only changes when the server does", async () => {
     const { api, calls } = stubbedApi(() => ({ body: catalog }));
     const store = new AllowedModulesStore(api);
 
-    await store.ensure("test");
-    await store.ensure("test");
+    store.all("test");
+    await store.fetch("test");
+    store.all("test");
 
     expect(calls).toHaveLength(1);
   });
@@ -32,10 +33,10 @@ describe("AllowedModulesStore", () => {
   it("finds one allowed type, and reports an unknown one as absent", async () => {
     const { api } = stubbedApi(() => ({ body: catalog }));
     const store = new AllowedModulesStore(api);
-    await store.ensure("test");
+    await store.fetch("test");
 
-    expect(store.find("test", "billing")?.description).toBe("Billing");
-    expect(store.find("test", "nope")).toBeUndefined();
+    expect(store.get("test", "billing")?.description).toBe("Billing");
+    expect(store.get("test", "nope")).toBeUndefined();
   });
 
   it("keeps catalogs of different communities apart", async () => {
@@ -44,19 +45,20 @@ describe("AllowedModulesStore", () => {
     );
     const store = new AllowedModulesStore(api);
 
-    await store.ensure("test");
-    await store.ensure("other");
+    await store.fetch("test");
+    await store.fetch("other");
 
-    expect(store.list("test")).toHaveLength(2);
-    expect(store.list("other")).toHaveLength(1);
+    expect(store.all("test")).toHaveLength(2);
+    expect(store.all("other")).toHaveLength(1);
   });
 
-  it("captures a failure rather than throwing", async () => {
+  it("keeps a failure to show", async () => {
     const { api } = stubbedApi(() => ({ status: 404, body: { status: 404, detail: "no community" } }));
     const store = new AllowedModulesStore(api);
 
-    await store.load("nope");
+    await store.fetch("nope").catch(() => {});
 
-    expect(store.error?.isNotFound).toBe(true);
+    expect(store.error("nope")?.isNotFound).toBe(true);
+    expect(store.error("test")).toBeNull();
   });
 });

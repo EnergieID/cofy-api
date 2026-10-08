@@ -2,7 +2,7 @@ import { consume } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import type { ProblemError, ResourceStore } from "@cofy/frontend-sdk";
+import type { ProblemError } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/dialog/dialog.js";
@@ -10,7 +10,7 @@ import "@awesome.me/webawesome/dist/components/input/input.js";
 import "../cofy-problem-details.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { communitySlugContext, resourceStoreContext } from "../../context.js";
+import { communitySlugContext } from "../../context.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 
 /**
@@ -29,10 +29,6 @@ export class CofySaveResourceDialog extends CofyElement {
       }
     `,
   ];
-
-  @consume({ context: resourceStoreContext, subscribe: true })
-  @state()
-  public resourceStore?: ResourceStore;
 
   @consume({ context: communitySlugContext, subscribe: true })
   @state()
@@ -97,12 +93,13 @@ export class CofySaveResourceDialog extends CofyElement {
   }
 
   private async save(): Promise<void> {
-    if (this.resourceStore === undefined) return;
+    const cofy = this.cofy;
+    if (cofy === undefined) return;
 
     this.saving = true;
     this.error = null;
     try {
-      const created = await this.resourceStore.create(this.slug, {
+      const created = await cofy.resources.create(this.slug, {
         type: this.kind,
         name: this.name,
         description: this.description === "" ? null : this.description,

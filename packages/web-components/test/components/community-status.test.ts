@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiClient, CommunityStatusStore, type CommunityStatus } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore, type CommunityStatus } from "@cofy/frontend-sdk";
 
 import { CofyCommunityStatus } from "../../src/components/community/cofy-community-status.js";
 import type { CofyI18n } from "../../src/i18n/cofy-i18n.js";
@@ -12,7 +12,7 @@ function status(state: CommunityStatus["state"]): CommunityStatus {
 }
 
 /** A store whose API answers each status request with the next of *answers*, repeating the last. */
-function storeAnswering(...answers: CommunityStatus[]): { store: CommunityStatusStore; requests: string[] } {
+function storeAnswering(...answers: CommunityStatus[]): { store: CofyStore; requests: string[] } {
   const requests: string[] = [];
   const fetchStub = (input: RequestInfo | URL): Promise<Response> => {
     requests.push(new URL(input instanceof Request ? input.url : input.toString()).pathname);
@@ -21,7 +21,7 @@ function storeAnswering(...answers: CommunityStatus[]): { store: CommunityStatus
       new Response(JSON.stringify(answer), { status: 200, headers: { "content-type": "application/json" } }),
     );
   };
-  return { store: new CommunityStatusStore(new ApiClient({ fetch: fetchStub, baseUrl: "http://localhost" })), requests };
+  return { store: new CofyStore(new ApiClient({ fetch: fetchStub, baseUrl: "http://localhost" })), requests };
 }
 
 async function settle(element: CofyCommunityStatus): Promise<void> {
@@ -30,10 +30,10 @@ async function settle(element: CofyCommunityStatus): Promise<void> {
   await element.updateComplete;
 }
 
-async function mount(store?: CommunityStatusStore): Promise<CofyCommunityStatus> {
+async function mount(store?: CofyStore): Promise<CofyCommunityStatus> {
   const element = new CofyCommunityStatus();
   element.i18n = i18n;
-  element.store = store;
+  if (store !== undefined) element.cofy = store;
   element.slug = "demo";
   document.body.append(element);
   await settle(element);
@@ -95,6 +95,17 @@ describe("cofy-community-status", () => {
 
     await vi.advanceTimersByTimeAsync(CofyCommunityStatus.SETTLED_INTERVAL);
     expect(requests).toHaveLength(3);
+  });
+
+  it("asks again right away when a write makes it out of date", async () => {
+    const { store, requests } = storeAnswering(status("live"), status("pending"));
+    const element = await mount(store);
+
+    await store.secrets.delete("demo", "acc");
+    await settle(element);
+
+    expect(requests.filter((path) => path.endsWith("/status"))).toHaveLength(2);
+    expect(badge(element)?.textContent?.trim()).toBe("Changes pending");
   });
 
   it("stops asking once it is taken out", async () => {

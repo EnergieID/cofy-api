@@ -1,11 +1,9 @@
-import { consume } from "@lit/context";
 import { css, html } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { CommunityStore } from "@cofy/frontend-sdk";
 import type { Crumb } from "@cofy/web-components";
 
-import { communityStoreContext, nativeStyles } from "@cofy/web-components";
+import { nativeStyles } from "@cofy/web-components";
 import "@cofy/web-components";
 
 import { CofyPage } from "./cofy-page.js";
@@ -22,13 +20,10 @@ export class CofyNewModulePage extends CofyPage {
     `,
   ];
 
-  @consume({ context: communityStoreContext, subscribe: true })
-  public communities!: CommunityStore;
-
   @property({ type: String }) public override slug = "";
 
   protected override crumbs(): Crumb[] {
-    const community = this.communities?.communities.find((entry) => entry.slug === this.slug);
+    const community = this.cofy?.communities.get(this.slug);
     return [
       { label: community?.title ?? this.slug, href: this.routes.hashFor("modules", { slug: this.slug }) },
       { label: this.t("newModule.crumb") },

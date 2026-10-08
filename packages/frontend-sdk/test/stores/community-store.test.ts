@@ -3,66 +3,52 @@ import { describe, expect, it } from "vitest";
 import { CommunityStore } from "../../src/stores/community-store.js";
 import { failingApi, stubbedApi } from "../support/api.js";
 
-describe("CommunityStore mutations", () => {
-  it("updates the cached listing in place", async () => {
-    const { api } = stubbedApi(() => ({ body: { slug: "test", title: "Renamed", module_count: 0, revision: 2, api_url: "http://localhost/test/" } }));
-    const store = new CommunityStore(api);
-    store.communities = [{ slug: "test", title: "Test", module_count: 0, revision: 1, api_url: "http://localhost/test/" }];
+function community(slug: string, title = slug): {
+  slug: string;
+  title: string;
+  module_count: number;
+  revision: number;
+  api_url: string;
+} {
+  return { slug, title, module_count: 0, revision: 1, api_url: `http://localhost/${slug}/` };
+}
 
-    const updated = await store.update("test", { title: "Renamed" });
-
-    expect(updated.title).toBe("Renamed");
-    expect(store.communities).toEqual([{ slug: "test", title: "Renamed", module_count: 0, revision: 2, api_url: "http://localhost/test/" }]);
-  });
-
-  it("removes a community from the cached listing, clearing the selection if it was current", async () => {
-    const { api } = stubbedApi(() => ({ status: 204 }));
-    const store = new CommunityStore(api);
-    store.communities = [{ slug: "test", title: "Test", module_count: 0, revision: 1, api_url: "http://localhost/test/" }];
-    store.select("test");
-
-    await store.remove("test");
-
-    expect(store.communities).toEqual([]);
-    expect(store.currentSlug).toBeNull();
-  });
-});
-
-describe("CommunityStore loading", () => {
-  it("loads the communities once, however often it is asked to ensure them", async () => {
-    const { api, calls } = stubbedApi(() => ({ body: [] }));
+describe("CommunityStore", () => {
+  it("lists the communities, without a scope", async () => {
+    const { api, calls } = stubbedApi(() => ({ body: [community("test")] }));
     const store = new CommunityStore(api);
 
-    await Promise.all([store.ensure(), store.ensure()]);
-    await store.ensure();
+    await store.fetch();
 
-    expect(calls).toHaveLength(1);
-    expect(store.loaded).toBe(true);
-  });
-});
-
-describe("CommunityStore error wrapping", () => {
-  it("converts a raw fetch failure into a ProblemError on get", async () => {
-    const store = new CommunityStore(failingApi());
-
-    await expect(store.get("test")).rejects.toMatchObject({ name: "ProblemError" });
+    expect(store.all()).toEqual([community("test")]);
+    expect(store.get("test")).toEqual(community("test"));
+    expect(calls[0]!.path).toBe("/management/communities");
   });
 
-  it("converts a raw fetch failure into a ProblemError on create", async () => {
-    const store = new CommunityStore(failingApi());
+  it("replaces a community in the listing with what the server stored", async () => {
+    const { api, calls } = stubbedApi((call) =>
+      call.method === "GET" ? { body: [community("test")] } : { body: community("test", "Renamed") },
+    );
+    const store = new CommunityStore(api);
+    await store.fetch();
 
-    await expect(store.create({ slug: "test", title: "Test" })).rejects.toMatchObject({ name: "ProblemError" });
+    await store.replace("test", { title: "Renamed" });
+
+    expect(calls[1]).toMatchObject({ method: "PUT", path: "/management/communities/test" });
+    expect(store.get("test")?.title).toBe("Renamed");
   });
 
-  it("converts a raw fetch failure into a ProblemError on update", async () => {
-    const store = new CommunityStore(failingApi());
+  it("drops a deleted community from the listing", async () => {
+    const { api } = stubbedApi((call) => (call.method === "GET" ? { body: [community("test")] } : { status: 204 }));
+    const store = new CommunityStore(api);
+    await store.fetch();
 
-    await expect(store.update("test", { title: "Test" })).rejects.toMatchObject({ name: "ProblemError" });
+    await store.delete("test");
+
+    expect(store.all()).toEqual([]);
   });
 
-  it("converts a raw fetch failure into a ProblemError on remove", async () => {
-    const store = new CommunityStore(failingApi());
-
-    await expect(store.remove("test")).rejects.toMatchObject({ name: "ProblemError" });
+  it("converts a raw fetch failure into a ProblemError on a write", async () => {
+    await expect(new CommunityStore(failingApi()).delete("test")).rejects.toMatchObject({ name: "ProblemError" });
   });
 });

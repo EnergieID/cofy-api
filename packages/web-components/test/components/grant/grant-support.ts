@@ -1,7 +1,7 @@
 import { ContextProvider } from "@lit/context";
-import { ApiClient, GrantStore, type GrantInfo } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore, type GrantInfo } from "@cofy/frontend-sdk";
 
-import { communitySlugContext, grantStoreContext, i18nContext } from "../../../src/context.js";
+import { cofyStoreContext, communitySlugContext, i18nContext } from "../../../src/context.js";
 import { testI18n } from "../../support/i18n.js";
 
 export interface Community {
@@ -31,6 +31,10 @@ function stubApi(state: Community): ApiClient {
       state.writes.push({ method: request.method, path, body: sent });
       body = sent === undefined ? undefined : { ...(sent as object), bound: false };
       status = request.method === "POST" ? 201 : request.method === "DELETE" ? 204 : 200;
+      // Kept, so the grants are listed as written when they are fetched again.
+      const email = path.split("/").at(-1);
+      if (request.method === "DELETE") state.grants = state.grants.filter((grant) => grant.email !== email);
+      if (request.method === "POST") state.grants = [...state.grants, body as GrantInfo];
     }
     return new Response(status === 204 ? null : JSON.stringify(body), {
       status,
@@ -46,7 +50,7 @@ export async function mountIn<T extends HTMLElement & { updateComplete: Promise<
   state: Community,
 ): Promise<T> {
   const host = document.createElement("div");
-  new ContextProvider(host, { context: grantStoreContext, initialValue: new GrantStore(stubApi(state)) });
+  new ContextProvider(host, { context: cofyStoreContext, initialValue: new CofyStore(stubApi(state)) });
   new ContextProvider(host, { context: communitySlugContext, initialValue: "test" });
   new ContextProvider(host, { context: i18nContext, initialValue: await testI18n() });
   document.body.append(host);

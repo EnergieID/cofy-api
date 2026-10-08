@@ -3,7 +3,7 @@ import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
-import type { GrantStore, ProblemError, Role } from "@cofy/frontend-sdk";
+import type { ProblemError, Role } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/dialog/dialog.js";
@@ -13,7 +13,7 @@ import "@awesome.me/webawesome/dist/components/select/select.js";
 import "../cofy-problem-details.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { communitySlugContext, grantStoreContext } from "../../context.js";
+import { communitySlugContext } from "../../context.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 
 /** The roles a person can be granted. */
@@ -35,10 +35,6 @@ export class CofyGrantDialog extends CofyElement {
       }
     `,
   ];
-
-  @consume({ context: grantStoreContext, subscribe: true })
-  @state()
-  public grantStore?: GrantStore;
 
   @consume({ context: communitySlugContext, subscribe: true })
   @state()
@@ -108,12 +104,13 @@ export class CofyGrantDialog extends CofyElement {
   }
 
   private async save(): Promise<void> {
-    if (this.grantStore === undefined) return;
+    const cofy = this.cofy;
+    if (cofy === undefined) return;
 
     this.saving = true;
     this.error = null;
     try {
-      const saved = await this.grantStore.create(this.slug, { email: this.email, role: this.chosenRole });
+      const saved = await cofy.grants.create(this.slug, { email: this.email, role: this.chosenRole });
       this.dispatchEvent(new CustomEvent("grant-saved", { detail: { email: saved.email }, bubbles: true, composed: true }));
     } catch (error) {
       this.error = error as ProblemError;

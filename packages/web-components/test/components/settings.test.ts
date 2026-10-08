@@ -1,11 +1,11 @@
 import { ContextProvider } from "@lit/context";
 import { beforeEach, describe, expect, it } from "vitest";
-import { ApiClient, SessionStore, type Me } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore, type Me } from "@cofy/frontend-sdk";
 
 import { CofyLocalePicker } from "../../src/components/settings/cofy-locale-picker.js";
 import { CofySettingsPanel } from "../../src/components/settings/cofy-settings-panel.js";
 import { CofyThemePicker } from "../../src/components/settings/cofy-theme-picker.js";
-import { i18nContext, sessionStoreContext } from "../../src/context.js";
+import { cofyStoreContext, i18nContext } from "../../src/context.js";
 import { ThemeState } from "../../src/theme/theme-state.js";
 import { testI18n } from "../support/i18n.js";
 
@@ -113,10 +113,18 @@ describe("cofy-settings-panel", () => {
   });
 
   async function panel(me: Me | null): Promise<CofySettingsPanel> {
-    const session = new SessionStore(new ApiClient({ baseUrl: "http://localhost" }), window.location);
-    session.me = me;
+    // Who is logged in, or the 401 the API answers without anyone.
+    const fetchStub = (): Promise<Response> =>
+      Promise.resolve(
+        new Response(JSON.stringify(me ?? { status: 401 }), {
+          status: me === null ? 401 : 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    const cofy = new CofyStore(new ApiClient({ fetch: fetchStub, baseUrl: "http://localhost" }));
+    await cofy.session.fetch().catch(() => {});
     const host = document.createElement("div");
-    new ContextProvider(host, { context: sessionStoreContext, initialValue: session });
+    new ContextProvider(host, { context: cofyStoreContext, initialValue: cofy });
     new ContextProvider(host, { context: i18nContext, initialValue: await testI18n() });
     document.body.append(host);
     const element = new CofySettingsPanel();

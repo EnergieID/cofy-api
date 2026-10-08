@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { AllowedModulesStore, ApiClient, ModuleStore, type ModuleSettings } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore, type ModuleSettings } from "@cofy/frontend-sdk";
 
 import { CofyModuleEditor } from "../../src/components/module/cofy-module-editor.js";
 import { testI18n } from "../support/i18n.js";
@@ -30,8 +30,7 @@ async function mount(allowedModules?: unknown): Promise<CofyModuleEditor> {
   const api = stubApi(allowedModules);
   const element = new CofyModuleEditor();
   element.i18n = await testI18n();
-  element.moduleStore = new ModuleStore(api);
-  element.allowedModules = new AllowedModulesStore(api);
+  element.cofy = new CofyStore(api);
   element.slug = "test";
   element.moduleId = { type: "tariff", name: "spot" };
   document.body.append(element);

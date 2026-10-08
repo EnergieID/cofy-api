@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { AllowedModulesStore, ApiClient, ModuleStore } from "@cofy/frontend-sdk";
+import { ApiClient, CofyStore } from "@cofy/frontend-sdk";
 
 import { CofyModuleCreate } from "../../src/components/module/cofy-module-create.js";
 import { testI18n } from "../support/i18n.js";
@@ -51,13 +51,12 @@ function stubApi(): ApiClient {
 
 async function mount(preload = true): Promise<CofyModuleCreate> {
   const api = stubApi();
-  const allowedModules = new AllowedModulesStore(api);
-  if (preload) await allowedModules.ensure("test");
+  const cofy = new CofyStore(api);
+  if (preload) await cofy.allowedModules.fetch("test");
 
   const element = new CofyModuleCreate();
   element.i18n = await testI18n();
-  element.allowedModules = allowedModules;
-  element.moduleStore = new ModuleStore(api);
+  element.cofy = cofy;
   element.slug = "test";
   document.body.append(element);
   await element.updateComplete;

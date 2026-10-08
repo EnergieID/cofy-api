@@ -53,25 +53,25 @@ copies of the same package.
 
 ## Usage
 
-Provide the stores and shared state a component tree needs, then use the components in a
+Provide the store and shared state a component tree needs, then use the components in a
 template:
 
 ```ts
 import { provide } from "@lit/context";
-import { ApiClient, CommunityStore } from "@cofy/frontend-sdk";
-import { communityStoreContext } from "@cofy/web-components";
+import { ApiClient, CofyStore } from "@cofy/frontend-sdk";
+import { cofyStoreContext } from "@cofy/web-components";
 import "@cofy/web-components/components/community/cofy-community-list";
 
 class MyConsole extends LitElement {
   private readonly api = new ApiClient({ baseUrl: "http://127.0.0.1:8000" });
 
-  @provide({ context: communityStoreContext })
-  public communities = new CommunityStore(this.api);
+  @provide({ context: cofyStoreContext })
+  public cofy = new CofyStore(this.api);
 }
 ```
 
 See [apps/management-web/src/main.ts](../../apps/management-web/src/main.ts) for the full set
-of contexts a real console provides (stores, theme, i18n, routing state).
+of contexts a real console provides (store, theme, i18n, routing state).
 
 ## Development
 

@@ -1,15 +1,15 @@
-import { consume, provide } from "@lit/context";
+import { provide } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import type { ProblemError, SecretInfo, SecretStore } from "@cofy/frontend-sdk";
+import type { ProblemError, SecretInfo } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
 import "@awesome.me/webawesome/dist/components/scroller/scroller.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { communitySlugContext, secretStoreContext } from "../../context.js";
+import { communitySlugContext } from "../../context.js";
 import { tableStyles } from "../../theme/table.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import "../layout/cofy-heading.js";
@@ -38,10 +38,6 @@ export class CofySecretList extends CofyElement {
     `,
   ];
 
-  @consume({ context: secretStoreContext, subscribe: true })
-  @state()
-  public store!: SecretStore;
-
   // Provided, so the dialog saves to this community.
   @provide({ context: communitySlugContext })
   @property({ type: String })
@@ -52,16 +48,12 @@ export class CofySecretList extends CofyElement {
   @state() private deleting = false;
   @state() private deleteError: ProblemError | null = null;
 
-  public override willUpdate(changed: Map<string, unknown>): void {
-    if ((changed.has("slug") || changed.has("store")) && this.slug !== "") void this.store?.ensure(this.slug);
-  }
-
   public override render(): TemplateResult | typeof nothing {
-    if (this.store === undefined) return nothing;
+    if (this.cofy === undefined || this.slug === "") return nothing;
 
-    const secrets = this.store.list(this.slug);
-
-    if (this.store.error != null) return html`<cofy-problem-details .problem=${this.store.error}></cofy-problem-details>`;
+    const secrets = this.cofy.secrets.all(this.slug);
+    const error = this.cofy.secrets.error(this.slug);
+    if (error !== null) return html`<cofy-problem-details .problem=${error}></cofy-problem-details>`;
     if (secrets === undefined) {
       return html`<div class="wa-stack">
         ${Array.from({ length: 3 }, () => html`<wa-skeleton></wa-skeleton>`)}
@@ -167,7 +159,7 @@ export class CofySecretList extends CofyElement {
     this.deleting = true;
     this.deleteError = null;
     try {
-      await this.store.remove(this.slug, secret.name);
+      await this.cofy.secrets.delete(this.slug, secret.name);
     } catch (error) {
       this.deleteError = error as ProblemError;
     } finally {

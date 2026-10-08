@@ -75,7 +75,7 @@ describe("ModuleDraft", () => {
   it("saves through the store against its original identity", async () => {
     const { api, calls } = stubbedApi((call) => (call.method === "PUT" ? { body: call.body } : { body: [stored] }));
     const store = new ModuleStore(api);
-    await store.load("test");
+    await store.fetch("test");
     const draft = new ModuleDraft(stored);
     draft.set({ ...stored, display_name: "Spot prices" });
 
@@ -83,7 +83,7 @@ describe("ModuleDraft", () => {
 
     expect(calls.at(-1)!.path).toBe("/management/communities/test/modules/tariff/spot");
     expect(saved["display_name"]).toBe("Spot prices");
-    expect(store.find("test", { type: "tariff", name: "spot" })).toEqual(saved);
+    expect(store.get("test", { type: "tariff", name: "spot" })).toEqual(saved);
     expect(draft.saving).toBe(false);
   });
 

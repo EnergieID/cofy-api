@@ -1,7 +1,6 @@
 import { consume } from "@lit/context";
 import { ProblemError } from "@cofy/frontend-sdk";
-import type { SessionStore } from "@cofy/frontend-sdk";
-import { CofyElement, sessionStoreContext } from "@cofy/web-components";
+import { CofyElement } from "@cofy/web-components";
 import type { Crumb } from "@cofy/web-components";
 import type { TOptions } from "i18next";
 import { html } from "lit";
@@ -24,9 +23,9 @@ const NO_ACCESS = new ProblemError(403, { status: 403, code: "forbidden" });
  * the route, and is shown the same "no access" a refused request shows instead of its content when
  * the person logged in may not see that community.
  *
- * A subclass implements {@link crumbs} and is done; the trail is published after each render,
- * which is late enough that reading a store here cannot race the render that subscribed to
- * it. A subclass overriding `updated` has to call `super.updated()` or its trail stops
+ * A subclass implements {@link crumbs} and is done. They are worked out during each render, so
+ * what they read is subscribed to - and loaded - like anything else rendered, and published
+ * after it. A subclass overriding `updated` has to call `super.updated()` or its trail stops
  * updating.
  *
  * Pages translate out of the `app` namespace, since `components` belongs to the library.
@@ -38,23 +37,24 @@ export abstract class CofyPage extends CofyElement {
   @consume({ context: crumbStateContext, subscribe: true })
   public trail!: CrumbState;
 
-  @consume({ context: sessionStoreContext, subscribe: true })
-  public session!: SessionStore;
-
   /** The community this page is part of; a page outside any one community has none. */
   declare public slug?: string;
+
+  private trailToPublish: Crumb[] = [];
 
   /** The page itself, for someone who may see it. */
   protected abstract content(): TemplateResult;
 
   public override render(): TemplateResult {
-    if (this.slug !== undefined && !this.session?.can("read", "community", this.slug)) {
+    // Published once rendered: setting another state while rendering would update its readers mid-render.
+    this.trailToPublish = this.crumbs();
+    if (this.slug !== undefined && !this.cofy?.session.can("read", "community", this.slug)) {
       return html`<cofy-problem-details .problem=${NO_ACCESS}></cofy-problem-details>`;
     }
     return this.content();
   }
 
-  /** This page's trail. Recomputed after every render, so it may read stores directly. */
+  /** This page's trail. Worked out while rendering, so it may read stores directly. */
   protected abstract crumbs(): Crumb[];
 
   /** Translate out of the application's own namespace. */
@@ -63,6 +63,6 @@ export abstract class CofyPage extends CofyElement {
   }
 
   public override updated(): void {
-    this.trail?.set(this.crumbs());
+    this.trail?.set(this.trailToPublish);
   }
 }

@@ -1,8 +1,7 @@
-import { consume } from "@lit/context";
 import { css, html, nothing } from "lit";
 import type { TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import type { ProblemError, ResourceSettings, ResourceStore } from "@cofy/frontend-sdk";
+import type { ProblemError, ResourceSettings } from "@cofy/frontend-sdk";
 
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/skeleton/skeleton.js";
@@ -10,7 +9,6 @@ import "@awesome.me/webawesome/dist/components/tag/tag.js";
 import "@awesome.me/webawesome/dist/components/scroller/scroller.js";
 
 import { CofyElement } from "../../cofy-element.js";
-import { resourceStoreContext } from "../../context.js";
 import { tableStyles } from "../../theme/table.js";
 import { utilityStyles } from "../../theme/utility-styles.js";
 import "../layout/cofy-heading.js";
@@ -40,27 +38,17 @@ export class CofyResourceList extends CofyElement {
     `,
   ];
 
-  @consume({ context: resourceStoreContext, subscribe: true })
-  @state()
-  public store!: ResourceStore;
-
   @property({ type: String }) public slug = "";
 
   @state() private deleting = false;
   @state() private deleteError: ProblemError | null = null;
 
-  public override willUpdate(changed: Map<string, unknown>): void {
-    if (changed.has("slug") || changed.has("store")) {
-      if (this.slug !== "") void this.store?.ensure(this.slug);
-    }
-  }
-
   public override render(): TemplateResult | typeof nothing {
-    if (this.store === undefined) return nothing;
+    if (this.cofy === undefined || this.slug === "") return nothing;
 
-    const resources = this.store.list(this.slug);
-
-    if (this.store.error != null) return html`<cofy-problem-details .problem=${this.store.error}></cofy-problem-details>`;
+    const resources = this.cofy.resources.all(this.slug);
+    const error = this.cofy.resources.error(this.slug);
+    if (error !== null) return html`<cofy-problem-details .problem=${error}></cofy-problem-details>`;
     if (resources === undefined) {
       return html`<div class="wa-stack">
         ${Array.from({ length: 4 }, () => html`<wa-skeleton></wa-skeleton>`)}
@@ -160,7 +148,7 @@ export class CofyResourceList extends CofyElement {
     this.deleteError = null;
     try {
       if (!window.confirm(this.t("resourceList.deleteConfirm", { name: resource.name }))) return;
-      await this.store.remove(this.slug, resource.name);
+      await this.cofy.resources.delete(this.slug, resource.name);
     } catch (error) {
       this.deleteError = error as ProblemError;
     } finally {
