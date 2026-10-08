@@ -45,6 +45,8 @@ export { CofyActionMenu, type MenuAction } from "./components/form/cofy-action-m
 export { CofySaveResourceDialog } from "./components/resource/cofy-save-resource-dialog.js";
 export { CofySecretDialog } from "./components/secret/cofy-secret-dialog.js";
 export { CofySecretList } from "./components/secret/cofy-secret-list.js";
+export { CofyTokenDialog } from "./components/token/cofy-token-dialog.js";
+export { CofyTokenList } from "./components/token/cofy-token-list.js";
 export { CofyGrantDialog } from "./components/grant/cofy-grant-dialog.js";
 export { CofyGrantList } from "./components/grant/cofy-grant-list.js";
 export { CofyResourceCreate } from "./components/resource/cofy-resource-create.js";

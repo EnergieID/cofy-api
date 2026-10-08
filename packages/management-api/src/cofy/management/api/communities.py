@@ -4,9 +4,7 @@ The wire models here deliberately expose less than a stored config holds:
 
 - `modules` belongs to `ModulesRouter`. Editing a title should not require sending, or be
   able to disturb, every module in the community.
-- `auth` is omitted entirely. `TokenAuthSettings.tokens` is keyed *by the token*, so
-  returning it would publish every machine-to-machine credential, and a `Secret` cannot mask
-  a mapping key. Token management needs its own design.
+- `auth` belongs to `TokensRouter`, which never reports a token's key or hash.
 - `debug_dir` is a local operational detail, and accepting a filesystem path from a client is
   a capability this API has no reason to hand out.
 

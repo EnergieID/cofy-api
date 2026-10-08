@@ -8,6 +8,7 @@ import { ModuleStore } from "../stores/module-store.js";
 import { ResourceStore } from "../stores/resource-store.js";
 import { SecretStore } from "../stores/secret-store.js";
 import { SessionStore } from "../stores/session-store.js";
+import { TokenStore } from "../stores/token-store.js";
 import type { Cache } from "./cache.js";
 
 /**
@@ -25,6 +26,7 @@ export class CofyStore {
   public readonly resources: ResourceStore;
   public readonly allowedResources: AllowedResourcesStore;
   public readonly secrets: SecretStore;
+  public readonly tokens: TokenStore;
   public readonly grants: GrantStore;
 
   public constructor(api: ApiClient, location: Location = window.location) {
@@ -47,6 +49,7 @@ export class CofyStore {
     });
     this.resources = new ResourceStore(api, ({ scope: [slug] }) => this.status.invalidate(slug));
     this.secrets = new SecretStore(api, ({ scope: [slug] }) => this.status.invalidate(slug));
+    this.tokens = new TokenStore(api, ({ scope: [slug] }) => this.status.invalidate(slug));
 
     // A grant may be to the person logged in, which changes what they may do - and which
     // communities they may see at all. Revoking one may leave them seeing nothing of it.
@@ -78,6 +81,7 @@ export class CofyStore {
       this.resources,
       this.allowedResources,
       this.secrets,
+      this.tokens,
       this.grants,
     ];
   }

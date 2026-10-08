@@ -1,7 +1,8 @@
 auth:
   tokens:
-    demo:
-      name: Demo User
+  - description: Demo User
+    hash: sha256:2a97516c354b68848cdbd8f54a226a0a55b21ed138e207ad6c5cbb9c00aa5aea
+    name: demo
   type: token
 debug_mode: true
 description: Modular cloud API for energy data

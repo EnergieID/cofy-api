@@ -13,11 +13,11 @@ import "@awesome.me/webawesome/dist/components/tab-panel/tab-panel.js";
 import { CofyPage } from "./cofy-page.js";
 
 /** The tabs of a community, each naming the route it is shown on. */
-export const COMMUNITY_TABS = ["modules", "resources", "secrets", "grants"] as const;
+export const COMMUNITY_TABS = ["modules", "resources", "secrets", "tokens", "grants"] as const;
 export type CommunityTab = (typeof COMMUNITY_TABS)[number];
 
 /**
- * A community: its modules, resources, secrets and who has access, each on a tab of its own.
+ * A community: its modules, resources, secrets, API tokens and who has access, each on a tab of its own.
  *
  * The tab shown is part of the route, so it survives a reload, the back button returns to it,
  * and a page under a tab - a resource's editor - can link back to it.
@@ -72,6 +72,9 @@ export class CofyCommunityPage extends CofyPage {
         </wa-tab-panel>
         <wa-tab-panel name="secrets">
           <cofy-secret-list .slug=${this.slug}></cofy-secret-list>
+        </wa-tab-panel>
+        <wa-tab-panel name="tokens">
+          <cofy-token-list .slug=${this.slug}></cofy-token-list>
         </wa-tab-panel>
         <wa-tab-panel name="grants">
           <cofy-grant-list .slug=${this.slug}></cofy-grant-list>

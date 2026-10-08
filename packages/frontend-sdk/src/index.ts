@@ -25,6 +25,9 @@ export {
   type SecretBody,
   type SecretInfo,
   type Subject,
+  type CreatedToken,
+  type TokenBody,
+  type TokenInfo,
 } from "./types.js";
 export { narrowToInstance, validate, type JsonSchema, type ValidationIssue } from "./validation.js";
 export { Cache } from "./core/cache.js";
@@ -37,6 +40,7 @@ export { AllowedModulesStore } from "./stores/allowed-modules-store.js";
 export { ResourceStore } from "./stores/resource-store.js";
 export { AllowedResourcesStore } from "./stores/allowed-resources-store.js";
 export { SecretStore } from "./stores/secret-store.js";
+export { TokenStore } from "./stores/token-store.js";
 export { GrantStore } from "./stores/grant-store.js";
 export { SessionStore } from "./stores/session-store.js";
 export { EditableValue } from "./drafts/editable-value.js";

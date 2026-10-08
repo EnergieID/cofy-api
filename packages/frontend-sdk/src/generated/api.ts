@@ -249,6 +249,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/management/communities/{slug}/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All */
+        get: operations["all_management_communities__slug__tokens_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_management_communities__slug__tokens_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/management/communities/{slug}/tokens/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["get_management_communities__slug__tokens__name__get"];
+        /** Put */
+        put: operations["put_management_communities__slug__tokens__name__put"];
+        post?: never;
+        /** Delete */
+        delete: operations["delete_management_communities__slug__tokens__name__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/management/communities/{slug}/allowed-resources": {
         parameters: {
             query?: never;
@@ -896,6 +933,23 @@ export interface components {
          * @enum {string}
          */
         CostGroup: "consumption" | "injection" | "capacity" | "fixed";
+        /**
+         * CreatedToken
+         * @description A newly created API token, with its key: the only time it is ever reported.
+         */
+        CreatedToken: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Expires */
+            expires?: string | null;
+            /**
+             * Key
+             * @description The key itself, to keep now: it can't be shown again.
+             */
+            key: string;
+        };
         /**
          * DayOfWeek
          * @enum {string}
@@ -1749,7 +1803,7 @@ export interface components {
          * @description A part of a community that permissions are given on.
          * @enum {string}
          */
-        Subject: "community" | "modules" | "resources" | "secrets" | "grants" | "allowed_modules" | "allowed_resources";
+        Subject: "community" | "modules" | "resources" | "secrets" | "tokens" | "grants" | "allowed_modules" | "allowed_resources";
         /** Tariff */
         "Tariff-Input": components["schemas"]["TariffVersion-Input"][];
         /** Tariff */
@@ -2016,6 +2070,39 @@ export interface components {
             source: (components["schemas"]["DirectiveSourceSettings-Output"] | components["schemas"]["DynamicBoundaryDirectiveSourceSettings-Output"] | components["schemas"]["AccSimultaneitySourceSettings-Output"] | components["schemas"]["SimultaneitySourceSettings-Output"] | components["schemas"]["AccForecastSettings-Output"] | components["schemas"]["EnergyCostTariffSourceSettings-Output"] | components["schemas"]["EnergyIDProductionSettings-Output"] | components["schemas"]["EntsoeDayAheadTariffSourceSettings-Output"]) | components["schemas"]["RefSettings"];
             /** Formats */
             formats?: (components["schemas"]["JSONFormatSettings"] | components["schemas"]["CSVFormatSettings"])[] | null;
+        };
+        /**
+         * TokenBody
+         * @description An API token as written: everything but its key, which is only ever generated.
+         */
+        TokenBody: {
+            /**
+             * Name
+             * @description The machine name of the token.
+             */
+            name: string;
+            /**
+             * Description
+             * @description A short description of the token, e.g. who uses it.
+             */
+            description?: string | null;
+            /**
+             * Expires
+             * @description When the token stops being accepted.
+             */
+            expires?: string | null;
+        };
+        /**
+         * TokenDetails
+         * @description An API token as reported: everything but its key and hash.
+         */
+        TokenDetails: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Expires */
+            expires?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -2793,6 +2880,171 @@ export interface operations {
         };
     };
     delete_management_communities__slug__secrets__name__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    all_management_communities__slug__tokens_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenDetails"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_management_communities__slug__tokens_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedToken"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_management_communities__slug__tokens__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenDetails"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_management_communities__slug__tokens__name__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenDetails"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_management_communities__slug__tokens__name__delete: {
         parameters: {
             query?: never;
             header?: never;

@@ -5,7 +5,7 @@ from .module import Module, ModuleSettings
 from .references import Referable, RefSettings
 from .resource import Resource, ResourceSettings
 from .secret import Secret, SecretRef, SecretSettings, SecretValue
-from .token_auth import Auth, AuthSettings, TokenAuth, TokenAuthSettings, TokenInfo
+from .token_auth import Auth, AuthSettings, TokenAuth, TokenAuthSettings, TokenInfo, generate_key, hash_key
 from .version import __version__
 
 __all__ = [
@@ -29,5 +29,7 @@ __all__ = [
     "TokenAuthSettings",
     "Auth",
     "AuthSettings",
+    "generate_key",
+    "hash_key",
     "__version__",
 ]

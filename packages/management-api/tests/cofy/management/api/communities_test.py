@@ -48,7 +48,7 @@ def tmp_data(tmp_path: Path) -> Path:
                         "source": {"type": "entsoe_day_ahead", "api_key": {"type": "secret", "name": "entsoe_key"}},
                     },
                 ],
-                "auth": {"type": "token", "tokens": {TOKEN: {"name": "M2M"}}},
+                "auth": {"type": "token", "tokens": [{"name": "m2m", "key": TOKEN}]},
             }
         )
     )
@@ -115,8 +115,7 @@ def test_response_omits_the_modules(client: TestClient):
 
 
 def test_response_never_includes_the_auth_block(client: TestClient):
-    """`TokenAuthSettings.tokens` is keyed *by the token*, so exposing auth would publish
-    every machine-to-machine credential - and a mapping key cannot be masked."""
+    """Tokens are managed through their own endpoints, which never report a key."""
     r = client.get("/management/communities/test")
 
     assert "auth" not in r.json()
@@ -167,7 +166,7 @@ def test_update_leaves_secrets_intact(client: TestClient, tmp_data: Path):
 def test_update_leaves_the_auth_block_intact(client: TestClient, tmp_data: Path):
     client.put("/management/communities/test", json={"title": "Renamed"})
 
-    assert _stored(tmp_data)["auth"]["tokens"] == {TOKEN: {"name": "M2M"}}
+    assert _stored(tmp_data)["auth"]["tokens"] == [{"name": "m2m", "key": TOKEN}]
 
 
 def test_update_raises_the_revision(client: TestClient, tmp_data: Path):

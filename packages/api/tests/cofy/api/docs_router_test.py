@@ -67,7 +67,7 @@ class TestDocsRouter:
 
     def test_openapi_requires_security_when_token_and_auth_scheme_present(self):
         app = FastAPI(
-            dependencies=[Depends(TokenAuth({"foo": TokenInfo(name="Demo User")}).verify)],
+            dependencies=[Depends(TokenAuth([TokenInfo(name="demo", key="foo")]).verify)],
             docs_url=None,
             redoc_url=None,
             openapi_url=None,

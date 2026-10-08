@@ -81,6 +81,43 @@ settings:
     legend: Taal
     choose: Kies een taal
 
+tokenList:
+  title: API-tokens
+  description: Sleutels waarmee je toepassingen de API van deze gemeenschap aanspreken. De sleutel van een token wordt één keer getoond, bij het aanmaken.
+  add: Nieuwe token
+  delete: Verwijderen
+  deleting: Verwijderen…
+  empty: Er zijn geen API-tokens geconfigureerd voor deze gemeenschap.
+  deleteConfirm: "{{name}} verwijderen? Toepassingen die deze token gebruiken, kunnen de API niet meer bereiken."
+  never: Nooit
+  expired: Verlopen
+  columns:
+    token: Token
+    description: Beschrijving
+    expires: Verloopt
+    actions: Acties
+
+tokenDialog:
+  title: Nieuwe API-token
+  changeTitle: "{{name}} wijzigen"
+  createdTitle: "{{name}} aangemaakt"
+  name: Naam
+  nameHint: Hoe de token gekend is. Geen spaties, geen speciale tekens.
+  description: Beschrijving
+  descriptionHint: Welke toepassing hem gebruikt, bijvoorbeeld.
+  expires: Verloopt op
+  expiresHint: Optioneel. De token werkt niet meer vanaf deze datum.
+  create: Aanmaken
+  save: Opslaan
+  saving: Opslaan…
+  cancel: Annuleren
+  key: Sleutel
+  copyWarning: Kopieer deze sleutel nu en bewaar hem op een veilige plek. Hij wordt niet opgeslagen en kan nooit meer getoond worden.
+  copy: De sleutel kopiëren
+  copied: Gekopieerd
+  copyFailed: Kopiëren mislukt
+  done: Klaar
+
 grantList:
   title: Toegang
   description: Wie deze gemeenschap mag beheren. Toegang wordt per e-mailadres gegeven en aan het account van de persoon gekoppeld zodra die voor het eerst aanmeldt.

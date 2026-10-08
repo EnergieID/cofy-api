@@ -1,11 +1,16 @@
 type: cofy_api
 debug_mode: true
 
+# API tokens, each given as its key or, to keep the key itself out of the settings, as its hash.
+# Generate a key and its hash with:
+#   python -c "from cofy.api import generate_key, hash_key; key = generate_key(); print(key, hash_key(key))"
 auth:
   type: token
   tokens:
-    ${COFY_API_TOKEN}:
-      name: Demo User
+    - name: demo
+      description: Demo User
+      key: ${COFY_API_TOKEN}
+      # hash: ${COFY_API_TOKEN_HASH}
 
 # Credentials, referenced by name from every field that needs one. This app fills them in from its own
 # environment, see `${...}`.

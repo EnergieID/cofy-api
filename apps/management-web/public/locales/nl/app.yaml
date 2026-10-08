@@ -8,6 +8,7 @@ community:
     modules: Modules
     resources: Bronnen
     secrets: Geheimen
+    tokens: API-tokens
     grants: Toegang
 
 newModule:

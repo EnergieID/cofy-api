@@ -83,6 +83,43 @@ secretDialog:
   saving: Saving…
   cancel: Cancel
 
+tokenList:
+  title: API tokens
+  description: Keys your applications use to call this community's API. A token's key is shown once, when it is created.
+  add: New token
+  delete: Delete
+  deleting: Deleting…
+  empty: No API tokens are configured for this community.
+  deleteConfirm: "Delete {{name}}? Applications using it can no longer reach the API."
+  never: Never
+  expired: Expired
+  columns:
+    token: Token
+    description: Description
+    expires: Expires
+    actions: Actions
+
+tokenDialog:
+  title: New API token
+  changeTitle: "Change {{name}}"
+  createdTitle: "{{name}} created"
+  name: Name
+  nameHint: How the token is known. No spaces, no special characters.
+  description: Description
+  descriptionHint: Which application uses it, for example.
+  expires: Expires on
+  expiresHint: Optional. The token stops working from this date on.
+  create: Create
+  save: Save
+  saving: Saving…
+  cancel: Cancel
+  key: Key
+  copyWarning: Copy this key now and store it somewhere safe. It is not stored and can never be shown again.
+  copy: Copy the key
+  copied: Copied
+  copyFailed: Could not copy
+  done: Done
+
 grantList:
   title: Access
   description: Who may manage this community. Access is granted by email and tied to the person's account when they first log in.

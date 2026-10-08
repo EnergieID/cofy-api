@@ -8,6 +8,7 @@ describe("routes", () => {
     ["/communities/foo", "modules", { slug: "foo" }],
     ["/communities/foo/resources", "resources", { slug: "foo" }],
     ["/communities/foo/secrets", "secrets", { slug: "foo" }],
+    ["/communities/foo/tokens", "tokens", { slug: "foo" }],
     ["/communities/foo/resources/new", "newResource", { slug: "foo" }],
     ["/communities/foo/resources/entsoe_key", "resource", { slug: "foo", name: "entsoe_key" }],
     ["/communities/foo/modules/tariff/spot", "module", { slug: "foo", type: "tariff", name: "spot" }],
